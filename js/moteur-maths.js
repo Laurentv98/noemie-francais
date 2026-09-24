@@ -167,13 +167,16 @@
 
   // Parmi des nombres qui seront rangés, on choisit les pièges pour que la bonne réponse soit
   // tantôt en premier, tantôt au milieu, tantôt en dernier (sinon, on la devinerait à sa place)
-  function piegesAuHasard(bonne, autres, combien) {
+  // (les pièges « à garder » sont toujours pris ; on choisit les autres autour d'eux)
+  function piegesAuHasard(bonne, autres, combien, aGarder = []) {
     const valeur = lireNombre(bonne);
-    const dessous = RM.melanger(autres.filter(p => lireNombre(p) < valeur));
-    const dessus = RM.melanger(autres.filter(p => lireNombre(p) > valeur));
-    const k = Math.min(combien, dessous.length + dessus.length);
+    const fixes = aGarder.filter(p => autres.includes(p)).slice(0, combien);
+    const libres = autres.filter(p => !fixes.includes(p));
+    const dessous = RM.melanger(libres.filter(p => lireNombre(p) < valeur));
+    const dessus = RM.melanger(libres.filter(p => lireNombre(p) > valeur));
+    const k = Math.min(combien - fixes.length, dessous.length + dessus.length);
     const combienDessous = entier(Math.max(0, k - dessus.length), Math.min(k, dessous.length));
-    return [...dessous.slice(0, combienDessous), ...dessus.slice(0, k - combienDessous)];
+    return [...fixes, ...dessous.slice(0, combienDessous), ...dessus.slice(0, k - combienDessous)];
   }
 
   // Choisir la bonne réponse parmi des boutons.
@@ -182,18 +185,25 @@
   // Si tous les boutons sont des nombres, ils sont rangés du plus petit au plus grand ; sinon, mélangés.
   // ordre : 'croissant', 'melange' ou 'fixe' (garder l'ordre des pièges, la réponse en premier)
   // choix : pour donner tous les boutons dans un ordre fixe (la réponse doit en faire partie)
+  // garder : les pièges à proposer à coup sûr (l'erreur classique dont parle l'explication) ;
+  //          ils font aussi partie des pièges, et le moteur choisit les autres autour d'eux
   function choix({
-    consigne, enonce, reponse, pieges = [], choix: fixes, explication, solution, nombreChoix = 4, ordre,
+    consigne, enonce, reponse, pieges = [], choix: fixes, explication, solution, nombreChoix = 4, ordre, garder = [],
   }) {
     const bonne = texteDe(reponse);
     let boutons;
     if (fixes) {
       boutons = fixes.map(texteDe);
     } else {
-      const autres = [...new Set(pieges.map(texteDe))].filter(p => p && p !== bonne);
+      const aGarder = garder.map(texteDe).filter(p => p && p !== bonne);
+      const autres = [...new Set([...aGarder, ...pieges.map(texteDe)])].filter(p => p && p !== bonne);
       const tousDesNombres = [bonne, ...autres].every(estUnNombre);
       const ranges = ordre === 'croissant' || (!ordre && tousDesNombres);
-      boutons = [bonne, ...(ordre === 'fixe' ? autres : (ranges ? piegesAuHasard(bonne, autres, nombreChoix - 1) : RM.melanger(autres)))
+      const melanges = () => {
+        const reste = RM.melanger(autres.filter(p => !aGarder.includes(p)));
+        return [...aGarder.filter(p => autres.includes(p)), ...reste];
+      };
+      boutons = [bonne, ...(ordre === 'fixe' ? autres : (ranges ? piegesAuHasard(bonne, autres, nombreChoix - 1, aGarder) : melanges()))
         .slice(0, nombreChoix - 1)];
       if (ranges) boutons.sort((a, b) => lireNombre(a) - lireNombre(b));
       else if (ordre !== 'fixe') boutons = RM.melanger(boutons);
@@ -430,18 +440,19 @@
       return figures.svg(largeur, 90, html, 'Une droite graduée');
     },
 
-    // Un repère : de xmin à xmax et de ymin à ymax (en unités), « unite » pixels par unité.
+    // Un repère : de xmin à xmax et de ymin à ymax (en unités), « unite » pixels par unité
+    // (uniteY : pour l'axe vertical, s'il n'a pas la même unité : 8 kg en largeur, 24 € en hauteur).
     // points : [{ x, y, nom }] ; traces : [{ f: x => …, de, a }] (une fonction) ou [{ segment: [[x1, y1], [x2, y2]] }]
     // pasEtiquettes : on écrit un nombre toutes les combien de graduations
     repere({
-      xmin, xmax, ymin, ymax, unite = 40, points = [], traces = [], pasEtiquettes = 1, nomAxes = ['', ''],
+      xmin, xmax, ymin, ymax, unite = 40, uniteY = unite, points = [], traces = [], pasEtiquettes = 1, nomAxes = ['', ''],
       pasX = 1, pasY = 1,
     }) {
       const marge = 26;
       const largeur = (xmax - xmin) * unite + 2 * marge;
-      const hauteur = (ymax - ymin) * unite + 2 * marge;
+      const hauteur = (ymax - ymin) * uniteY + 2 * marge;
       const X = v => marge + (v - xmin) * unite;
-      const Y = v => marge + (ymax - v) * unite;
+      const Y = v => marge + (ymax - v) * uniteY;
       let html = '';
       for (let v = xmin; v <= xmax + 1e-9; v += pasX) html += figures.segment([X(v), Y(ymin)], [X(v), Y(ymax)], 'fig-grille');
       for (let v = ymin; v <= ymax + 1e-9; v += pasY) html += figures.segment([X(xmin), Y(v)], [X(xmax), Y(v)], 'fig-grille');
@@ -455,7 +466,8 @@
       for (let v = ymin; v <= ymax + 1e-9; v += pasY) {
         if (Math.abs(v) > 1e-9 && compteur++ % pasEtiquettes === 0) html += figures.texte([X(0) - 8, Y(v)], ecrire(net(v)), { classe: 'fig-petit', ancre: 'end' });
       }
-      if (xmin <= 0 && ymin <= 0) html += figures.texte([X(0) - 8, Y(0) + 14], '0', { classe: 'fig-petit', ancre: 'end' });
+      // (le « 0 » de l'origine, un peu décalé pour ne pas se coller au « −1 » de l'axe horizontal)
+      if (xmin <= 0 && ymin <= 0) html += figures.texte([X(0) - 5, Y(0) + 16], '0', { classe: 'fig-petit', ancre: 'end' });
       if (nomAxes[0]) html += figures.texte([X(xmax) + 6, Y(0) - 12], nomAxes[0], { classe: 'fig-petit', ancre: 'end' });
       if (nomAxes[1]) html += figures.texte([X(0) + 8, Y(ymax) - 4], nomAxes[1], { classe: 'fig-petit', ancre: 'start' });
       traces.forEach(t => {
