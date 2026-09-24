@@ -1,7 +1,7 @@
 {
   "name": "Renard Malin",
   "short_name": "Renard Malin",
-  "description": "Révise le français avec Roxy la renarde !",
+  "description": "Révise le français et les maths avec Roxy la renarde !",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

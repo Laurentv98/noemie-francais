@@ -382,7 +382,7 @@ button:disabled { cursor: default; }
 }
 .niveau-titre { font-family: var(--police-titre); font-size: 1.2rem; font-weight: 600; }
 .niveau-description { color: var(--brun-doux); font-size: .95rem; }
-.niveau-progres { margin-top: 6px; font-weight: 800; }
+.niveau-progres { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 6px; font-weight: 800; }
 .niveau-actuel {
   position: absolute;
   top: 10px;
@@ -712,6 +712,39 @@ button:disabled { cursor: default; }
   font-weight: 800;
 }
 .raccourci b { color: var(--orange-fonce); }
+/* Le choix du côté de la forêt : 📖 le français ou 🔢 les maths */
+.choix-matiere {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--creme-fonce);
+}
+.bouton-matiere {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brun-doux);
+  font-family: var(--police-titre);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.bouton-matiere b { font-family: var(--police-texte); font-size: .95rem; font-weight: 800; }
+.bouton-matiere.actif {
+  background: #fff;
+  color: var(--brun);
+  box-shadow: 0 3px 0 var(--orange);
+}
+.bouton-matiere.actif b { color: var(--orange-fonce); }
+.matiere-icone { font-size: 1.3rem; }
+
 /* Les 4 chemins tiennent sur une ligne : leur icône et leurs étoiles (le nom est en haut de chaque chemin) */
 .raccourci:not(.raccourci-niveau) { flex: 1; justify-content: center; }
 .raccourci:not(.raccourci-niveau) > span { display: none; }
@@ -723,7 +756,7 @@ button:disabled { cursor: default; }
   border-radius: 32px;
   background: var(--zone-clair);
   box-shadow: 0 8px 0 rgba(90, 53, 33, .06);
-  scroll-margin-top: 150px;
+  scroll-margin-top: 210px; /* sous le haut de la carte, qui reste visible */
 }
 .zone-entete {
   display: flex;
@@ -1068,6 +1101,8 @@ button:disabled { cursor: default; }
 }
 
 .saisie { display: flex; gap: 12px; }
+.saisie-case { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; }
+.saisie-unite { flex-shrink: 0; font-family: var(--police-titre); font-size: 1.6rem; font-weight: 600; }
 .saisie input {
   flex: 1;
   min-width: 0;
@@ -1101,6 +1136,60 @@ button:disabled { cursor: default; }
   box-shadow: 0 3px 0 var(--creme-fonce);
 }
 .bouton-accent:disabled { opacity: .4; }
+
+/* ---------- Les maths : fractions, puissances et figures ---------- */
+/* Une fraction : le numérateur au-dessus de la barre, le dénominateur en dessous */
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  margin: 0 .12em;
+  font-size: .82em;
+  line-height: 1.15;
+  text-align: center;
+  vertical-align: middle;
+}
+.frac > span { padding: 0 .2em; }
+.frac > span:first-child { border-bottom: .09em solid currentColor; }
+.enonce sup, .bulle sup, .lecon sup, .bouton-choix sup { font-size: .6em; line-height: 0; }
+/* Un angle : les trois lettres, avec un petit chapeau au-dessus */
+.angle {
+  display: inline-block;
+  padding-top: .28em;
+  line-height: 1;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpolyline points='4,18 50,3 96,18' fill='none' stroke='%235A3521' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") top center / 80% .3em no-repeat;
+}
+/* Un tableau dans une question (proportionnalité, statistiques…) */
+.tableau-maths { margin: 6px auto 12px; border-collapse: collapse; font-size: .8em; }
+.tableau-maths th, .tableau-maths td { min-width: 2.6em; padding: 6px 10px; border: 2px solid var(--creme-fonce); text-align: center; }
+.tableau-maths th { background: var(--creme); font-family: var(--police-texte); font-size: .8em; font-weight: 800; text-align: left; }
+.tableau-maths td { background: #fff; }
+.lecon .tableau-maths, .bulle .tableau-maths { font-size: 1em; }
+
+/* Les figures (les petits dessins de géométrie, les graphiques) */
+.figure-maths {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 4px auto 14px;
+  overflow: visible;
+  font-family: var(--police-texte);
+}
+.lecon .figure-maths, .bulle .figure-maths { margin: 8px auto; }
+.figure-maths .fig-trait { fill: none; stroke: var(--brun); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.figure-maths .fig-plein { fill: var(--jaune-clair); }
+.figure-maths .fig-fin { fill: none; stroke: #C9AE97; stroke-width: 1.5; }
+.figure-maths .fig-grille { fill: none; stroke: #EADCCB; stroke-width: 1.2; }
+.figure-maths .fig-axe { fill: none; stroke: var(--brun-doux); stroke-width: 2; }
+.figure-maths .fig-accent { fill: none; stroke: var(--orange); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.figure-maths .fig-courbe { fill: none; stroke: var(--riviere); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.figure-maths .fig-marque { fill: none; stroke: var(--brun); stroke-width: 2; }
+.figure-maths .fig-cache { stroke-dasharray: 7 7; } /* un trait caché (les arêtes cachées d'un solide), avec fig-trait ou fig-fin */
+.figure-maths .fig-croix { stroke: var(--brun); stroke-width: 2.5; stroke-linecap: round; }
+.figure-maths .fig-barre { fill: var(--orange); }
+.figure-maths .fig-texte { fill: var(--brun); font-size: 19px; font-weight: 800; }
+.figure-maths .fig-petit { fill: var(--brun-doux); font-size: 15px; font-weight: 700; }
+.figure-maths .fig-petit-gras { fill: var(--brun); font-size: 17px; font-weight: 800; }
+.figure-maths .fig-texte-accent { fill: var(--orange-fonce); }
 
 /* Roxy et sa bulle */
 .retour {
@@ -1283,6 +1372,8 @@ button:disabled { cursor: default; }
   .carte { padding: 22px 16px; }
   .choix-duree { gap: 8px; }
   .saisie { flex-direction: column; }
+  .choix-matiere { gap: 4px; padding: 4px; }
+  .bouton-matiere { gap: 6px; min-height: 42px; padding: 4px 8px; font-size: 1.05rem; }
   .choix-avatars { grid-template-columns: repeat(4, 1fr); }
   .grille-profils { grid-template-columns: 1fr 1fr; gap: 14px; }
   .joueur-prenom { display: none; }

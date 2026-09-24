@@ -1,4 +1,5 @@
-// Renard Malin — la carte d'aventure : les chemins de la forêt, les étapes et Roxy
+// Renard Malin — la carte d'aventure : les chemins de la forêt, les étapes et Roxy.
+// En haut, on choisit le côté de la forêt : 📖 le français ou 🔢 les maths.
 
 (function () {
   const $ = id => document.getElementById(id);
@@ -47,6 +48,7 @@
   RM.ecrans.carte = function () {
     const profil = P.profilActif();
     const niveau = RM.niveau(P.niveauDe(profil));
+    const matiere = P.matiereDe(profil);
     const foret = P.foretDe(profil);
     $('carte-titre').textContent = `La forêt de ${profil.prenom}`;
     $('carte-joueur').innerHTML = `${RM.htmlAvatar(profil, 'petit')}
@@ -54,18 +56,26 @@
       <span class="joueur-points">✨ ${profil.points}</span>`;
     $('carte-flamme').innerHTML = RM.htmlFlamme(profil);
 
+    // Les deux côtés de la forêt : le français et les maths, avec leurs étoiles
+    $('choix-matiere').innerHTML = RM.MATIERES.map(m => {
+      const { gagnees } = RM.etoilesForet(profil, RM.idForet(niveau.id, m.id));
+      const actif = m.id === matiere;
+      return `<button class="bouton-matiere${actif ? ' actif' : ''}" data-matiere="${m.id}" aria-pressed="${actif}">
+          <span class="matiere-icone" aria-hidden="true">${m.icone}</span> ${m.nom} <b>★ ${gagnees}</b></button>`;
+    }).join('');
+
     // Le premier bouton du haut : le niveau (on le touche pour en changer)
     $('raccourcis-zones').innerHTML = `
       <button class="raccourci raccourci-niveau" data-aller="niveau" aria-label="Changer de niveau">
         🎒 <b>${niveau.nom}</b> <span class="saison">${niveau.saison}</span> ▾
       </button>` + foret.map(zone => `
-      <button class="raccourci" data-zone="${zone.id}" style="--zone:${zone.couleur}" aria-label="${zone.matiere}" title="${zone.matiere}">
-        ${zone.icone} <span>${zone.matiere}</span>
+      <button class="raccourci" data-zone="${zone.id}" style="--zone:${zone.couleur}" aria-label="${zone.nomCourt}" title="${zone.nomCourt}">
+        ${zone.icone} <span>${zone.nomCourt}</span>
         ${zone.bientot ? '🔒' : `<b>★ ${etoilesZone(profil, zone)}</b>`}
       </button>`).join('');
 
     // Les quatre chemins, puis la course de Roxy tout en bas de la forêt
-    $('carte-aventure').innerHTML = foret.map(zone => htmlZone(profil, zone)).join('') + RM.course.htmlCarte(profil, niveau.id);
+    $('carte-aventure').innerHTML = foret.map(zone => htmlZone(profil, zone)).join('') + RM.course.htmlCarte(profil, P.idForetDe(profil));
     foret.filter(zone => !zone.bientot).forEach(zone => tracerChemin(profil, zone));
     placerRoxy(profil, foret);
     RM.nouvelleEtape = null;
@@ -172,7 +182,8 @@
 
   function placerRoxy(profil, foret) {
     const derniereJouee = RM.trouverEtape(profil.derniereEtape);
-    // Si la dernière partie était dans une autre forêt (un autre niveau), Roxy attend au début du Sentier
+    // Si la dernière partie était dans une autre forêt (un autre niveau, ou l'autre matière),
+    // Roxy attend au début du premier chemin
     const zone = derniereJouee && foret.includes(derniereJouee.zone) ? derniereJouee.zone : foret[0];
     const cible = derniereOuverte(profil, zone);
     const chemin = document.querySelector(`#zone-${zone.id} .chemin`);
@@ -221,6 +232,15 @@
     } else {
       RM.choisirDuree(etape);
     }
+  });
+
+  // Changer de côté : le français ou les maths
+  $('choix-matiere').addEventListener('click', e => {
+    const bouton = e.target.closest('[data-matiere]');
+    const profil = P.profilActif();
+    if (!bouton || bouton.dataset.matiere === P.matiereDe(profil)) return;
+    P.changerMatiere(profil, bouton.dataset.matiere);
+    RM.ecrans.carte();
   });
 
   // Les boutons du haut : aller directement à une zone de la forêt

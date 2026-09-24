@@ -52,19 +52,24 @@
   // Quand la course s'ouvre
   // ======================================================================
   // Il faut autant d'étoiles que si l'on avait réussi toute la forêt : 3 étoiles par étape
-  const etapesDu = niveau => RM.FORETS[niveau].filter(zone => !zone.bientot).flatMap(zone => zone.etapes);
-  const etoilesPourOuvrir = niveau => etapesDu(niveau).length * P.ETOILES_POUR_DEBLOQUER;
-  const estOuverte = (profil, niveau) => RM.etoilesNiveau(profil, niveau).gagnees >= etoilesPourOuvrir(niveau);
+  // (une forêt : « 6e » pour le français de 6e, « 6e-maths » pour les maths de 6e…)
+  const etapesDe = foret => RM.FORETS[foret].filter(zone => !zone.bientot).flatMap(zone => zone.etapes);
+  const etoilesPourOuvrir = foret => etapesDe(foret).length * P.ETOILES_POUR_DEBLOQUER;
+  const estOuverte = (profil, foret) => RM.etoilesForet(profil, foret).gagnees >= etoilesPourOuvrir(foret);
+  // « la forêt de 6e 🌸 », ou « la forêt des maths de 6e 🌸 »
+  function nomDeLaForet(foret) {
+    const { niveau, matiere } = RM.infosForet(foret);
+    return `la forêt ${matiere.id === 'maths' ? 'des maths ' : ''}de ${niveau.nom}&nbsp;${niveau.saison}`;
+  }
 
   // Le bloc de la course, tout en bas de la carte
-  function htmlCarte(profil, niveau) {
-    const { gagnees } = RM.etoilesNiveau(profil, niveau);
-    const seuil = etoilesPourOuvrir(niveau);
-    const infos = P.courseDe(profil, niveau);
-    const n = RM.niveau(niveau);
+  function htmlCarte(profil, foret) {
+    const { gagnees } = RM.etoilesForet(profil, foret);
+    const seuil = etoilesPourOuvrir(foret);
+    const infos = P.courseDe(profil, foret);
     const contenu = gagnees >= seuil
       ? `<p class="course-texte">Roxy t’attend sur la ligne de départ&nbsp;! Ramasse les étoiles et passe par les bonnes portes.</p>
-        <button class="bouton bouton-principal" data-course="${niveau}">🏁 Jouer à la course</button>
+        <button class="bouton bouton-principal" data-course="${foret}">🏁 Jouer à la course</button>
         ${infos ? `<p class="course-record">🏅 Diplôme obtenu · record&nbsp;: <b>${infos.meilleur}&nbsp;⭐</b></p>` : ''}`
       : `<p class="course-texte">🔒 Gagne <b>${seuil}&nbsp;étoiles</b> dans cette forêt pour ouvrir la course.
           <small>C’est comme réussir toutes les étapes avec 3&nbsp;étoiles.</small></p>
@@ -74,17 +79,18 @@
       <section class="zone zone-course" id="zone-course">
         <header class="zone-entete">
           <span class="zone-icone">🏁</span>
-          <div><h3>La course de Roxy</h3><p>Le grand jeu de la forêt de ${n.nom} ${n.saison}</p></div>
+          <div><h3>La course de Roxy</h3><p>Le grand jeu de ${nomDeLaForet(foret)}</p></div>
         </header>
         <div class="course-contenu">${contenu}</div>
       </section>`;
   }
 
   // Le bloc de la course dans l'espace parent, avec un bouton pour l'essayer
-  function htmlParent(profil, niveau) {
-    const { gagnees } = RM.etoilesNiveau(profil, niveau);
-    const seuil = etoilesPourOuvrir(niveau);
-    const infos = P.courseDe(profil, niveau);
+  function htmlParent(profil, foret) {
+    const { gagnees } = RM.etoilesForet(profil, foret);
+    const seuil = etoilesPourOuvrir(foret);
+    const infos = P.courseDe(profil, foret);
+    const { niveau, matiere } = RM.infosForet(foret);
     const etat = gagnees >= seuil
       ? '✅ Ouverte'
       : `🔒 Fermée : ★ ${gagnees} / ${seuil} étoiles (il en faut 3 par étape)`;
@@ -93,10 +99,10 @@
         + ` · meilleur score aux portes ${infos.meilleuresPortes}/${PORTES.length}`
       : 'Pas encore jouée.';
     return `<section class="carte bloc-parent bloc-course">
-      <h3>🏁 La course de Roxy (${niveau})</h3>
+      <h3>🏁 La course de Roxy (${niveau.nom}, ${matiere.icone} ${matiere.nom})</h3>
       <p class="course-etat">${etat}</p>
       <p class="bloc-sous-titre">${bilan}</p>
-      <button class="bouton-reglage" data-course-essai="${niveau}">▶️ Essayer la course</button>
+      <button class="bouton-reglage" data-course-essai="${foret}">▶️ Essayer la course</button>
       <p class="bloc-sous-titre">Un essai n’enregistre rien : c’est pour découvrir le jeu.</p>
     </section>`;
   }
@@ -111,8 +117,9 @@
   };
 
   // Des questions à choix, courtes, qui tiennent sur des panneaux de porte (3 portes au plus)
-  function questionsPourLaCourse(niveau, nombre = PORTES.length) {
-    const etapes = RM.melanger(etapesDu(niveau).filter(e => typeof e.creerQuestions === 'function'));
+  // (pas de figure : elle serait trop petite pendant la course)
+  function questionsPourLaCourse(foret, nombre = PORTES.length) {
+    const etapes = RM.melanger(etapesDe(foret).filter(e => typeof e.creerQuestions === 'function'));
     const choisies = [];
     const dejaVues = new Set();
     for (let essai = 0; essai < 80 * nombre && choisies.length < nombre; essai++) {
@@ -120,7 +127,7 @@
       // D'abord une question par étape, pour que ce soit varié
       if (essai < 30 * nombre && choisies.some(q => q.etape === etape)) continue;
       const q = etape.creerQuestions(1)[0];
-      if (q.type !== 'choix' || !q.choix || q.choix.length < 2) continue;
+      if (q.type !== 'choix' || !q.choix || q.choix.length < 2 || q.enonce.includes('<svg')) continue;
       if (q.choix.some(c => c.length > 16)) continue;
       const enonce = texteSeul(q.enonce);
       if (!enonce || enonce.length > 90 || dejaVues.has(enonce)) continue;
@@ -142,11 +149,11 @@
   let jeu = null;   // la course en cours
 
   // essai : on joue sans rien enregistrer ; retour : l'écran où l'on revient après la course
-  async function lancer(niveau, { essai = false, retour = essai ? 'parent' : 'carte' } = {}) {
+  async function lancer(foret, { essai = false, retour = essai ? 'parent' : 'carte' } = {}) {
     arreter();
     const profil = P.profilActif();
     jeu = {
-      niveau,
+      foret,
       options: { essai, retour }, // pour « Rejouer »
       essai: essai || !profil,
       prenom: profil ? profil.prenom : 'Renard malin',
@@ -154,9 +161,9 @@
       etat: 'chargement',
     };
     const courseActuelle = jeu;
-    const n = RM.niveau(niveau);
-    $('course-depart-titre').textContent = `La course de Roxy · ${n.nom} ${n.saison}`;
-    const infos = profil && !essai ? P.courseDe(profil, niveau) : null;
+    const { niveau: n, matiere } = RM.infosForet(foret);
+    $('course-depart-titre').textContent = `La course de Roxy · ${n.nom} ${n.saison}${matiere.id === 'maths' ? ' · 🔢 Maths' : ''}`;
+    const infos = profil && !essai ? P.courseDe(profil, foret) : null;
     $('course-depart-record').innerHTML = infos ? `🏅 Ton record&nbsp;: <b>${infos.meilleur}&nbsp;⭐</b>` : '';
     $('course-depart-essai').hidden = !jeu.essai;
     $('course-partir').disabled = true;
@@ -177,7 +184,7 @@
     }
     if (jeu !== courseActuelle) return; // on a quitté pendant le chargement
     try {
-      construireMonde(niveau);
+      construireMonde(foret);
     } catch (e) {
       return montrerErreur('Cet appareil n’arrive pas à dessiner la 3D. Désolée&nbsp;!');
     }
@@ -324,7 +331,8 @@
     c.fillText(texte, l / 2, h / 2 + 4);
   }
 
-  function construireMonde(niveau) {
+  function construireMonde(foret) {
+    const niveau = RM.infosForet(foret).niveau.id;
     const saison = SAISONS[niveau];
     const conteneur = $('course-scene');
     const rendu = new T.WebGLRenderer({ antialias: true });
@@ -415,7 +423,7 @@
     scene.add(roxy, ombre);
 
     // Le parcours : les étoiles, les troncs, les portes et l'arrivée
-    const questions = questionsPourLaCourse(niveau);
+    const questions = questionsPourLaCourse(foret);
     const monde = { rendu, scene, camera, saison, geo, mat, arbres, particules, roxy, ombre, texHerbe, texChemin };
     jeu.monde = monde;
     jeu.questions = questions;
@@ -889,7 +897,7 @@
     $('course-question').innerHTML = `
       <p class="course-consigne">${q.consigne}</p>
       <div class="course-enonce">${q.enonce}</div>
-      <p class="course-indice">Passe par la bonne porte&nbsp;: ${q.choix.map(c => `<b>${c}</b>`).join(' · ')}</p>`;
+      <p class="course-indice">Passe par la bonne porte&nbsp;: ${q.choix.map(c => `<b>${q.etiquettes?.[c] || c}</b>`).join(' · ')}</p>`;
     $('course-question').hidden = false;
   }
 
@@ -962,7 +970,7 @@
     jeu.arrivee = 0;
     $('course-question').hidden = true;
     let resultat = null;
-    if (!jeu.essai) resultat = P.enregistrerCourse(jeu.niveau, { etoiles: jeu.etoiles, bonnes: jeu.bonnes, duree: jeu.temps });
+    if (!jeu.essai) resultat = P.enregistrerCourse(jeu.foret, { etoiles: jeu.etoiles, bonnes: jeu.bonnes, duree: jeu.temps });
     jeu.resultat = resultat;
     RM.lancerConfettis?.();
     setTimeout(montrerDiplome, 1800);
@@ -993,14 +1001,13 @@
 
   function montrerDiplome() {
     if (!jeu) return;
-    const n = RM.niveau(jeu.niveau);
     const total = jeu.portesPassees;
     const r = jeu.resultat;
     $('course-diplome').innerHTML = `
       <p class="diplome-entete">🏅 Diplôme${jeu.essai ? ' (essai)' : ''}</p>
       <p class="diplome-titre">${titreDuDiplome(jeu.bonnes, total)}</p>
       <p class="diplome-texte"><b>${RM.echapper(jeu.prenom)}</b> a terminé la course de Roxy
-        dans la forêt de ${n.nom}&nbsp;${n.saison}</p>
+        dans ${nomDeLaForet(jeu.foret)}</p>
       <p class="diplome-score">⭐ <b>${jeu.etoiles}</b> étoiles · 🚪 <b>${jeu.bonnes}</b> bonne${jeu.bonnes > 1 ? 's' : ''} porte${jeu.bonnes > 1 ? 's' : ''} sur ${total}</p>
       ${r && r.record ? '<p class="record">🎉 Nouveau record !</p>' : ''}
       ${r && !r.record && !r.premiere ? `<p class="diplome-record">Ton record&nbsp;: ${r.meilleur}&nbsp;⭐</p>` : ''}
@@ -1054,7 +1061,7 @@
   $('course-partir').addEventListener('click', partir);
   $('course-rejouer').addEventListener('click', () => {
     if (!jeu) return;
-    lancer(jeu.niveau, jeu.options);
+    lancer(jeu.foret, jeu.options);
   });
 
   // Les flèches à l'écran (on réagit dès qu'on appuie, sans attendre qu'on lève le doigt)
@@ -1097,8 +1104,8 @@
   titreAccueil.addEventListener('pointerdown', () => {
     clearTimeout(minuteurTesteur);
     minuteurTesteur = setTimeout(() => {
-      $('boutons-testeur').innerHTML = RM.NIVEAUX.map(n =>
-        `<button class="bouton bouton-principal" data-course-testeur="${n.id}">${n.nom} ${n.saison}</button>`).join('');
+      $('boutons-testeur').innerHTML = RM.NIVEAUX.flatMap(n => RM.MATIERES.map(m =>
+        `<button class="bouton bouton-principal" data-course-testeur="${RM.idForet(n.id, m.id)}">${n.nom} ${n.saison} ${m.icone}</button>`)).join('');
       $('acces-testeur').hidden = false;
     }, 3000);
   });

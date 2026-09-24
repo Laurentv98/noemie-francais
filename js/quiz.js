@@ -32,16 +32,17 @@
     $('quiz-numero').textContent = `Question ${partie.index + 1} / ${partie.nombre}`;
     $('quiz-barre').style.width = (partie.index / partie.nombre * 100) + '%';
     $('quiz-points').textContent = '✨ ' + partie.points;
-    $('quiz-consigne').textContent = q.consigne;
-    $('quiz-enonce').innerHTML = q.enonce;
-    // Un long texte (une définition, un extrait) s'écrit un peu plus petit
-    $('quiz-enonce').classList.toggle('enonce-long', $('quiz-enonce').textContent.length > 90);
+    $('quiz-consigne').textContent = RM.insecables(q.consigne);
+    $('quiz-enonce').innerHTML = RM.insecables(q.enonce);
+    // Un long texte (une définition, un extrait) s'écrit un peu plus petit (le texte des figures ne compte pas)
+    const longueurFigures = [...$('quiz-enonce').querySelectorAll('svg')].reduce((l, svg) => l + svg.textContent.length, 0);
+    $('quiz-enonce').classList.toggle('enonce-long', $('quiz-enonce').textContent.length - longueurFigures > 90);
     $('quiz-retour').hidden = true;
     $('quiz-suivant').hidden = true;
 
     const zone = $('quiz-reponse');
     zone.innerHTML = '';
-    if (q.type === 'ecrire') construireSaisie(zone);
+    if (q.type === 'ecrire') construireSaisie(zone, q);
     else construireChoix(zone, q);
     window.scrollTo(0, 0);
   }
@@ -55,7 +56,9 @@
     q.choix.forEach(valeur => {
       const bouton = document.createElement('button');
       bouton.className = 'bouton-choix';
-      bouton.textContent = ETIQUETTES[valeur] || valeur;
+      // En maths, une fraction s'écrit l'une au-dessus de l'autre (q.etiquettes donne le HTML du bouton)
+      if (q.etiquettes?.[valeur]) bouton.innerHTML = q.etiquettes[valeur];
+      else bouton.textContent = ETIQUETTES[valeur] || valeur;
       bouton.dataset.valeur = valeur;
       bouton.addEventListener('click', () => verifier(valeur));
       grille.appendChild(bouton);
@@ -63,17 +66,25 @@
     zone.appendChild(grille);
   }
 
-  // Une case pour écrire, avec des boutons d'accents (pénibles à taper sur iPad)
-  function construireSaisie(zone) {
+  // Une case pour écrire, avec des boutons d'accents (pénibles à taper sur iPad).
+  // En maths (q.saisie) : le clavier des chiffres, l'unité à côté de la case, et les touches − , /
+  function construireSaisie(zone, q) {
+    const maths = Boolean(q.saisie);
+    const touches = maths ? (q.touches || []) : ACCENTS;
     zone.innerHTML = `
       <form class="saisie" id="saisie-formulaire">
-        <input id="saisie" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
-               spellcheck="false" enterkeyhint="done" placeholder="Écris ta réponse" aria-label="Ta réponse">
+        <div class="saisie-case">
+          <input id="saisie" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
+                 spellcheck="false" enterkeyhint="done" aria-label="Ta réponse"
+                 inputmode="${q.saisie === 'nombre' ? 'decimal' : 'text'}"
+                 placeholder="${maths ? (q.saisie === 'fraction' ? 'ex. 3/4' : 'Ta réponse') : 'Écris ta réponse'}">
+          ${q.unite ? `<span class="saisie-unite">${q.unite}</span>` : ''}
+        </div>
         <button class="bouton bouton-principal" type="submit">Valider</button>
       </form>
-      <div class="accents">
-        ${ACCENTS.map(a => `<button type="button" class="bouton-accent">${a}</button>`).join('')}
-      </div>`;
+      ${touches.length ? `<div class="accents">
+        ${touches.map(a => `<button type="button" class="bouton-accent">${a}</button>`).join('')}
+      </div>` : ''}`;
     const champ = $('saisie');
     zone.querySelectorAll('.bouton-accent').forEach(bouton => {
       bouton.addEventListener('mousedown', e => e.preventDefault()); // garde le clavier ouvert
@@ -110,9 +121,11 @@
     partie.repondu = true;
     const q = partie.questions[partie.index];
     const ecrite = q.type === 'ecrire';
-    // Quand on écrit, il peut y avoir plusieurs bonnes réponses (ex. deux synonymes)
+    // Quand on écrit, il peut y avoir plusieurs bonnes réponses (ex. deux synonymes).
+    // En maths, la question sait elle-même comparer (3,5 = 3.5 = 3,50) : q.comparer
     const attendues = [q.reponse, ...(q.acceptees || [])].map(nettoyer);
-    const juste = ecrite ? attendues.includes(nettoyer(valeur)) : valeur === q.reponse;
+    let juste = valeur === q.reponse;
+    if (ecrite) juste = q.comparer ? q.comparer(valeur) : attendues.includes(nettoyer(valeur));
 
     // On fige la zone de réponse et on colorie
     if (ecrite) {
@@ -132,7 +145,8 @@
     // Le « ? » de la phrase se remplit avec le bon mot
     const trou = document.querySelector('#quiz-enonce .trou');
     if (trou) {
-      trou.textContent = q.reponse;
+      if (q.etiquettes?.[q.reponse]) trou.innerHTML = q.etiquettes[q.reponse];
+      else trou.textContent = q.reponse;
       trou.classList.add('rempli');
     }
 
@@ -140,7 +154,12 @@
       partie.bonnes++;
       partie.points += POINTS_PAR_BONNE_REPONSE;
     }
-    const presque = ecrite && !juste && attendues.some(r => sansAccents(r) === sansAccents(nettoyer(valeur)));
+    // Presque : les accents oubliés (en français), la virgule mal placée ou le signe oublié (en maths)
+    let presque = '';
+    if (ecrite && !juste) {
+      if (q.presque) presque = q.presque(valeur);
+      else if (attendues.some(r => sansAccents(r) === sansAccents(nettoyer(valeur)))) presque = 'Presque ! Attention aux accents.';
+    }
     montrerRetour(q, juste, presque);
   }
 
@@ -155,9 +174,9 @@
     } else {
       roxy.src = 'img/roxy-reflechit.png';
       $('retour-bulle').innerHTML = `
-        <p class="bulle-titre">${presque ? 'Presque ! Attention aux accents.' : 'Oups, pas tout à fait…'}</p>
-        <p class="solution">La bonne réponse : ${q.solution}</p>
-        <div class="explication">${q.explication}</div>`;
+        <p class="bulle-titre">${presque || 'Oups, pas tout à fait…'}</p>
+        <p class="solution">La bonne réponse&nbsp;: ${RM.insecables(q.solution)}</p>
+        <div class="explication">${RM.insecables(q.explication)}</div>`;
     }
     retour.className = 'retour ' + (juste ? 'juste' : 'faux');
     retour.hidden = false;

@@ -23,6 +23,14 @@ window.RM = {
     return copie;
   },
 
+  // Les espaces avant ? ! : ; » et après « deviennent insécables : la ponctuation ne se retrouve
+  // jamais seule au début d'une ligne (on ne touche qu'au texte, pas aux balises HTML)
+  insecables(html) {
+    return String(html).replace(/(^|>)([^<]+)/g, (tout, avant, texte) => avant + texte
+      .replace(/ ([?!:;»])/g, ' $1')
+      .replace(/« /g, '« '));
+  },
+
   // Rend un texte tapé par un enfant (un prénom) sans danger à afficher dans la page
   echapper(texte) {
     const div = document.createElement('div');

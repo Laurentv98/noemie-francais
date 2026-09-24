@@ -122,6 +122,7 @@
   RM.ecrans.accueil = () => {
     deverrouille = false;
     niveauVu = null;
+    matiereVue = null;
   };
   $('parent-quitter').addEventListener('click', () => RM.afficherEcran('accueil'));
   $('accueil-parent').addEventListener('click', () => RM.ouvrirEspaceParent());
@@ -130,9 +131,14 @@
   // Le tableau de suivi
   // ======================================================================
   let profilVu = null;
-  let niveauVu = null; // le niveau dont on regarde le détail des étapes
+  let niveauVu = null;   // le niveau dont on regarde le détail des étapes
+  let matiereVue = null; // et la matière : le français ou les maths
   const tousLesChemins = () => Object.values(RM.FORETS).flat().filter(zone => !zone.bientot);
-  const cheminsDu = niveau => RM.FORETS[niveau].filter(zone => !zone.bientot);
+  const cheminsDe = foret => RM.FORETS[foret].filter(zone => !zone.bientot);
+  // Les étoiles d'un niveau, français et maths ensemble
+  const etoilesDuNiveau = (profil, niveau) => RM.MATIERES
+    .map(m => RM.etoilesForet(profil, RM.idForet(niveau, m.id)))
+    .reduce((somme, e) => ({ gagnees: somme.gagnees + e.gagnees, total: somme.total + e.total }), { gagnees: 0, total: 0 });
   // Le nom d'une étape avec son niveau : « 5e · 🌲 Le futur antérieur »
   const nomComplet = etape => `${etape.zone.niveau} · ${etape.zone.icone} ${etape.titre}`;
   const pluriel = n => (n > 1 ? 's' : '');
@@ -179,14 +185,16 @@
       bonnes += s.bonnes || 0;
       questions += s.questions || 0;
     }));
-    const { gagnees, total } = RM.etoilesNiveau(profil, niveauVu);
+    const { gagnees, total } = etoilesDuNiveau(profil, niveauVu);
+    const parMatiere = RM.MATIERES
+      .map(m => `${m.icone} ${RM.etoilesForet(profil, RM.idForet(niveauVu, m.id)).gagnees}`).join(' · ');
     const flamme = P.flamme(profil);
     const derniere = RM.trouverEtape(profil.derniereEtape);
     return `<div class="tuiles">
       ${tuile('⏱️', duree(profil.tempsDeJeu || 0), 'Temps de jeu')}
       ${tuile('🎮', parties, 'Parties terminées')}
       ${tuile('✅', questions ? pourcent(bonnes, questions) + ' %' : '—', 'Réussite', questions ? `${bonnes} bonnes réponses sur ${questions}` : 'pas encore de partie')}
-      ${tuile('★', `${gagnees} / ${total}`, `Étoiles en ${niveauVu}`)}
+      ${tuile('★', `${gagnees} / ${total}`, `Étoiles en ${niveauVu}`, parMatiere)}
       ${tuile('🔥', `${flamme.jours} jour${pluriel(flamme.jours)}`, 'Flamme', `record : ${flamme.record} jour${pluriel(flamme.record)}`)}
       ${tuile('📅', quand(profil.dernierePartie), 'Dernière partie', derniere ? nomComplet(derniere) : '')}
     </div>`;
@@ -262,7 +270,7 @@
       </div>`;
     }).join('');
     return `<section class="carte bloc-parent zone-parent" style="--zone:${zone.couleur};--zone-clair:${zone.couleurClaire}">
-      <h3>${zone.icone} ${zone.matiere}</h3>
+      <h3>${zone.icone} ${zone.nomCourt}</h3>
       <div class="ligne-stat entete"><span>Étape</span><span>Meilleur score</span><span>Réussite</span></div>
       ${lignes}
     </section>`;
@@ -300,15 +308,23 @@
     </section>`;
   }
 
-  // Les onglets pour voir le détail d'un niveau (le niveau actuel de l'enfant est marqué 🎒)
+  // Les onglets pour voir le détail d'un niveau (le niveau actuel de l'enfant est marqué 🎒),
+  // puis ceux de la matière : le français ou les maths
   function htmlOngletsNiveaux(profil) {
     return `<nav class="onglets-niveaux" aria-label="Choisir un niveau">
       <span class="onglets-titre">Détail par étape :</span>
       ${RM.NIVEAUX.map(n => {
-        const { gagnees, total } = RM.etoilesNiveau(profil, n.id);
+        const { gagnees, total } = etoilesDuNiveau(profil, n.id);
         const actuel = n.id === P.niveauDe(profil) ? ' 🎒' : '';
         return `<button class="onglet-niveau${n.id === niveauVu ? ' actif' : ''}" data-niveau-vu="${n.id}">`
           + `${n.nom}${actuel} <small>★ ${gagnees}/${total}</small></button>`;
+      }).join('')}
+    </nav>
+    <nav class="onglets-niveaux" aria-label="Choisir une matière">
+      ${RM.MATIERES.map(m => {
+        const { gagnees, total } = RM.etoilesForet(profil, RM.idForet(niveauVu, m.id));
+        return `<button class="onglet-niveau${m.id === matiereVue ? ' actif' : ''}" data-matiere-vue="${m.id}">`
+          + `${m.icone} ${m.nom} <small>★ ${gagnees}/${total}</small></button>`;
       }).join('')}
     </nav>`;
   }
@@ -327,9 +343,11 @@
 
     const profil = profilVu && P.trouver(profilVu);
     if (profil && !niveauVu) niveauVu = P.niveauDe(profil);
+    if (profil && !matiereVue) matiereVue = P.matiereDe(profil);
+    const foretVue = RM.idForet(niveauVu, matiereVue);
     $('parent-tableau').innerHTML = profil
       ? htmlResume(profil) + htmlARevoir(profil) + htmlCalendrier(profil) + htmlOngletsNiveaux(profil)
-        + cheminsDu(niveauVu).map(z => htmlZone(profil, z)).join('') + RM.course.htmlParent(profil, niveauVu)
+        + cheminsDe(foretVue).map(z => htmlZone(profil, z)).join('') + RM.course.htmlParent(profil, foretVue)
       : '<section class="carte bloc-parent"><p>Aucun profil pour l’instant. Les enfants peuvent en créer un depuis l’accueil, avec « C’est parti ! ».</p></section>';
     $('parent-reglages').innerHTML = htmlReglages(profils);
   };
@@ -348,13 +366,15 @@
     const onglet = e.target.closest('[data-profil-vu]');
     if (onglet) {
       profilVu = onglet.dataset.profilVu;
-      niveauVu = null; // on repart du niveau de cet enfant
+      niveauVu = null; // on repart du niveau (et de la matière) de cet enfant
+      matiereVue = null;
       RM.ecrans.parent();
       return;
     }
-    const ongletNiveau = e.target.closest('[data-niveau-vu]');
+    const ongletNiveau = e.target.closest('[data-niveau-vu], [data-matiere-vue]');
     if (ongletNiveau) {
-      niveauVu = ongletNiveau.dataset.niveauVu;
+      if (ongletNiveau.dataset.niveauVu) niveauVu = ongletNiveau.dataset.niveauVu;
+      else matiereVue = ongletNiveau.dataset.matiereVue;
       const defilement = window.scrollY;
       RM.ecrans.parent();
       window.scrollTo(0, defilement);
@@ -395,6 +415,7 @@
       const nombre = P.importer(texte);
       profilVu = null;
       niveauVu = null;
+      matiereVue = null;
       RM.ecrans.parent();
       RM.bulleInfo(`📥 Sauvegarde importée : ${nombre} profil${pluriel(nombre)}.`);
     } catch (erreur) {

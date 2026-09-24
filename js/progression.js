@@ -32,6 +32,11 @@
   // Le niveau du joueur (6e, 5e, 4e ou 3e) ; les profils d'avant les niveaux sont en 6e
   const niveauValide = niveau => RM.NIVEAUX.some(n => n.id === niveau);
   const niveauDe = profil => (niveauValide(profil.niveau) ? profil.niveau : RM.NIVEAU_PAR_DEFAUT);
+  // La matière qu'il révise en ce moment (français ou maths) ; les profils d'avant les maths sont en français
+  const matiereValide = matiere => RM.MATIERES.some(m => m.id === matiere);
+  const matiereDe = profil => (matiereValide(profil.matiere) ? profil.matiere : RM.MATIERE_PAR_DEFAUT);
+  // Sa forêt : « 6e » (le français de 6e), « 6e-maths »…
+  const idForetDe = profil => RM.idForet(niveauDe(profil), matiereDe(profil));
 
   function creerProfil({ prenom, avatar, couleur, niveau }) {
     const profil = {
@@ -40,9 +45,10 @@
       avatar,
       couleur,
       niveau: niveauValide(niveau) ? niveau : RM.NIVEAU_PAR_DEFAUT,
+      matiere: RM.MATIERE_PAR_DEFAUT,
       points: 0,
       etapes: {},        // pour chaque étape : meilleures étoiles, parties, bonnes réponses, questions
-      courses: {},       // pour chaque forêt : le record de la course de Roxy
+      courses: {},       // pour chaque forêt (« 6e », « 6e-maths »…) : le record de la course de Roxy
       tempsDeJeu: 0,     // en secondes, pour l'espace parent
       creeLe: new Date().toISOString(),
     };
@@ -135,15 +141,15 @@
   // ---------- La course de Roxy, au bout de chaque forêt ----------
   // On garde le record (les étoiles ramassées), les bonnes portes et le nombre de courses.
   // La course ne nourrit pas la flamme : c'est la récompense, pas la révision du jour.
-  function enregistrerCourse(niveau, { etoiles, bonnes, duree }) {
+  function enregistrerCourse(foret, { etoiles, bonnes, duree }) {
     const profil = trouver(donnees.profilActif);
     profil.courses = profil.courses || {};
-    const infos = profil.courses[niveau] || { meilleur: 0, meilleuresPortes: 0, parties: 0 };
+    const infos = profil.courses[foret] || { meilleur: 0, meilleuresPortes: 0, parties: 0 };
     const record = infos.parties > 0 && etoiles > infos.meilleur;
     infos.meilleur = Math.max(infos.meilleur, etoiles);
     infos.meilleuresPortes = Math.max(infos.meilleuresPortes, bonnes);
     infos.parties++;
-    profil.courses[niveau] = infos;
+    profil.courses[foret] = infos;
     profil.tempsDeJeu += Math.round(duree);
     enregistrer();
     return { record, meilleur: infos.meilleur, premiere: infos.parties === 1 };
@@ -191,9 +197,9 @@
     }
     const courses = {};
     if (p.courses && typeof p.courses === 'object') {
-      Object.entries(p.courses).forEach(([niveau, c]) => {
-        if (!niveauValide(niveau) || !c || typeof c !== 'object') return;
-        courses[niveau] = {
+      Object.entries(p.courses).forEach(([foret, c]) => {
+        if (!RM.FORETS[foret] || !c || typeof c !== 'object') return;
+        courses[foret] = {
           meilleur: nombre(c.meilleur),
           meilleuresPortes: nombre(c.meilleuresPortes),
           parties: nombre(c.parties),
@@ -209,6 +215,7 @@
       avatar: RM.ANIMAUX.includes(p.avatar) ? p.avatar : RM.ANIMAUX[0],
       couleur: RM.COULEURS.some(c => c.nom === p.couleur) ? p.couleur : RM.COULEURS[0].nom,
       niveau: niveauValide(p.niveau) ? p.niveau : RM.NIVEAU_PAR_DEFAUT,
+      matiere: matiereValide(p.matiere) ? p.matiere : RM.MATIERE_PAR_DEFAUT,
       points: nombre(p.points),
       etapes,
       courses,
@@ -241,10 +248,17 @@
     flamme,
     jourDe,
     niveauDe,
-    foretDe: profil => RM.FORETS[niveauDe(profil)],
+    matiereDe,
+    idForetDe,
+    foretDe: profil => RM.FORETS[idForetDe(profil)],
     changerNiveau(profil, niveau) {
       if (!niveauValide(niveau)) return;
       profil.niveau = niveau;
+      enregistrer();
+    },
+    changerMatiere(profil, matiere) {
+      if (!matiereValide(matiere)) return;
+      profil.matiere = matiere;
       enregistrer();
     },
     joursJoues: profil => serieDe(profil).jours,
@@ -259,7 +273,7 @@
     creerProfil,
     enregistrerPartie,
     enregistrerCourse,
-    courseDe: (profil, niveau) => profil.courses?.[niveau] || null,
+    courseDe: (profil, foret) => profil.courses?.[foret] || null,
 
     profils: () => donnees.profils,
     profilActif: () => trouver(donnees.profilActif) || null,

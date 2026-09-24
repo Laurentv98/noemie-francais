@@ -1,6 +1,7 @@
 // Renard Malin — le plan des forêts : une forêt par niveau (6e, 5e, 4e, 3e)
 //
-// Chaque forêt a ses chemins (zones), et chaque chemin ses étapes, de la plus facile
+// Chaque forêt a deux côtés : le français (ici) et les maths (data/foret-maths.js).
+// Chaque côté a ses chemins (zones), et chaque chemin ses étapes, de la plus facile
 // à la plus difficile. Une étape qui n'a pas encore de questions apparaît avec un panneau 🚧.
 // Pour la rendre jouable, il suffit d'ajouter une étape avec le même « id »
 // dans le fichier de contenu du niveau (data/5e-conjugaison.js, etc.).
@@ -45,6 +46,16 @@
       clairs: ['#E6E4F2', '#DEE3F4', '#EAE5EE', '#F1E3EF'],
     },
   };
+
+  // Les deux matières : chaque forêt a son côté français et son côté maths
+  RM.MATIERES = [
+    { id: 'francais', nom: 'Français', icone: '📖' },
+    { id: 'maths', nom: 'Maths', icone: '🔢' },
+  ];
+  RM.MATIERE_PAR_DEFAUT = 'francais';
+
+  // Le nom d'une forêt : « 6e » pour le français (comme avant les maths), « 6e-maths » pour les maths
+  RM.idForet = (niveau, matiere) => (matiere === 'maths' ? `${niveau}-maths` : niveau);
 
   const etape = (id, titre, sousTitre, options = {}) => ({ id, titre, sousTitre, ...options });
 
@@ -197,35 +208,49 @@
     },
   };
 
-  // Les 4 zones d'une forêt, avec leurs étapes
+  // Les 4 zones du côté français d'une forêt, avec leurs étapes
   // (une zone marquée « bientot: true » apparaîtrait fermée, avec un panneau « Bientôt ! »)
+  // nomCourt : le nom de la zone dans l'espace parent et sur les boutons du haut de la carte
   function foret(niveau) {
     const decors = DECORS[niveau];
-    return [
+    const zones = [
       {
-        id: 'conjugaison', niveau, nom: 'Le Sentier de la Conjugaison', matiere: 'Conjugaison', icone: '🌲',
+        id: 'conjugaison', niveau, nom: 'Le Sentier de la Conjugaison', nomCourt: 'Conjugaison', icone: '🌲',
         couleur: '#4E9A5A', couleurClaire: decors.clairs[0], decors: decors.conjugaison,
         etapes: ETAPES[niveau].conjugaison,
       },
       {
-        id: 'orthographe', niveau, nom: 'La Rivière de l’Orthographe', matiere: 'Orthographe', icone: '🌊',
+        id: 'orthographe', niveau, nom: 'La Rivière de l’Orthographe', nomCourt: 'Orthographe', icone: '🌊',
         couleur: '#3E8FD1', couleurClaire: decors.clairs[1], decors: decors.orthographe,
         etapes: ETAPES[niveau].orthographe,
       },
       {
-        id: 'grammaire', niveau, nom: 'La Colline de la Grammaire', matiere: 'Grammaire', icone: '⛰️',
+        id: 'grammaire', niveau, nom: 'La Colline de la Grammaire', nomCourt: 'Grammaire', icone: '⛰️',
         couleur: '#A67C52', couleurClaire: decors.clairs[2], decors: decors.grammaire,
         etapes: ETAPES[niveau].grammaire,
       },
       {
-        id: 'vocabulaire', niveau, nom: 'Le Jardin du Vocabulaire', matiere: 'Vocabulaire', icone: '🌸',
+        id: 'vocabulaire', niveau, nom: 'Le Jardin du Vocabulaire', nomCourt: 'Vocabulaire', icone: '🌸',
         couleur: '#EC6F9B', couleurClaire: decors.clairs[3], decors: decors.vocabulaire,
         etapes: ETAPES[niveau].vocabulaire,
       },
     ];
+    return zones.map(zone => ({ ...zone, matiere: 'francais', foret: niveau }));
   }
 
+  // RM.FORETS : pour chaque forêt (« 6e », « 6e-maths »…), la liste de ses zones
   RM.FORETS = {};
   RM.NIVEAUX.forEach(n => { RM.FORETS[n.id] = foret(n.id); });
   RM.NIVEAU_PAR_DEFAUT = '6e';
+
+  // Le niveau et la matière d'une forêt, d'après son nom
+  RM.infosForet = function (id) {
+    const zone = RM.FORETS[id]?.[0];
+    if (!zone) return null;
+    return {
+      id,
+      niveau: RM.NIVEAUX.find(n => n.id === zone.niveau),
+      matiere: RM.MATIERES.find(m => m.id === zone.matiere),
+    };
+  };
 })();

@@ -64,8 +64,8 @@
 
   RM.terminerPartie = function (partie) {
     dernierePartie = partie;
-    const niveau = partie.etape.zone.niveau;
-    const courseFermee = !RM.course.estOuverte(P.profilActif(), niveau);
+    const foret = partie.etape.zone.foret;
+    const courseFermee = !RM.course.estOuverte(P.profilActif(), foret);
     const { etoiles, record, ancienMeilleur, flamme } = P.enregistrerPartie(partie);
     const prenom = RM.echapper(P.profilActif().prenom);
 
@@ -82,7 +82,7 @@
     }
 
     // Assez d'étoiles dans la forêt : la course de Roxy s'ouvre !
-    if (courseFermee && RM.course.estOuverte(P.profilActif(), niveau)) {
+    if (courseFermee && RM.course.estOuverte(P.profilActif(), foret)) {
       deblocage += '<span class="deblocage">🏁 La course de Roxy est ouverte, tout en bas de la forêt&nbsp;!</span>';
     }
 
@@ -106,7 +106,7 @@
   // ---------- La fenêtre d'aide ----------
   RM.ouvrirAide = function (etape) {
     $('aide-titre').textContent = etape.titreLecon;
-    $('aide-contenu').innerHTML = etape.lecon;
+    $('aide-contenu').innerHTML = RM.insecables(etape.lecon);
     $('aide').hidden = false;
     $('aide-contenu').scrollTop = 0;
   };
