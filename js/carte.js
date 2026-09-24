@@ -64,7 +64,8 @@
         ${zone.bientot ? '🔒' : `<b>★ ${etoilesZone(profil, zone)}</b>`}
       </button>`).join('');
 
-    $('carte-aventure').innerHTML = foret.map(zone => htmlZone(profil, zone)).join('');
+    // Les quatre chemins, puis la course de Roxy tout en bas de la forêt
+    $('carte-aventure').innerHTML = foret.map(zone => htmlZone(profil, zone)).join('') + RM.course.htmlCarte(profil, niveau.id);
     foret.filter(zone => !zone.bientot).forEach(zone => tracerChemin(profil, zone));
     placerRoxy(profil, foret);
     RM.nouvelleEtape = null;

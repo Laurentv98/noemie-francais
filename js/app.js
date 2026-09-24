@@ -64,6 +64,8 @@
 
   RM.terminerPartie = function (partie) {
     dernierePartie = partie;
+    const niveau = partie.etape.zone.niveau;
+    const courseFermee = !RM.course.estOuverte(P.profilActif(), niveau);
     const { etoiles, record, ancienMeilleur, flamme } = P.enregistrerPartie(partie);
     const prenom = RM.echapper(P.profilActif().prenom);
 
@@ -77,6 +79,11 @@
       deblocage = `<span class="deblocage">🔓 Nouvelle étape débloquée&nbsp;: ${suivante.titre}&nbsp;!${enTravaux}</span>`;
     } else if (suivante && Math.max(ancienMeilleur, etoiles) < seuil) {
       deblocage = `<span class="indice-deblocage">Il faut ${seuil} étoiles pour ouvrir l’étape suivante.</span>`;
+    }
+
+    // Assez d'étoiles dans la forêt : la course de Roxy s'ouvre !
+    if (courseFermee && RM.course.estOuverte(P.profilActif(), niveau)) {
+      deblocage += '<span class="deblocage">🏁 La course de Roxy est ouverte, tout en bas de la forêt&nbsp;!</span>';
     }
 
     const pluriel = partie.bonnes > 1 ? 's' : '';
@@ -109,7 +116,8 @@
   $('aide').addEventListener('click', e => { if (e.target.id === 'aide') fermerAide(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerAide(); });
 
-  // ---------- Confettis pour l'étoile d'or ----------
+  // ---------- Confettis pour l'étoile d'or (et pour l'arrivée de la course) ----------
+  RM.lancerConfettis = lancerConfettis;
   function lancerConfettis() {
     const couleurs = ['#F28C28', '#FFC23D', '#3E8FD1', '#4E9A5A', '#F27BA0'];
     for (let i = 0; i < 70; i++) {

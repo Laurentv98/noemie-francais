@@ -329,7 +329,7 @@
     if (profil && !niveauVu) niveauVu = P.niveauDe(profil);
     $('parent-tableau').innerHTML = profil
       ? htmlResume(profil) + htmlARevoir(profil) + htmlCalendrier(profil) + htmlOngletsNiveaux(profil)
-        + cheminsDu(niveauVu).map(z => htmlZone(profil, z)).join('')
+        + cheminsDu(niveauVu).map(z => htmlZone(profil, z)).join('') + RM.course.htmlParent(profil, niveauVu)
       : '<section class="carte bloc-parent"><p>Aucun profil pour l’instant. Les enfants peuvent en créer un depuis l’accueil, avec « C’est parti ! ».</p></section>';
     $('parent-reglages').innerHTML = htmlReglages(profils);
   };

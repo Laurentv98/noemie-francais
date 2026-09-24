@@ -42,6 +42,7 @@
       niveau: niveauValide(niveau) ? niveau : RM.NIVEAU_PAR_DEFAUT,
       points: 0,
       etapes: {},        // pour chaque étape : meilleures étoiles, parties, bonnes réponses, questions
+      courses: {},       // pour chaque forêt : le record de la course de Roxy
       tempsDeJeu: 0,     // en secondes, pour l'espace parent
       creeLe: new Date().toISOString(),
     };
@@ -131,6 +132,23 @@
     return { etoiles, record, ancienMeilleur, flamme: resultatFlamme };
   }
 
+  // ---------- La course de Roxy, au bout de chaque forêt ----------
+  // On garde le record (les étoiles ramassées), les bonnes portes et le nombre de courses.
+  // La course ne nourrit pas la flamme : c'est la récompense, pas la révision du jour.
+  function enregistrerCourse(niveau, { etoiles, bonnes, duree }) {
+    const profil = trouver(donnees.profilActif);
+    profil.courses = profil.courses || {};
+    const infos = profil.courses[niveau] || { meilleur: 0, meilleuresPortes: 0, parties: 0 };
+    const record = infos.parties > 0 && etoiles > infos.meilleur;
+    infos.meilleur = Math.max(infos.meilleur, etoiles);
+    infos.meilleuresPortes = Math.max(infos.meilleuresPortes, bonnes);
+    infos.parties++;
+    profil.courses[niveau] = infos;
+    profil.tempsDeJeu += Math.round(duree);
+    enregistrer();
+    return { record, meilleur: infos.meilleur, premiere: infos.parties === 1 };
+  }
+
   // ---------- Pour l'espace parent : le code, l'export et l'import ----------
   const reglages = () => (donnees.parent = donnees.parent || { code: null, derniereExport: null });
 
@@ -171,6 +189,17 @@
         jours: p.serie.jours.filter(jour => JOUR_VALIDE.test(jour)),
       };
     }
+    const courses = {};
+    if (p.courses && typeof p.courses === 'object') {
+      Object.entries(p.courses).forEach(([niveau, c]) => {
+        if (!niveauValide(niveau) || !c || typeof c !== 'object') return;
+        courses[niveau] = {
+          meilleur: nombre(c.meilleur),
+          meilleuresPortes: nombre(c.meilleuresPortes),
+          parties: nombre(c.parties),
+        };
+      });
+    }
     const id = typeof p.id === 'string' && !idsDejaVus.has(p.id) ? p.id : nouvelId();
     idsDejaVus.add(id);
     const dateValide = d => (typeof d === 'string' && !isNaN(new Date(d)) ? d : undefined);
@@ -182,6 +211,7 @@
       niveau: niveauValide(p.niveau) ? p.niveau : RM.NIVEAU_PAR_DEFAUT,
       points: nombre(p.points),
       etapes,
+      courses,
       tempsDeJeu: nombre(p.tempsDeJeu),
       creeLe: dateValide(p.creeLe),
       dernierePartie: dateValide(p.dernierePartie),
@@ -228,6 +258,8 @@
     importer,
     creerProfil,
     enregistrerPartie,
+    enregistrerCourse,
+    courseDe: (profil, niveau) => profil.courses?.[niveau] || null,
 
     profils: () => donnees.profils,
     profilActif: () => trouver(donnees.profilActif) || null,

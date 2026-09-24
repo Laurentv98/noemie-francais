@@ -1258,7 +1258,7 @@ button:disabled { cursor: default; }
 .confetti {
   position: fixed;
   top: -20px;
-  z-index: 20;
+  z-index: 60; /* au-dessus de tout, même de la course de Roxy */
   width: 10px;
   height: 16px;
   border-radius: 3px;
@@ -1307,6 +1307,197 @@ button:disabled { cursor: default; }
   .bouton-choix:not(:disabled):hover,
   .bouton-duree:hover { transform: translateY(-2px); }
 }
+
+/* ---------- La course de Roxy : sur la carte ---------- */
+.zone-course { --zone: #F2B233; --zone-clair: #FFF3D6; }
+.course-contenu { padding: 6px 12px 4px; text-align: center; }
+.course-texte { margin: 6px 0 14px; font-weight: 700; }
+.course-texte small { display: block; margin-top: 4px; color: var(--brun-doux); }
+.course-jauge {
+  max-width: 420px;
+  height: 14px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff;
+}
+.course-jauge span { display: block; height: 100%; border-radius: 999px; background: var(--or); }
+.course-total, .course-record { margin: 10px 0 0; color: var(--brun-doux); font-weight: 800; }
+.bloc-course .course-etat { font-weight: 800; }
+
+/* ---------- La course de Roxy : le jeu en plein écran ---------- */
+body.en-course { overflow: hidden; }
+.ecran-course.actif {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: block;
+  overflow: hidden;
+  background: var(--creme);
+  animation: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.course-scene, .course-scene canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+.course-haut {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.course-avancee {
+  position: relative;
+  flex: 1;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .75);
+}
+.course-avancee > div { width: 0; height: 100%; border-radius: 999px; background: var(--orange); }
+.course-avancee span { position: absolute; top: 50%; right: -8px; transform: translateY(-50%); font-size: 1.3rem; }
+#course-etoiles.gagne { animation: etoile-pop .35s ease; }
+
+.course-question {
+  position: absolute;
+  top: calc(max(12px, env(safe-area-inset-top)) + 62px);
+  left: 50%;
+  z-index: 2;
+  width: min(92vw, 620px);
+  padding: 10px 18px 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .95);
+  box-shadow: 0 6px 0 rgba(90, 53, 33, .12);
+  text-align: center;
+  transform: translateX(-50%);
+}
+.course-question[hidden] { display: none; }
+.course-consigne {
+  margin: 0;
+  color: var(--orange-fonce);
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.course-enonce {
+  margin: 4px 0;
+  font-family: var(--police-titre);
+  font-size: clamp(1.25rem, 4vw, 1.7rem);
+  font-weight: 500;
+  line-height: 1.35;
+}
+.course-enonce .trou { min-width: 2.2em; }
+.course-enonce .precision { font-size: .9rem; }
+.course-indice { margin: 0; color: var(--brun-doux); font-size: .95rem; font-weight: 700; }
+
+.course-message {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  z-index: 3;
+  width: max-content; /* sinon, centré avec left: 50 %, il serait coincé dans la moitié de l'écran */
+  max-width: min(88vw, 560px);
+  padding: 12px 22px;
+  border: 3px solid var(--vert);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 6px 0 rgba(90, 53, 33, .15);
+  font-family: var(--police-titre);
+  font-size: 1.5rem;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+.course-message[hidden] { display: none; }
+.course-message.juste { border-color: var(--vert); color: #1F6B42; }
+.course-message.rate { border-color: var(--corail); color: #A3352A; }
+.course-message small {
+  display: block;
+  margin-top: 4px;
+  color: var(--brun);
+  font-family: var(--police-texte);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.course-compte {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  z-index: 3;
+  color: #fff;
+  font-family: var(--police-titre);
+  font-size: clamp(3rem, 14vw, 6rem);
+  font-weight: 700;
+  text-shadow: 0 5px 0 var(--orange-fonce);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+.course-compte[hidden] { display: none; }
+.course-compte.pop { animation: compte-pop .6s ease; }
+@keyframes compte-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.4); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  to   { transform: translate(-50%, -50%) scale(1); }
+}
+
+.course-commandes {
+  position: absolute;
+  right: 0;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  left: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+.bouton-commande {
+  width: 78px;
+  height: 78px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 5px 0 rgba(90, 53, 33, .18);
+  font-size: 2rem;
+}
+.bouton-commande:active { box-shadow: 0 2px 0 rgba(90, 53, 33, .18); transform: translateY(3px); }
+
+.course-panneau {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(90, 53, 33, .28);
+}
+.course-panneau[hidden] { display: none; }
+.course-carte { width: min(100%, 520px); max-height: 100%; overflow-y: auto; text-align: center; }
+.course-carte h2 { margin: 0 0 10px; color: var(--orange-fonce); font-family: var(--police-titre); }
+.course-carte .bouton { width: 100%; margin-top: 10px; }
+.course-regles {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  font-weight: 700;
+  list-style: none;
+  text-align: left;
+}
+.course-depart-record, .course-depart-essai { margin: 6px 0; color: var(--brun-doux); font-weight: 800; }
+
+.diplome { border: 5px double var(--or); }
+.diplome-entete { margin: 0; color: var(--brun-doux); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.diplome-titre { margin: 6px 0; color: var(--orange-fonce); font-family: var(--police-titre); font-size: clamp(1.7rem, 6vw, 2.3rem); }
+.diplome-texte { margin: 6px 0; font-size: 1.1rem; }
+.diplome-score { margin: 12px 0; font-size: 1.2rem; }
+.diplome-record { color: var(--brun-doux); font-weight: 700; }
+.diplome .boutons-resultat { margin-top: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
