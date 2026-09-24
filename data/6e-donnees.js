@@ -1609,7 +1609,8 @@
       reponse: e(r),
       pieges: positifs(candidats).filter(auCentieme).map(e),
       explication: calculPourcent(p, n, e)
-        + (n > p ? `<br>⚠️ Ce n’est pas ${ecrire(n)} − ${ecrire(p)} : on ne soustrait pas ${ecrire(p)}, on prend ${POURCENTS[p].nom}.` : ''),
+        // (pas d'avertissement quand la soustraction tombe par hasard sur la bonne réponse : 50 % de 100)
+        + (n > p && net(n - p) !== net(r) ? `<br>⚠️ Ce n’est pas ${ecrire(n)} − ${ecrire(p)} : on ne soustrait pas ${ecrire(p)}, on prend ${POURCENTS[p].nom}.` : ''),
     });
   }
 
