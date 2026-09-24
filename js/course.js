@@ -141,14 +141,16 @@
   let T = null;     // Three.js, une fois chargé
   let jeu = null;   // la course en cours
 
-  async function lancer(niveau, { essai = false } = {}) {
+  // essai : on joue sans rien enregistrer ; retour : l'écran où l'on revient après la course
+  async function lancer(niveau, { essai = false, retour = essai ? 'parent' : 'carte' } = {}) {
     arreter();
     const profil = P.profilActif();
     jeu = {
       niveau,
+      options: { essai, retour }, // pour « Rejouer »
       essai: essai || !profil,
       prenom: profil ? profil.prenom : 'Renard malin',
-      retour: essai ? 'parent' : 'carte',
+      retour,
       etat: 'chargement',
     };
     const courseActuelle = jeu;
@@ -1003,7 +1005,7 @@
       ${r && r.record ? '<p class="record">🎉 Nouveau record !</p>' : ''}
       ${r && !r.record && !r.premiere ? `<p class="diplome-record">Ton record&nbsp;: ${r.meilleur}&nbsp;⭐</p>` : ''}
       ${jeu.essai ? '<p class="diplome-record">Un essai n’enregistre pas de score.</p>' : ''}`;
-    $('course-retour').textContent = jeu.retour === 'parent' ? '↩️ Espace parent' : '🗺️ La carte';
+    $('course-retour').textContent = { parent: '↩️ Espace parent', accueil: '🏠 Accueil' }[jeu.retour] || '🗺️ La carte';
     montrerPanneau('course-fin');
   }
 
@@ -1052,8 +1054,7 @@
   $('course-partir').addEventListener('click', partir);
   $('course-rejouer').addEventListener('click', () => {
     if (!jeu) return;
-    const { niveau, retour } = jeu;
-    lancer(niveau, { essai: retour === 'parent' });
+    lancer(jeu.niveau, jeu.options);
   });
 
   // Les flèches à l'écran (on réagit dès qu'on appuie, sans attendre qu'on lève le doigt)
@@ -1086,6 +1087,29 @@
       commande(touches[e.key]);
     }
     if (e.key === 'Enter' && jeu.etat === 'depart') partir();
+  });
+
+  // ---------- L'accès testeur, caché ----------
+  // Un appui long (3 secondes) sur le titre « Renard Malin » de l'accueil ouvre un petit menu
+  // pour lancer la course de n'importe quelle forêt, en mode essai : rien n'est enregistré.
+  const titreAccueil = document.querySelector('#ecran-accueil .titre-appli');
+  let minuteurTesteur = null;
+  titreAccueil.addEventListener('pointerdown', () => {
+    clearTimeout(minuteurTesteur);
+    minuteurTesteur = setTimeout(() => {
+      $('boutons-testeur').innerHTML = RM.NIVEAUX.map(n =>
+        `<button class="bouton bouton-principal" data-course-testeur="${n.id}">${n.nom} ${n.saison}</button>`).join('');
+      $('acces-testeur').hidden = false;
+    }, 3000);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(evenement =>
+    titreAccueil.addEventListener(evenement, () => clearTimeout(minuteurTesteur)));
+  $('acces-testeur-fermer').addEventListener('click', () => { $('acces-testeur').hidden = true; });
+  $('boutons-testeur').addEventListener('click', e => {
+    const bouton = e.target.closest('[data-course-testeur]');
+    if (!bouton) return;
+    $('acces-testeur').hidden = true;
+    lancer(bouton.dataset.courseTesteur, { essai: true, retour: 'accueil' });
   });
 
   // Les boutons « Jouer à la course » (sur la carte) et « Essayer » (dans l'espace parent)

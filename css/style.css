@@ -170,6 +170,11 @@ button:disabled { cursor: default; }
   font-weight: 700;
   color: var(--orange);
   text-shadow: 0 5px 0 var(--orange-clair);
+  /* L'appui long ouvre l'accès testeur (caché) : pas de sélection de texte ni de loupe sur l'iPad */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
 }
 .sous-titre {
   margin: 0 0 16px;
@@ -1306,6 +1311,16 @@ button:disabled { cursor: default; }
   .rond-etape:hover .rond,
   .bouton-choix:not(:disabled):hover,
   .bouton-duree:hover { transform: translateY(-2px); }
+}
+
+/* ---------- L'accès testeur (caché) ---------- */
+.acces-testeur { text-align: center; }
+.acces-testeur h3 { margin: 0 0 6px; font-family: var(--police-titre); }
+.boutons-testeur {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0;
 }
 
 /* ---------- La course de Roxy : sur la carte ---------- */
