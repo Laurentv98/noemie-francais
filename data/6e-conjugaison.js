@@ -1,152 +1,16 @@
-// Renard Malin — Conjugaison : les 9 étapes du Sentier
+// Renard Malin — Conjugaison, niveau 6e : les 9 étapes du Sentier
 //
-// Les verbes conjugués viennent du livre des verbes (data/verbes.js).
-// Chaque étape dit : quels verbes, à quel temps, avec quelles personnes,
+// Le moteur qui fabrique les questions est dans js/moteur-conjugaison.js,
+// et les verbes conjugués dans le livre des verbes (data/verbes.js).
+// Ici, chaque étape dit : quels verbes, à quel temps, avec quelles personnes,
 // ce que Roxy explique après une erreur, et la petite leçon du bouton Aide.
 // Le titre et la place de chaque étape sur la carte sont dans data/foret.js.
-//
-// Une question est un objet comme celui-ci :
-//   type        : 'ecrire' (taper la réponse) ou 'choix' (boutons)
-//   consigne    : la petite phrase au-dessus de la question
-//   enonce      : la question elle-même (en HTML)
-//   choix       : les réponses proposées (pour 'choix')
-//   reponse     : la bonne réponse
-//   solution    : la bonne réponse telle qu'on l'affiche après une erreur
-//   explication : ce que Roxy explique quand on se trompe
 
 (function () {
-  const V = RM.verbe;
-  const ETRE = V('être');
-  const AVOIR = V('avoir');
-  const PRONOMS = ['je', 'tu', 'il', 'nous', 'vous', 'ils'];
-  const PRONOMS_REGLE = ['je', 'tu', 'il / elle / on', 'nous', 'vous', 'ils / elles'];
-  const TOUTES_LES_PERSONNES = [0, 1, 2, 3, 4, 5];
-
-  // « je » devient « j’ » devant une voyelle ou un h : j’aime, j’ai chanté
-  const commenceParVoyelle = forme => /^[aeéèêiîoôuûh]/.test(forme);
-  const avecPronom = (pronom, forme) =>
-    (pronom === 'je' && commenceParVoyelle(forme) ? 'j’' : pronom + ' ') + forme;
-
-  // ---------- Le sujet de la question ----------
-  // Avec l'auxiliaire être, il faut savoir si l'on parle de filles ou de garçons : on le précise.
-  function choisirSujet(p, { genre = false } = {}) {
-    const sujet = { p, pronom: PRONOMS[p], feminin: false, pluriel: p >= 3, mixte: false, precision: '' };
-    if (p === 2) sujet.pronom = RM.hasard(genre ? ['il', 'elle'] : ['il', 'elle', 'on']);
-    if (p === 5) sujet.pronom = RM.hasard(['ils', 'elles']);
-    sujet.feminin = sujet.pronom === 'elle' || sujet.pronom === 'elles';
-    if (genre && (p === 0 || p === 1)) {
-      sujet.feminin = Math.random() < 0.5;
-      sujet.precision = `« ${sujet.pronom} » = ${sujet.feminin ? 'une fille 👧' : 'un garçon 👦'}`;
-    }
-    if (genre && (p === 3 || p === 4)) {
-      const cas = RM.hasard(['filles', 'garcons', 'mixte']);
-      sujet.feminin = cas === 'filles';
-      sujet.mixte = cas === 'mixte';
-      sujet.precision = `« ${sujet.pronom} » = `
-        + { filles: 'des filles 👧👧', garcons: 'des garçons 👦👦', mixte: 'une fille et un garçon 👧👦' }[cas];
-    }
-    return sujet;
-  }
-
-  const sujetSimple = p => ({ p, pronom: PRONOMS[p], feminin: false, pluriel: p >= 3 });
-
-  // Avec l'auxiliaire être, le participe passé s'accorde avec le sujet : + e (féminin), + s (pluriel)
-  const accorder = (participe, sujet) => participe + (sujet.feminin ? 'e' : '') + (sujet.pluriel ? 's' : '');
-
-  function expliquerAccord(sujet, participeAccorde) {
-    const marques = [sujet.feminin && '+ e pour le féminin', sujet.pluriel && '+ s pour le pluriel']
-      .filter(Boolean).join(', ') || 'rien à ajouter';
-    const qui = sujet.mixte
-      ? `« ${sujet.pronom} », c’est une fille et un garçon : le <b>masculin</b> l’emporte`
-      : `« ${sujet.pronom} » est au ${sujet.feminin ? 'féminin' : 'masculin'} ${sujet.pluriel ? 'pluriel' : 'singulier'}`;
-    return ` Avec être, le participe passé <b>s’accorde avec le sujet</b>. Ici, ${qui} : <b>${participeAccorde}</b> (${marques}).`;
-  }
-
-  // Dans les tableaux, les temps avec être s'écrivent : je suis allé(e), nous sommes allé(e)s…
-  const MARQUES_TABLEAU = ['(e)', '(e)', '', '(e)s', '(e)s', 's'];
-  const formeAvecEtre = auxiliaire => (verbe, i) => `${auxiliaire[i]} ${verbe.participe}${MARQUES_TABLEAU[i]}`;
-
-  // ---------- Le moteur commun à toutes les étapes ----------
-
-  function afficher(etape, sujet, forme) {
-    return etape.sansSujet
-      ? `<span class="indice">(${sujet.pronom})</span> ${forme} !`
-      : avecPronom(sujet.pronom, forme);
-  }
-
-  // Le verbe conjugué en entier, avec la ligne de la question surlignée
-  function tableau(etape, verbe, sujet, forme) {
-    const cellule = i => {
-      const texte = i === sujet.p
-        ? afficher(etape, sujet, forme)
-        : afficher(etape, sujetSimple(i), etape.formeTableau(verbe, i));
-      return `<td class="${i === sujet.p ? 'cible' : ''}">${texte}</td>`;
-    };
-    if (etape.personnes.length === 6) {
-      return `<table class="mini-tableau">
-        <tr>${cellule(0)}${cellule(3)}</tr>
-        <tr>${cellule(1)}${cellule(4)}</tr>
-        <tr>${cellule(2)}${cellule(5)}</tr>
-      </table>`;
-    }
-    return `<table class="mini-tableau"><tr>${etape.personnes.map(cellule).join('')}</tr></table>`;
-  }
-
-  function creerQuestion(etape, verbe, sujet) {
-    const forme = etape.conjuguer(verbe, sujet);
-    const debut = etape.sansSujet
-      ? `<span class="indice">(${sujet.pronom})</span> `
-      : (sujet.p === 0 && commenceParVoyelle(forme) ? 'j’' : sujet.pronom + ' ');
-    const fin = etape.sansSujet ? ' !' : '';
-    const precision = etape.precision ? etape.precision(sujet) : sujet.precision;
-    const question = {
-      enonce: `${debut}<span class="trou">?</span>${fin} <span class="indice">(${verbe.infinitif})</span>`
-        + (precision ? `<span class="precision">${precision}</span>` : ''),
-      reponse: forme,
-      solution: `${debut}<b>${forme}</b>${fin}`,
-      explication: etape.expliquer(verbe, sujet, forme) + tableau(etape, verbe, sujet, forme),
-    };
-    if (Math.random() < etape.partEcrire) {
-      return { ...question, type: 'ecrire', consigne: `Écris le verbe ${etape.temps}` };
-    }
-    const pieges = [...new Set(etape.distracteurs(verbe, sujet, forme))].filter(f => f && f !== forme);
-    const choix = RM.melanger([forme, ...RM.melanger(pieges).slice(0, 3)]);
-    return { ...question, type: 'choix', consigne: `Choisis le verbe ${etape.temps}`, choix };
-  }
-
-  // Ajoute une étape au Sentier, avec des réglages par défaut
-  function ajouterEtape(etape) {
-    const liste = etape.verbes.map(v => (Array.isArray(v) ? { verbe: V(v[0]), poids: v[1] } : { verbe: V(v), poids: 1 }));
-    const total = liste.reduce((somme, v) => somme + v.poids, 0);
-    const tirerVerbe = () => {
-      let tirage = Math.random() * total; // « poids » : plus il est grand, plus le verbe revient souvent
-      return liste.find(v => (tirage -= v.poids) < 0).verbe;
-    };
-
-    etape.personnes = etape.personnes || TOUTES_LES_PERSONNES;
-    etape.partEcrire = etape.partEcrire ?? 0.6; // écrire la réponse aide le mieux à mémoriser
-    etape.formeTableau = etape.formeTableau || ((verbe, i) => etape.conjuguer(verbe, sujetSimple(i)));
-    // Par défaut, les pièges sont les autres personnes du même verbe
-    etape.distracteurs = etape.distracteurs
-      || (verbe => etape.personnes.map(i => etape.conjuguer(verbe, sujetSimple(i))));
-
-    etape.creerQuestions = function (nombre) {
-      const dejaPosees = new Set();
-      const questions = [];
-      let essais = 0;
-      while (questions.length < nombre) {
-        const verbe = tirerVerbe();
-        const p = RM.hasard(etape.personnes);
-        if (dejaPosees.has(verbe.infinitif + p) && essais++ < 1000) continue;
-        dejaPosees.add(verbe.infinitif + p);
-        const genre = etape.genre ? etape.genre(verbe) : false;
-        questions.push(creerQuestion(etape, verbe, choisirSujet(p, { genre })));
-      }
-      return questions;
-    };
-
-    RM.etapes.push(etape);
-  }
+  const {
+    ETRE, AVOIR, PRONOMS, PRONOMS_REGLE, avecPronom, accorder, expliquerAccord,
+    formeAvecEtre, avecEtre, astuceParticipe, ajouterEtape,
+  } = RM.conj;
 
   // ======================================================================
   // 1. Le présent : verbes en -er, finir, être et avoir
@@ -390,17 +254,6 @@
   // ======================================================================
   // 5. Le passé composé avec avoir
   // ======================================================================
-  function astuceParticipe(verbe) {
-    const participe = verbe.participe;
-    if (verbe.groupe === 'premier') return 'Les verbes en -er ont un participe en <b>-é</b> (et pas -er !).';
-    if (verbe.groupe === 'deuxieme') return `Les verbes comme finir ont un participe en <b>-i</b> : ${participe}.`;
-    if (verbe.groupe === 'etre-avoir') return `Le participe de « ${verbe.infinitif} » est <b>${participe}</b> : à retenir !`;
-    if (/[st]$/.test(participe)) {
-      return `Pour trouver la lettre muette à la fin, mets le participe au féminin : ${participe}e → <b>${participe}</b>.`;
-    }
-    return `Le participe de « ${verbe.infinitif} » est <b>${participe}</b>. Beaucoup de verbes finissent en <b>-u</b> : vu, lu, bu, pu.`;
-  }
-
   // Les erreurs d'auxiliaire les plus fréquentes : « tu a », « ils on »…
   const AUXILIAIRE_PIEGE = ['as', 'a', 'as', 'avez', 'avons', 'on'];
 
@@ -472,7 +325,7 @@
     },
     titreLecon: 'Le passé composé avec être',
     lecon: `
-      <p>Quelques verbes utilisent l’auxiliaire <b>être</b> au lieu de avoir. Ce sont surtout des verbes
+      <p>Quelques verbes utilisent l’auxiliaire <b>être</b> au lieu d’avoir. Ce sont surtout des verbes
         de <b>mouvement</b> : aller, venir, partir, sortir, arriver, entrer, tomber, rester, monter,
         descendre, rentrer.</p>
 
@@ -550,7 +403,6 @@
   // ======================================================================
   // 8. Le plus-que-parfait (nouveauté de 6e)
   // ======================================================================
-  const avecEtre = verbe => verbe.auxiliaire === 'être';
   // Les erreurs de terminaison les plus fréquentes : « j’avait », « ils avait »…
   const PERSONNE_PIEGE = [2, 2, 0, 4, 3, 2];
 

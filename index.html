@@ -22,7 +22,7 @@
 
   <!-- ⚠️ Après chaque mise à jour, changer le numéro « v= » partout dans ce fichier :
        l'iPad saura alors qu'il doit charger la nouvelle version (et pas une ancienne gardée en mémoire). -->
-  <link rel="stylesheet" href="css/style.css?v=2026-09-24">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-24-b">
 </head>
 <body>
   <main id="app">
@@ -93,6 +93,9 @@
         <div class="choix-avatars" id="form-avatars"></div>
         <p class="etiquette">Choisis ta couleur</p>
         <div class="choix-couleurs" id="form-couleurs"></div>
+        <p class="etiquette">Ton niveau</p>
+        <div class="choix-classes" id="form-classes"></div>
+        <p class="aide-classe">6e = je prépare mon entrée en 6e · tu pourras changer plus tard</p>
         <button class="bouton bouton-principal" type="submit" id="form-valider">C’est moi ! ✔</button>
       </form>
     </section>
@@ -109,6 +112,17 @@
         <nav class="raccourcis-zones" id="raccourcis-zones" aria-label="Aller à une zone"></nav>
       </div>
       <div class="carte-aventure" id="carte-aventure"></div>
+    </section>
+
+    <!-- Écran : Choisis ton niveau -->
+    <section class="ecran" id="ecran-niveau">
+      <header class="barre">
+        <button class="bouton-rond" data-aller="carte" aria-label="Retour à la carte">←</button>
+        <h2>Choisis ton niveau</h2>
+        <span class="bouton-rond fantome"></span>
+      </header>
+      <p class="niveau-aide">Tu peux changer quand tu veux : tes étoiles restent gardées dans chaque forêt.</p>
+      <div class="grille-niveaux" id="grille-niveaux"></div>
     </section>
 
     <!-- Écran : Combien de questions ? -->
@@ -184,17 +198,26 @@
   <div class="bulle-info" id="bulle-info" role="status" hidden></div>
 
   <!-- L'ordre compte : d'abord les outils, puis les données, puis le moteur -->
-  <script src="js/outils.js?v=2026-09-24"></script>
-  <script src="data/verbes.js?v=2026-09-24"></script>
-  <script src="data/conjugaison.js?v=2026-09-24"></script>
-  <script src="data/orthographe.js?v=2026-09-24"></script>
-  <script src="data/foret.js?v=2026-09-24"></script>
-  <script src="js/progression.js?v=2026-09-24"></script>
-  <script src="js/flamme.js?v=2026-09-24"></script>
-  <script src="js/quiz.js?v=2026-09-24"></script>
-  <script src="js/profils.js?v=2026-09-24"></script>
-  <script src="js/carte.js?v=2026-09-24"></script>
-  <script src="js/parent.js?v=2026-09-24"></script>
-  <script src="js/app.js?v=2026-09-24"></script>
+  <script src="js/outils.js?v=2026-09-24-b"></script>
+  <script src="data/verbes.js?v=2026-09-24-b"></script>
+  <script src="js/moteur-conjugaison.js?v=2026-09-24-b"></script>
+  <script src="js/moteur-phrases.js?v=2026-09-24-b"></script>
+  <script src="data/6e-conjugaison.js?v=2026-09-24-b"></script>
+  <script src="data/6e-orthographe.js?v=2026-09-24-b"></script>
+  <script src="data/5e-conjugaison.js?v=2026-09-24-b"></script>
+  <script src="data/5e-orthographe.js?v=2026-09-24-b"></script>
+  <script src="data/4e-conjugaison.js?v=2026-09-24-b"></script>
+  <script src="data/4e-orthographe.js?v=2026-09-24-b"></script>
+  <script src="data/3e-conjugaison.js?v=2026-09-24-b"></script>
+  <script src="data/3e-orthographe.js?v=2026-09-24-b"></script>
+  <script src="data/foret.js?v=2026-09-24-b"></script>
+  <script src="js/progression.js?v=2026-09-24-b"></script>
+  <script src="js/flamme.js?v=2026-09-24-b"></script>
+  <script src="js/quiz.js?v=2026-09-24-b"></script>
+  <script src="js/profils.js?v=2026-09-24-b"></script>
+  <script src="js/carte.js?v=2026-09-24-b"></script>
+  <script src="js/niveaux.js?v=2026-09-24-b"></script>
+  <script src="js/parent.js?v=2026-09-24-b"></script>
+  <script src="js/app.js?v=2026-09-24-b"></script>
 </body>
 </html>

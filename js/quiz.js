@@ -5,7 +5,7 @@
 (function () {
   const POINTS_PAR_BONNE_REPONSE = 10;
   const BRAVOS = ['Bravo !', 'Super !', 'Génial !', 'Trop fort !', 'Parfait !', 'Excellent !', 'Bien joué !'];
-  const ACCENTS = ['é', 'è', 'ê', 'à', 'ç', 'ù', 'î', 'ô'];
+  const ACCENTS = ['é', 'è', 'ê', 'à', 'â', 'ç', 'ù', 'û', 'î', 'ô'];
   const ETIQUETTES = { Vrai: '✔ Vrai', Faux: '✘ Faux' };
 
   const $ = id => document.getElementById(id);
@@ -94,6 +94,7 @@
       .replace(/\s+/g, ' ')
       .replace(/\s*[!.?]+\s*$/, '')
       .trim()
+      .replace(/^(que |qu')/, '')
       .replace(/^(je |j'|tu |il |elle |on |nous |vous |ils |elles )/, '')
       .trim();
   }

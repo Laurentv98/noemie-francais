@@ -29,12 +29,17 @@
 
   const calculerEtoiles = (bonnes, total) => Math.floor(bonnes * 5 / total);
 
-  function creerProfil({ prenom, avatar, couleur }) {
+  // Le niveau du joueur (6e, 5e, 4e ou 3e) ; les profils d'avant les niveaux sont en 6e
+  const niveauValide = niveau => RM.NIVEAUX.some(n => n.id === niveau);
+  const niveauDe = profil => (niveauValide(profil.niveau) ? profil.niveau : RM.NIVEAU_PAR_DEFAUT);
+
+  function creerProfil({ prenom, avatar, couleur, niveau }) {
     const profil = {
       id: nouvelId(),
       prenom,
       avatar,
       couleur,
+      niveau: niveauValide(niveau) ? niveau : RM.NIVEAU_PAR_DEFAUT,
       points: 0,
       etapes: {},        // pour chaque étape : meilleures étoiles, parties, bonnes réponses, questions
       tempsDeJeu: 0,     // en secondes, pour l'espace parent
@@ -174,6 +179,7 @@
       prenom: p.prenom.trim().slice(0, 12) || 'Joueur',
       avatar: RM.ANIMAUX.includes(p.avatar) ? p.avatar : RM.ANIMAUX[0],
       couleur: RM.COULEURS.some(c => c.nom === p.couleur) ? p.couleur : RM.COULEURS[0].nom,
+      niveau: niveauValide(p.niveau) ? p.niveau : RM.NIVEAU_PAR_DEFAUT,
       points: nombre(p.points),
       etapes,
       tempsDeJeu: nombre(p.tempsDeJeu),
@@ -204,6 +210,13 @@
     calculerEtoiles,
     flamme,
     jourDe,
+    niveauDe,
+    foretDe: profil => RM.FORETS[niveauDe(profil)],
+    changerNiveau(profil, niveau) {
+      if (!niveauValide(niveau)) return;
+      profil.niveau = niveau;
+      enregistrer();
+    },
     joursJoues: profil => serieDe(profil).jours,
     codeParent: () => reglages().code,
     changerCode(code) {

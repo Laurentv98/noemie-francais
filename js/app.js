@@ -6,8 +6,8 @@
 
   // ---------- Changer d'écran ----------
   RM.afficherEcran = function (nom) {
-    // Pas de carte sans joueur : on passe d'abord par « Qui joue ? »
-    if (nom === 'carte' && !P.profilActif()) nom = 'profils';
+    // Pas de carte (ni de niveau) sans joueur : on passe d'abord par « Qui joue ? »
+    if ((nom === 'carte' || nom === 'niveau') && !P.profilActif()) nom = 'profils';
     document.querySelectorAll('.ecran').forEach(ecran => {
       ecran.classList.toggle('actif', ecran.id === 'ecran-' + nom);
     });

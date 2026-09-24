@@ -119,7 +119,10 @@
   });
 
   // Quitter l'espace parent : on le referme
-  RM.ecrans.accueil = () => { deverrouille = false; };
+  RM.ecrans.accueil = () => {
+    deverrouille = false;
+    niveauVu = null;
+  };
   $('parent-quitter').addEventListener('click', () => RM.afficherEcran('accueil'));
   $('accueil-parent').addEventListener('click', () => RM.ouvrirEspaceParent());
 
@@ -127,7 +130,11 @@
   // Le tableau de suivi
   // ======================================================================
   let profilVu = null;
-  const zones = () => RM.FORET.filter(zone => !zone.bientot);
+  let niveauVu = null; // le niveau dont on regarde le détail des étapes
+  const tousLesChemins = () => Object.values(RM.FORETS).flat().filter(zone => !zone.bientot);
+  const cheminsDu = niveau => RM.FORETS[niveau].filter(zone => !zone.bientot);
+  // Le nom d'une étape avec son niveau : « 5e · 🌲 Le futur antérieur »
+  const nomComplet = etape => `${etape.zone.niveau} · ${etape.zone.icone} ${etape.titre}`;
   const pluriel = n => (n > 1 ? 's' : '');
   const pourcent = (bonnes, questions) => Math.round(bonnes * 100 / questions);
 
@@ -164,25 +171,24 @@
   }
 
   function htmlResume(profil) {
-    let parties = 0, bonnes = 0, questions = 0, etoiles = 0, maximum = 0;
-    zones().forEach(zone => zone.etapes.forEach(etape => {
-      maximum += 5;
+    let parties = 0, bonnes = 0, questions = 0;
+    tousLesChemins().forEach(zone => zone.etapes.forEach(etape => {
       const s = statsEtape(profil, etape);
       if (!s) return;
       parties += s.parties || 0;
       bonnes += s.bonnes || 0;
       questions += s.questions || 0;
-      etoiles += s.etoiles || 0;
     }));
+    const { gagnees, total } = RM.etoilesNiveau(profil, niveauVu);
     const flamme = P.flamme(profil);
     const derniere = RM.trouverEtape(profil.derniereEtape);
     return `<div class="tuiles">
       ${tuile('⏱️', duree(profil.tempsDeJeu || 0), 'Temps de jeu')}
       ${tuile('🎮', parties, 'Parties terminées')}
       ${tuile('✅', questions ? pourcent(bonnes, questions) + ' %' : '—', 'Réussite', questions ? `${bonnes} bonnes réponses sur ${questions}` : 'pas encore de partie')}
-      ${tuile('★', `${etoiles} / ${maximum}`, 'Étoiles')}
+      ${tuile('★', `${gagnees} / ${total}`, `Étoiles en ${niveauVu}`)}
       ${tuile('🔥', `${flamme.jours} jour${pluriel(flamme.jours)}`, 'Flamme', `record : ${flamme.record} jour${pluriel(flamme.record)}`)}
-      ${tuile('📅', quand(profil.dernierePartie), 'Dernière partie', derniere ? `${derniere.zone.icone} ${derniere.titre}` : '')}
+      ${tuile('📅', quand(profil.dernierePartie), 'Dernière partie', derniere ? nomComplet(derniere) : '')}
     </div>`;
   }
 
@@ -215,7 +221,7 @@
 
   // Les étapes où il y a le plus d'erreurs (au moins 5 questions, moins de 70 % de réussite)
   function htmlARevoir(profil) {
-    const etapes = zones().flatMap(zone => zone.etapes);
+    const etapes = tousLesChemins().flatMap(zone => zone.etapes);
     const jouees = etapes.filter(e => (statsEtape(profil, e)?.questions || 0) >= 5);
     const aRevoir = jouees
       .map(etape => ({ etape, taux: pourcent(statsEtape(profil, etape).bonnes, statsEtape(profil, etape).questions) }))
@@ -230,7 +236,7 @@
     } else {
       contenu = '<ul class="liste-a-revoir">' + aRevoir.map(({ etape, taux }) => `<li>
           <span class="a-revoir-icone" aria-hidden="true">⚠️</span>
-          <span><b>${etape.zone.icone} ${etape.titre}</b> : ${taux} % de réussite
+          <span><b>${nomComplet(etape)}</b> : ${taux} % de réussite
           (${statsEtape(profil, etape).questions} questions)</span></li>`).join('') + '</ul>'
         + '<p class="bloc-sous-titre">💡 Conseil : relire la leçon avec le bouton « Aide », puis rejouer une partie courte de 5 questions.</p>';
     }
@@ -294,6 +300,19 @@
     </section>`;
   }
 
+  // Les onglets pour voir le détail d'un niveau (le niveau actuel de l'enfant est marqué 🎒)
+  function htmlOngletsNiveaux(profil) {
+    return `<nav class="onglets-niveaux" aria-label="Choisir un niveau">
+      <span class="onglets-titre">Détail par étape :</span>
+      ${RM.NIVEAUX.map(n => {
+        const { gagnees, total } = RM.etoilesNiveau(profil, n.id);
+        const actuel = n.id === P.niveauDe(profil) ? ' 🎒' : '';
+        return `<button class="onglet-niveau${n.id === niveauVu ? ' actif' : ''}" data-niveau-vu="${n.id}">`
+          + `${n.nom}${actuel} <small>★ ${gagnees}/${total}</small></button>`;
+      }).join('')}
+    </nav>`;
+  }
+
   RM.ecrans.parent = function () {
     if (!deverrouille) {
       RM.ouvrirEspaceParent();
@@ -307,8 +326,10 @@
         ${RM.htmlAvatar(p, 'petit')} ${RM.echapper(p.prenom)}</button>`).join('');
 
     const profil = profilVu && P.trouver(profilVu);
+    if (profil && !niveauVu) niveauVu = P.niveauDe(profil);
     $('parent-tableau').innerHTML = profil
-      ? htmlResume(profil) + htmlARevoir(profil) + htmlCalendrier(profil) + zones().map(z => htmlZone(profil, z)).join('')
+      ? htmlResume(profil) + htmlARevoir(profil) + htmlCalendrier(profil) + htmlOngletsNiveaux(profil)
+        + cheminsDu(niveauVu).map(z => htmlZone(profil, z)).join('')
       : '<section class="carte bloc-parent"><p>Aucun profil pour l’instant. Les enfants peuvent en créer un depuis l’accueil, avec « C’est parti ! ».</p></section>';
     $('parent-reglages').innerHTML = htmlReglages(profils);
   };
@@ -327,7 +348,16 @@
     const onglet = e.target.closest('[data-profil-vu]');
     if (onglet) {
       profilVu = onglet.dataset.profilVu;
+      niveauVu = null; // on repart du niveau de cet enfant
       RM.ecrans.parent();
+      return;
+    }
+    const ongletNiveau = e.target.closest('[data-niveau-vu]');
+    if (ongletNiveau) {
+      niveauVu = ongletNiveau.dataset.niveauVu;
+      const defilement = window.scrollY;
+      RM.ecrans.parent();
+      window.scrollTo(0, defilement);
       return;
     }
     const bouton = e.target.closest('[data-action]');
@@ -364,6 +394,7 @@
     try {
       const nombre = P.importer(texte);
       profilVu = null;
+      niveauVu = null;
       RM.ecrans.parent();
       RM.bulleInfo(`📥 Sauvegarde importée : ${nombre} profil${pluriel(nombre)}.`);
     } catch (erreur) {

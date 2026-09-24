@@ -1,12 +1,13 @@
 # 🦊 Renard Malin
 
-Une application pour réviser le français avant la 6e (conjugaison et orthographe), en jouant avec Roxy la renarde.
+Une application pour réviser le français au collège (conjugaison et orthographe), en jouant avec Roxy la renarde.
 
 👉 **Jouer : https://laurentv98.github.io/noemie-francais/**
 
-- 18 étapes sur une carte d'aventure : 9 de conjugaison, 9 d'orthographe, avec leurs leçons.
+- **4 niveaux au choix** : 6e (les bases du CM2 et les nouveautés de 6e), 5e, 4e et 3e, chacun avec sa forêt et sa saison 🌸🍂❄️🌙.
+- **54 étapes** sur les cartes d'aventure, avec leurs leçons : conjugaison (du présent au subjonctif imparfait) et orthographe (homophones, accords, participe passé, nombres…).
 - Jusqu'à 5 étoiles par étape, une flamme qui grandit chaque jour de révision, un profil par enfant.
-- Un espace parent protégé par un code, avec le suivi des progrès et une sauvegarde à exporter.
+- Un espace parent protégé par un code, avec le suivi des progrès par niveau et une sauvegarde à exporter.
 - En HTML, CSS et JavaScript, sans serveur ni compte : les progrès restent dans le navigateur de l'appareil.
 
 ## Installer sur l'iPad
@@ -22,9 +23,13 @@ Renard Malin s'ouvre alors en plein écran, avec l'icône de Roxy.
 
 ## Organisation des fichiers
 
-| Dossier | Contenu |
+| Fichier ou dossier | Contenu |
 |---|---|
-| `data/` | le contenu : plan de la forêt, livre des verbes, étapes de conjugaison et d'orthographe |
-| `js/` | le fonctionnement : quiz, carte, profils, flamme, sauvegarde, espace parent |
+| `data/foret.js` | le plan des 4 forêts : les niveaux, leurs étapes dans l'ordre, les décors |
+| `data/verbes.js` | le livre des verbes : chaque verbe conjugué à tous les temps |
+| `data/6e-…`, `5e-…`, `4e-…`, `3e-…` | le contenu de chaque niveau : conjugaison et orthographe, avec leurs leçons |
+| `js/moteur-conjugaison.js` | le moteur qui fabrique les questions de conjugaison |
+| `js/moteur-phrases.js` | le moteur des étapes à phrases (homophones, accords…) |
+| `js/` (autres fichiers) | le fonctionnement : quiz, carte, niveaux, profils, flamme, sauvegarde, espace parent |
 | `css/style.css` | les couleurs et la mise en page |
 | `img/` | Roxy et les icônes |

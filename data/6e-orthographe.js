@@ -1,96 +1,15 @@
-// Renard Malin — Orthographe : les 9 étapes de la Rivière
+// Renard Malin — Orthographe, niveau 6e : les 9 étapes de la Rivière
 //
 // Ici, les phrases sont écrites à la main. Pour en ajouter une, il suffit d'ajouter une ligne
 // dans la bonne liste, avec ___ à la place du mot à trouver.
+// Le moteur qui fabrique les questions est dans js/moteur-phrases.js.
 // Le titre et la place de chaque étape sur la carte sont dans data/foret.js.
 
 (function () {
-  // ---------- Outils communs ----------
-  const avecTrou = phrase => phrase.replace('___', '<span class="trou">?</span>');
-  const avecMot = (phrase, mot, classe) =>
-    phrase.replace('___', classe ? `<span class="${classe}">${mot}</span>` : `<b>${mot}</b>`);
-  const indice = mot => ` <span class="indice">(${mot})</span>`;
-
-  // Tire un type de question selon les proportions voulues, ex. { choix: 0.7, vraifaux: 0.3 }
-  function tirerType(proportions) {
-    let tirage = Math.random();
-    for (const [type, part] of Object.entries(proportions)) {
-      if ((tirage -= part) < 0) return type;
-    }
-    return 'choix';
-  }
-
-  // Fabrique la question d'un des trois types, à partir d'une phrase avec ___
-  function fabriquer(type, { phrase, reponse, choix, mauvais, explication, aide = '', consigneChoix, consigneEcrire }) {
-    const commun = { reponse, solution: avecMot(phrase, reponse), explication };
-    if (type === 'ecrire') {
-      return { ...commun, type, consigne: consigneEcrire, enonce: avecTrou(phrase) + aide };
-    }
-    if (type === 'vraifaux') {
-      const bienEcrite = Math.random() < 0.5;
-      return {
-        ...commun,
-        type,
-        consigne: 'Cette phrase est-elle bien écrite ?',
-        enonce: avecMot(phrase, bienEcrite ? reponse : RM.hasard(mauvais), 'mot-teste'),
-        choix: ['Vrai', 'Faux'],
-        reponse: bienEcrite ? 'Vrai' : 'Faux',
-      };
-    }
-    return { ...commun, type: 'choix', consigne: consigneChoix, enonce: avecTrou(phrase) + aide, choix };
-  }
-
-  // Ajoute une étape : on pioche dans la banque de phrases sans les répéter
-  function ajouterEtape({ id, banque, creerQuestion, titreLecon, lecon }) {
-    RM.etapes.push({
-      id,
-      titreLecon,
-      lecon,
-      creerQuestions(nombre) {
-        let pioche = [];
-        const questions = [];
-        while (questions.length < nombre) {
-          if (pioche.length === 0) pioche = RM.melanger(banque);
-          questions.push(creerQuestion(pioche.pop()));
-        }
-        return questions;
-      },
-    });
-  }
-
-  // ======================================================================
-  // 1 à 6. Les homophones : des mots qui se prononcent pareil
-  // ======================================================================
-  // L'astuce de Roxy : on remplace le mot par un autre, et on regarde si la phrase a du sens.
-  function expliquerHomophone(def, phrase, reponse) {
-    const essai = mot => `<i>${phrase.replace('___', `<u>${mot}</u>`)}</i>`;
-    let html = `Remplace par « ${def.test} » : ${essai(def.test)}<br>`;
-    if (reponse === def.motTeste) return html + `✔ Ça marche ! ${def.verdicts[reponse]}`;
-    html += '✘ Ça ne veut rien dire ! ';
-    if (def.autreTest) html += `Essaie plutôt « ${def.autreTest} » : ${essai(def.autreTest)} ✔<br>`;
-    return html + def.verdicts[reponse];
-  }
-
-  function ajouterHomophones(def) {
-    const banque = Object.entries(def.phrases).flatMap(([reponse, liste]) => liste.map(entree => {
-      const [phrase, extra] = Array.isArray(entree) ? entree : [entree];
-      return { phrase, reponse, extra };
-    }));
-    ajouterEtape({
-      id: def.id,
-      banque,
-      titreLecon: def.titreLecon,
-      lecon: def.lecon,
-      creerQuestion: ({ phrase, reponse, extra }) => fabriquer(tirerType({ choix: 0.7, vraifaux: 0.3 }), {
-        phrase,
-        reponse,
-        choix: def.choix,
-        mauvais: def.choix.filter(mot => mot !== reponse),
-        explication: def.expliquer ? def.expliquer(phrase, reponse, extra) : expliquerHomophone(def, phrase, reponse),
-        consigneChoix: 'Choisis le bon mot',
-      }),
-    });
-  }
+  const {
+    indice, CASES, GENRES, NOMBRES, tirerType, fabriquer, ajouterEtape, ajouterHomophones,
+    accorderCas: accorder,
+  } = RM.phrases;
 
   // ---------- 1. a ou à ----------
   ajouterHomophones({
@@ -295,7 +214,7 @@
         ['Julie invite ___ amies à son anniversaire.', 'son amie'], ['Papa cherche ___ clés partout.', 'sa clé'],
         ['Le chien enterre ___ os dans le jardin.', 'son os'], ['Grand-père arrose ___ tomates.', 'sa tomate'],
         ['Mon frère met ___ chaussettes.', 'sa chaussette'], ['Chaque matin, Zoé coiffe ___ cheveux.', 'son cheveu'],
-        ['Le petit garçon a perdu ___ gants.', 'son gant']],
+        ['Le petit garçon a perdu ___ dents de lait.', 'sa dent de lait']],
       ces: [['Regarde ___ nuages !', 'ce nuage'], ['Tu vois ___ oiseaux, là-bas ?', 'cet oiseau'],
         ['Je voudrais ___ bonbons-là, s’il vous plaît.', 'ce bonbon-là'], ['Écoute ___ grenouilles qui chantent !', 'cette grenouille'],
         ['Comme ___ fleurs sentent bon !', 'cette fleur'], ['Ne touche pas ___ champignons, ils sont dangereux !', 'ce champignon'],
@@ -424,9 +343,6 @@
     long: ['long', 'longue', 'longs', 'longues'],
     sportif: ['sportif', 'sportive', 'sportifs', 'sportives'],
   };
-  const CASES = { ms: 0, fs: 1, mp: 2, fp: 3 };
-  const GENRES = { m: 'masculin', f: 'féminin' };
-  const NOMBRES = { s: 'singulier', p: 'pluriel' };
 
   // [groupe du nom avec ___, adjectif, nom, genre et nombre du nom]
   const GROUPES_NOM = [
@@ -550,8 +466,6 @@
     ['Les filles ont ___ leur chambre.', 'ranger'],
     ['Léo et Léa sont ___ au cinéma.', 'aller', 'Léo et Léa', 'mp', 'Un garçon et une fille ensemble : c’est le masculin qui l’emporte !'],
   ];
-
-  const accorder = (participe, cas) => participe + (cas[0] === 'f' ? 'e' : '') + (cas[1] === 'p' ? 's' : '');
 
   ajouterEtape({
     id: 'orthographe-participe-passe',

@@ -10,16 +10,18 @@
   // Le chemin serpente : position de chaque étape, en % de la largeur
   const POSITIONS = [50, 72, 76, 58, 34, 24, 38, 62, 74];
 
-  // On relie chaque étape du plan à son contenu (questions et leçon), s'il existe déjà
-  RM.FORET.forEach(zone => zone.etapes.forEach((etape, index) => {
+  // On relie chaque étape du plan (dans toutes les forêts) à son contenu : questions et leçon
+  const toutesLesZones = Object.values(RM.FORETS).flat();
+  toutesLesZones.forEach(zone => zone.etapes.forEach((etape, index) => {
     const contenu = RM.etapes.find(c => c.id === etape.id);
     if (contenu) Object.assign(etape, contenu);
     etape.zone = zone;
     etape.index = index;
   }));
 
-  const toutesLesEtapes = RM.FORET.flatMap(zone => zone.etapes);
+  const toutesLesEtapes = toutesLesZones.flatMap(zone => zone.etapes);
   RM.trouverEtape = id => toutesLesEtapes.find(e => e.id === id);
+  RM.niveau = id => RM.NIVEAUX.find(n => n.id === id);
 
   const estPrete = etape => typeof etape.creerQuestions === 'function';
   const positionX = etape => POSITIONS[etape.index % POSITIONS.length];
@@ -39,25 +41,32 @@
 
   const etoilesZone = (profil, zone) =>
     zone.etapes.reduce((somme, e) => somme + P.meilleuresEtoiles(profil, e.id), 0);
+  RM.etoilesZone = etoilesZone;
 
   // ---------- Dessiner la carte ----------
   RM.ecrans.carte = function () {
     const profil = P.profilActif();
+    const niveau = RM.niveau(P.niveauDe(profil));
+    const foret = P.foretDe(profil);
     $('carte-titre').textContent = `La forêt de ${profil.prenom}`;
     $('carte-joueur').innerHTML = `${RM.htmlAvatar(profil, 'petit')}
       <span class="joueur-prenom">${RM.echapper(profil.prenom)}</span>
       <span class="joueur-points">✨ ${profil.points}</span>`;
     $('carte-flamme').innerHTML = RM.htmlFlamme(profil);
 
-    $('raccourcis-zones').innerHTML = RM.FORET.map(zone => `
+    // Le premier bouton du haut : le niveau (on le touche pour en changer)
+    $('raccourcis-zones').innerHTML = `
+      <button class="raccourci raccourci-niveau" data-aller="niveau" aria-label="Changer de niveau">
+        🎒 <b>${niveau.nom}</b> <span class="saison">${niveau.saison}</span> ▾
+      </button>` + foret.map(zone => `
       <button class="raccourci" data-zone="${zone.id}" style="--zone:${zone.couleur}">
         ${zone.icone} <span>${zone.matiere}</span>
         ${zone.bientot ? '🔒' : `<b>★ ${etoilesZone(profil, zone)}</b>`}
       </button>`).join('');
 
-    $('carte-aventure').innerHTML = RM.FORET.map(zone => htmlZone(profil, zone)).join('');
-    RM.FORET.filter(zone => !zone.bientot).forEach(zone => tracerChemin(profil, zone));
-    placerRoxy(profil);
+    $('carte-aventure').innerHTML = foret.map(zone => htmlZone(profil, zone)).join('');
+    foret.filter(zone => !zone.bientot).forEach(zone => tracerChemin(profil, zone));
+    placerRoxy(profil, foret);
     RM.nouvelleEtape = null;
 
     // Si la flamme attend la partie du jour, Roxy le rappelle (une seule fois par visite)
@@ -160,9 +169,10 @@
   // Si une nouvelle étape vient de s'ouvrir, elle y marche depuis sa place d'avant.
   let anciennePlace = null;
 
-  function placerRoxy(profil) {
+  function placerRoxy(profil, foret) {
     const derniereJouee = RM.trouverEtape(profil.derniereEtape);
-    const zone = derniereJouee ? derniereJouee.zone : RM.FORET[0];
+    // Si la dernière partie était dans une autre forêt (un autre niveau), Roxy attend au début du Sentier
+    const zone = derniereJouee && foret.includes(derniereJouee.zone) ? derniereJouee.zone : foret[0];
     const cible = derniereOuverte(profil, zone);
     const chemin = document.querySelector(`#zone-${zone.id} .chemin`);
     const largeur = chemin.clientWidth;
@@ -181,7 +191,7 @@
     roxy.alt = 'Roxy est ici';
     chemin.appendChild(roxy);
 
-    const memePlace = anciennePlace && anciennePlace.profil === profil.id && anciennePlace.zone === zone.id;
+    const memePlace = anciennePlace && anciennePlace.profil === profil.id && anciennePlace.zone === zone;
     const doitMarcher = memePlace && anciennePlace.index < cible.index;
     Object.assign(roxy.style, coordonnees(doitMarcher ? zone.etapes[anciennePlace.index] : cible));
     if (doitMarcher) {
@@ -189,7 +199,7 @@
       roxy.classList.add('en-marche'); // …puis elle marche jusqu'à la nouvelle étape
       Object.assign(roxy.style, coordonnees(cible));
     }
-    anciennePlace = { profil: profil.id, zone: zone.id, index: cible.index };
+    anciennePlace = { profil: profil.id, zone, index: cible.index };
 
     // On fait défiler la carte pour que Roxy soit bien visible
     const haut = chemin.getBoundingClientRect().top + window.scrollY + cible.index * HAUTEUR_LIGNE;

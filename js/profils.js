@@ -16,6 +16,7 @@
         <button class="carte-profil-jouer">
           ${RM.htmlAvatar(profil, 'grand')}
           <span class="profil-prenom">${RM.echapper(profil.prenom)}</span>
+          <span class="profil-niveau">🎒 ${RM.niveau(P.niveauDe(profil)).nom}</span>
           <span class="profil-stats">✨ ${profil.points} &nbsp;·&nbsp; <span class="etoile gagnee">★</span> ${P.totalEtoiles(profil)}
             &nbsp;·&nbsp; ${RM.htmlFlamme(profil)}</span>
         </button>
@@ -45,6 +46,7 @@
   let enCours = null; // le profil qu'on modifie (null = nouveau joueur)
   let avatarChoisi = RM.ANIMAUX[0];
   let couleurChoisie = RM.COULEURS[0].nom;
+  let niveauChoisi = RM.NIVEAU_PAR_DEFAUT;
 
   function ouvrirFormulaire(profil) {
     enCours = profil;
@@ -56,6 +58,7 @@
     $('form-valider').textContent = profil ? 'Enregistrer ✔' : 'C’est moi ! ✔';
     avatarChoisi = profil ? profil.avatar : RM.hasard(RM.ANIMAUX);
     couleurChoisie = profil ? profil.couleur : RM.hasard(RM.COULEURS).nom;
+    niveauChoisi = profil ? P.niveauDe(profil) : RM.NIVEAU_PAR_DEFAUT;
     construireChoix();
     RM.afficherEcran('profil-form');
   }
@@ -67,6 +70,9 @@
     $('form-couleurs').innerHTML = RM.COULEURS.map(c =>
       `<button type="button" class="choix-couleur${c.nom === couleurChoisie ? ' choisi' : ''}" data-couleur="${c.nom}"
                style="--pastille:${c.fonce}" aria-label="${c.nom}"></button>`
+    ).join('');
+    $('form-classes').innerHTML = RM.NIVEAUX.map(n =>
+      `<button type="button" class="choix-classe${n.id === niveauChoisi ? ' choisi' : ''}" data-classe="${n.id}">${n.nom}</button>`
     ).join('');
     $('form-apercu').innerHTML = RM.htmlAvatar({ avatar: avatarChoisi, couleur: couleurChoisie }, 'geant');
   }
@@ -85,6 +91,13 @@
     construireChoix();
   });
 
+  $('form-classes').addEventListener('click', e => {
+    const bouton = e.target.closest('[data-classe]');
+    if (!bouton) return;
+    niveauChoisi = bouton.dataset.classe;
+    construireChoix();
+  });
+
   function montrerErreur(message) {
     $('form-erreur').textContent = message;
     $('form-erreur').hidden = false;
@@ -100,10 +113,10 @@
     $('form-prenom').blur();
 
     if (enCours) {
-      P.modifierProfil(enCours.id, { prenom, avatar: avatarChoisi, couleur: couleurChoisie });
+      P.modifierProfil(enCours.id, { prenom, avatar: avatarChoisi, couleur: couleurChoisie, niveau: niveauChoisi });
       RM.afficherEcran('profils');
     } else {
-      P.creerProfil({ prenom, avatar: avatarChoisi, couleur: couleurChoisie });
+      P.creerProfil({ prenom, avatar: avatarChoisi, couleur: couleurChoisie, niveau: niveauChoisi });
       RM.afficherEcran('carte');
     }
   });
