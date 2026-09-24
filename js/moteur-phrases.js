@@ -3,6 +3,7 @@
 // Pour ces étapes, les phrases sont écrites à la main dans une banque, avec ___ à la place
 // du mot à trouver. Le moteur pioche dans la banque sans répéter et fabrique trois types
 // de questions : choisir le bon mot, l'écrire, ou dire si la phrase est bien écrite.
+// La grammaire et le vocabulaire s'en servent aussi, avec des mots soulignés à classer.
 
 (function () {
   const avecTrou = phrase => phrase.replace('___', '<span class="trou">?</span>');
@@ -58,11 +59,13 @@
   }
 
   // Prépare une étape : on pioche dans la banque de phrases sans les répéter
-  function creerEtape({ id, banque, creerQuestion, titreLecon, lecon }) {
+  // (categories : pour les étapes « à classer », la liste des catégories, utile pour les vérifier)
+  function creerEtape({ id, banque, creerQuestion, titreLecon, lecon, categories }) {
     return {
       id,
       titreLecon,
       lecon,
+      categories,
       creerQuestions(nombre) {
         let pioche = [];
         const questions = [];
@@ -114,8 +117,73 @@
     });
   }
 
+  // ---------- La grammaire et le vocabulaire ----------
+  // Dans les banques, le mot ou le groupe à observer est écrit entre [[ et ]] : il sera souligné.
+  const souligner = texte => texte.replace(/\[\[(.+?)\]\]/g, '<span class="souligne">$1</span>');
+  const groupeSouligne = texte => (texte.match(/\[\[(.+?)\]\]/) || [])[1];
+
+  // Une question toute simple : un énoncé, la bonne réponse et les pièges.
+  // L'énoncé peut contenir [[…]] (souligné) ou ___ (un trou à remplir).
+  // choix : pour garder les boutons dans un ordre fixe (sinon, on mélange réponse et pièges)
+  // acceptees : d'autres réponses justes, quand on écrit la réponse
+  function question({ type = 'choix', consigne, enonce, reponse, pieges = [], choix, explication, solution, acceptees }) {
+    const trou = enonce.includes('___');
+    const q = {
+      type,
+      consigne,
+      enonce: souligner(trou ? avecTrou(enonce) : enonce),
+      reponse,
+      solution: solution || (trou ? souligner(avecMot(enonce, reponse)) : `<b>${reponse}</b>`),
+      explication,
+    };
+    if (acceptees) q.acceptees = acceptees;
+    if (type === 'choix') q.choix = choix || RM.melanger([reponse, ...pieges]);
+    return q;
+  }
+
+  // Classer : « Quelle est la nature du mot souligné ? » → nom, verbe, adjectif…
+  // def.categories : { cle: { nom: 'adjectif', regle: 'la règle, en une phrase' } }, dans l'ordre des boutons
+  // def.banque : [texte (avec [[…]] autour du mot à observer), cle, remarque facultative]
+  // def.consigne : la question ; « {mot} » y devient « mot » ou « groupe » selon ce qui est souligné
+  // def.nombreChoix : le nombre de boutons (4 par défaut) ; def.choixPossibles(cle) : les clés à proposer
+  // def.toujoursProposer(cle) (facultatif) : les clés à proposer à coup sûr avec cette réponse (les pièges « jumeaux »)
+  // def.montrerSouligne(groupe, cle) (facultatif) : comment écrire la partie soulignée dans la solution (ex. « in- »)
+  function ajouterClassement(def) {
+    const cles = Object.keys(def.categories);
+    ajouterEtape({
+      id: def.id,
+      banque: def.banque,
+      titreLecon: def.titreLecon,
+      lecon: def.lecon,
+      categories: cles.map(c => def.categories[c].nom),
+      creerQuestion([texte, cle, remarque]) {
+        const categorie = def.categories[cle];
+        const possibles = def.choixPossibles ? def.choixPossibles(cle) : cles;
+        // Les « jumeaux » (ex. épithète ↔ attribut) sont toujours proposés : ce sont les pièges qui font réfléchir
+        const jumeaux = (def.toujoursProposer ? def.toujoursProposer(cle) : [])
+          .filter(c => c !== cle && possibles.includes(c));
+        const autres = [...RM.melanger(jumeaux), ...RM.melanger(possibles.filter(c => c !== cle && !jumeaux.includes(c)))]
+          .slice(0, (def.nombreChoix || 4) - 1);
+        const groupe = groupeSouligne(texte);
+        // « l’arbre » est un groupe, mais « l’ » tout seul est un mot
+        const estUnGroupe = groupe && (/\s/.test(groupe) || /[’'][a-zà-ÿœ]/i.test(groupe));
+        return question({
+          consigne: def.consigne.replace('{mot}', estUnGroupe ? 'groupe' : 'mot'),
+          enonce: texte,
+          reponse: categorie.nom,
+          // Les boutons restent dans l'ordre de la leçon : c'est plus facile de s'y retrouver
+          choix: possibles.filter(c => c === cle || autres.includes(c)).map(c => def.categories[c].nom),
+          solution: (groupe ? `« ${def.montrerSouligne ? def.montrerSouligne(groupe, cle) : groupe} » : ` : '')
+            + `<b>${categorie.nom}</b>`,
+          explication: [remarque, categorie.regle].filter(Boolean).join('<br>'),
+        });
+      },
+    });
+  }
+
   RM.phrases = {
     avecTrou, avecMot, indice, CASES, GENRES, NOMBRES, genreNombre, accorderCas, quatreFormes,
     tirerType, fabriquer, creerEtape, ajouterEtape, expliquerHomophone, ajouterHomophones,
+    souligner, groupeSouligne, question, ajouterClassement,
   };
 })();

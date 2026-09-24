@@ -34,6 +34,8 @@
     $('quiz-points').textContent = '✨ ' + partie.points;
     $('quiz-consigne').textContent = q.consigne;
     $('quiz-enonce').innerHTML = q.enonce;
+    // Un long texte (une définition, un extrait) s'écrit un peu plus petit
+    $('quiz-enonce').classList.toggle('enonce-long', $('quiz-enonce').textContent.length > 90);
     $('quiz-retour').hidden = true;
     $('quiz-suivant').hidden = true;
 
@@ -48,6 +50,8 @@
   function construireChoix(zone, q) {
     const grille = document.createElement('div');
     grille.className = 'grille-choix';
+    // Des réponses longues (des définitions) : une seule colonne, en plus petit
+    if (q.choix.some(valeur => valeur.length > 20)) grille.classList.add('choix-longs');
     q.choix.forEach(valeur => {
       const bouton = document.createElement('button');
       bouton.className = 'bouton-choix';
@@ -106,7 +110,9 @@
     partie.repondu = true;
     const q = partie.questions[partie.index];
     const ecrite = q.type === 'ecrire';
-    const juste = ecrite ? nettoyer(valeur) === nettoyer(q.reponse) : valeur === q.reponse;
+    // Quand on écrit, il peut y avoir plusieurs bonnes réponses (ex. deux synonymes)
+    const attendues = [q.reponse, ...(q.acceptees || [])].map(nettoyer);
+    const juste = ecrite ? attendues.includes(nettoyer(valeur)) : valeur === q.reponse;
 
     // On fige la zone de réponse et on colorie
     if (ecrite) {
@@ -134,7 +140,7 @@
       partie.bonnes++;
       partie.points += POINTS_PAR_BONNE_REPONSE;
     }
-    const presque = ecrite && !juste && sansAccents(nettoyer(valeur)) === sansAccents(nettoyer(q.reponse));
+    const presque = ecrite && !juste && attendues.some(r => sansAccents(r) === sansAccents(nettoyer(valeur)));
     montrerRetour(q, juste, presque);
   }
 

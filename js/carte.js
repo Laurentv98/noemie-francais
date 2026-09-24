@@ -59,7 +59,7 @@
       <button class="raccourci raccourci-niveau" data-aller="niveau" aria-label="Changer de niveau">
         🎒 <b>${niveau.nom}</b> <span class="saison">${niveau.saison}</span> ▾
       </button>` + foret.map(zone => `
-      <button class="raccourci" data-zone="${zone.id}" style="--zone:${zone.couleur}">
+      <button class="raccourci" data-zone="${zone.id}" style="--zone:${zone.couleur}" aria-label="${zone.matiere}" title="${zone.matiere}">
         ${zone.icone} <span>${zone.matiere}</span>
         ${zone.bientot ? '🔒' : `<b>★ ${etoilesZone(profil, zone)}</b>`}
       </button>`).join('');

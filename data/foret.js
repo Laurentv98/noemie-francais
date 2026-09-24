@@ -19,22 +19,30 @@
     '6e': {
       conjugaison: ['🌲', '🍄', '🌳', '🐿️', '🌼', '🦔', '🌲', '🍂', '🌳'],
       orthographe: ['🐟', '💧', '🐸', '🦆', '🌿', '🐚', '💧', '🐢', '🐟'],
-      clairs: ['#E3F1E0', '#DFECF8'],
+      grammaire: ['⛰️', '🐐', '🌼', '🦋', '🌾', '🐑', '🏔️', '🌻', '🐞'],
+      vocabulaire: ['🌸', '🌷', '🐝', '🌹', '🦋', '🌺', '🐞', '🌻', '🌼'],
+      clairs: ['#E3F1E0', '#DFECF8', '#F1E6DA', '#FBE3EC'],
     },
     '5e': {
       conjugaison: ['🍂', '🍁', '🌰', '🍄', '🦔', '🍁', '🎃', '🌰', '🍂'],
       orthographe: ['🍁', '💧', '🦆', '🍂', '🐟', '🌧️', '🍁', '🐸', '💧'],
-      clairs: ['#F3EBD9', '#E2EAF1'],
+      grammaire: ['⛰️', '🍂', '🍄', '🦊', '🌾', '🍁', '🐗', '🌰', '🏔️'],
+      vocabulaire: ['🍎', '🍐', '🎃', '🌻', '🍇', '🐌', '🍁', '🌰', '🍄'],
+      clairs: ['#F3EBD9', '#E2EAF1', '#EFE3D3', '#F7E3E0'],
     },
     '4e': {
       conjugaison: ['❄️', '🌲', '⛄', '🦌', '🌨️', '🌲', '🐧', '❄️', '🧣'],
       orthographe: ['🧊', '❄️', '🐧', '🦭', '⛸️', '🧊', '🐟', '❄️', '🌨️'],
-      clairs: ['#E6F0F2', '#E0EAF7'],
+      grammaire: ['🏔️', '❄️', '🐐', '⛷️', '🌨️', '🦅', '🏔️', '❄️', '⛄'],
+      vocabulaire: ['🌲', '❄️', '🐦', '☃️', '🍊', '🌟', '🧤', '❄️', '🎁'],
+      clairs: ['#E6F0F2', '#E0EAF7', '#EDE7E2', '#F4E6EE'],
     },
     '3e': {
       conjugaison: ['🌙', '⭐', '🦉', '🌲', '✨', '🦇', '🌟', '🌲', '🌙'],
       orthographe: ['🌙', '✨', '🐟', '⭐', '💫', '🌊', '🌟', '🦢', '✨'],
-      clairs: ['#E6E4F2', '#DEE3F4'],
+      grammaire: ['🌙', '🦉', '⛰️', '⭐', '🌌', '🐺', '✨', '🏔️', '🌟'],
+      vocabulaire: ['🌙', '🌸', '🦇', '✨', '🌷', '⭐', '🌺', '💫', '🌙'],
+      clairs: ['#E6E4F2', '#DEE3F4', '#EAE5EE', '#F1E3EF'],
     },
   };
 
@@ -64,6 +72,26 @@
         etape('orthographe-accords-groupe-nom', 'Le groupe du nom', 'des petites renardes rousses'),
         etape('orthographe-participe-passe', 'Le participe passé', 'elle est partie, ils sont venus'),
       ],
+      grammaire: [
+        etape('6e-grammaire-types-phrases', 'Les types de phrases', 'déclarative, interrogative, exclamative, impérative'),
+        etape('6e-grammaire-nature-mots', 'La nature des mots', 'nom, verbe, adjectif, déterminant'),
+        etape('6e-grammaire-sujet', 'Le sujet du verbe', 'Qui est-ce qui… ?'),
+        etape('6e-grammaire-complements-circonstanciels', 'Les compléments circonstanciels', 'où ? quand ? comment ?'),
+        etape('6e-grammaire-determinant-pronom', 'Déterminant ou pronom ?', 'le chat, je le vois'),
+        etape('6e-grammaire-mots-invariables', 'Les mots invariables', 'adverbe, préposition, conjonction', { sixieme: true }),
+        etape('6e-grammaire-cod-coi', 'COD ou COI ?', 'je mange une pomme, je parle à Léa'),
+        etape('6e-grammaire-attribut', 'L’attribut du sujet', 'Roxy est rusée', { sixieme: true }),
+      ],
+      vocabulaire: [
+        etape('6e-vocabulaire-synonymes', 'Les synonymes', 'content = heureux'),
+        etape('6e-vocabulaire-contraires', 'Les contraires', 'grand ≠ petit'),
+        etape('6e-vocabulaire-familles', 'Les familles de mots', 'terre, terrain, enterrer'),
+        etape('6e-vocabulaire-prefixes', 'Les préfixes', 'impossible, refaire, défaire'),
+        etape('6e-vocabulaire-suffixes', 'Les suffixes', 'nageur, jardinage, fillette'),
+        etape('6e-vocabulaire-generiques', 'Les mots génériques', 'une pomme est un fruit'),
+        etape('6e-vocabulaire-sens-propre-figure', 'Sens propre ou sens figuré ?', 'une tempête de neige, une tempête de rires', { sixieme: true }),
+        etape('6e-vocabulaire-niveaux-langue', 'Les niveaux de langue', 'familier, courant, soutenu', { sixieme: true }),
+      ],
     },
     '5e': {
       conjugaison: [
@@ -81,6 +109,22 @@
         etape('5e-orthographe-la-ou-la', 'la, l’a ou là ?', 'la pomme, il l’a vue, viens là'),
         etape('5e-orthographe-peu-ou-peut', 'peu, peut ou peux ?', 'un peu, il peut, je peux'),
         etape('5e-orthographe-pluriel-noms', 'Le pluriel des noms', 'des chevaux, des bijoux, des pneus'),
+      ],
+      grammaire: [
+        etape('5e-grammaire-classes-mots', 'Les classes de mots', 'les huit natures, en révision'),
+        etape('5e-grammaire-pronoms', 'Les sortes de pronoms', 'personnel, possessif, démonstratif, relatif'),
+        etape('5e-grammaire-fonctions', 'Sujet, COD, COI ou attribut ?', 'les fonctions autour du verbe'),
+        etape('5e-grammaire-complements-circonstanciels', 'Les compléments circonstanciels', 'lieu, temps, manière, cause, but'),
+        etape('5e-grammaire-phrase-complexe', 'Phrase simple ou complexe ?', 'un verbe conjugué, ou plusieurs'),
+        etape('5e-grammaire-propositions', 'Juxtaposées, coordonnées ou subordonnées ?', 'relier les propositions'),
+      ],
+      vocabulaire: [
+        etape('5e-vocabulaire-champ-lexical', 'Le champ lexical', 'les mots de la mer, de la peur…'),
+        etape('5e-vocabulaire-homonymes', 'Les homonymes', 'un ver, un verre, vert'),
+        etape('5e-vocabulaire-formation-mots', 'Préfixe, radical, suffixe', 'dé-plac-ement'),
+        etape('5e-vocabulaire-polysemie', 'Les mots à plusieurs sens', 'une souris, deux sens'),
+        etape('5e-vocabulaire-expressions', 'Les expressions imagées', 'avoir un chat dans la gorge'),
+        etape('5e-vocabulaire-emotions', 'Le vocabulaire des émotions', 'joie, peur, colère, tristesse'),
       ],
     },
     '4e': {
@@ -100,6 +144,22 @@
         etape('4e-orthographe-tout', 'tout, tous, toute ou toutes ?', 'tous les jours, toute contente'),
         etape('4e-orthographe-couleurs', 'Les adjectifs de couleur', 'des robes vertes, des yeux marron'),
       ],
+      grammaire: [
+        etape('4e-grammaire-expansions-nom', 'Épithète, complément du nom ou apposition ?', 'les expansions du nom'),
+        etape('4e-grammaire-pronoms-relatifs', 'Les pronoms relatifs', 'qui, que, dont, où'),
+        etape('4e-grammaire-subordonnees', 'Relative, complétive ou circonstancielle ?', 'les propositions subordonnées'),
+        etape('4e-grammaire-circonstancielles', 'Les subordonnées circonstancielles', 'temps, cause, conséquence, but, condition'),
+        etape('4e-grammaire-formes-phrase', 'Les formes de phrase', 'négative, passive, emphatique, impersonnelle'),
+        etape('4e-grammaire-modes', 'Les modes du verbe', 'indicatif, subjonctif, impératif…'),
+      ],
+      vocabulaire: [
+        etape('4e-vocabulaire-racines-latines', 'Les racines latines', 'aqua, terra, manus…'),
+        etape('4e-vocabulaire-racines-grecques', 'Les racines grecques', 'hydro, géo, phobie…'),
+        etape('4e-vocabulaire-paronymes', 'Les paronymes', 'éruption ou irruption ?'),
+        etape('4e-vocabulaire-figures-style', 'Les figures de style', 'comparaison, métaphore, personnification…'),
+        etape('4e-vocabulaire-connecteurs', 'Les connecteurs logiques', 'donc, car, mais, pourtant…'),
+        etape('4e-vocabulaire-melioratif-pejoratif', 'Mélioratif ou péjoratif ?', 'une demeure ou une bicoque'),
+      ],
     },
     '3e': {
       conjugaison: [
@@ -118,10 +178,27 @@
         etape('3e-orthographe-homophones', 'Les homophones : révision', 'tous les pièges, mélangés'),
         etape('3e-orthographe-participe-revision', 'Le participe passé : révision', 'être, avoir, verbes pronominaux'),
       ],
+      grammaire: [
+        etape('3e-grammaire-classes-revision', 'Les classes de mots : révision', 'la nature de chaque mot'),
+        etape('3e-grammaire-fonctions-revision', 'Les fonctions : révision', 'sujet, COD, épithète, apposition…'),
+        etape('3e-grammaire-subordonnees', 'Les propositions subordonnées', 'relative, complétive, interrogative indirecte…'),
+        etape('3e-grammaire-rapports-logiques', 'Les rapports logiques', 'cause, conséquence, but, opposition, concession'),
+        etape('3e-grammaire-valeurs-present', 'Les valeurs du présent', 'vérité générale, habitude, narration…'),
+        etape('3e-grammaire-voix-passive', 'Voix active ou passive ?', 'et le complément d’agent'),
+      ],
+      vocabulaire: [
+        etape('3e-vocabulaire-figures-style', 'Les figures de style', 'antithèse, oxymore, gradation…'),
+        etape('3e-vocabulaire-etymologie', 'Racines grecques et latines', 'révision : chrono, bio, omni…'),
+        etape('3e-vocabulaire-mots-rares', 'Des mots pour briller', 'éphémère, perspicace, indolent…'),
+        etape('3e-vocabulaire-modalisation', 'Certitude ou doute ?', 'sans doute, peut-être, il semble…'),
+        etape('3e-vocabulaire-registres', 'Les registres', 'comique, tragique, lyrique, épique…'),
+        etape('3e-vocabulaire-locutions-latines', 'Les expressions latines', 'a priori, in extremis…'),
+      ],
     },
   };
 
-  // Les 4 zones d'une forêt : deux chemins construits, deux « Bientôt ! »
+  // Les 4 zones d'une forêt, avec leurs étapes
+  // (une zone marquée « bientot: true » apparaîtrait fermée, avec un panneau « Bientôt ! »)
   function foret(niveau) {
     const decors = DECORS[niveau];
     return [
@@ -137,11 +214,13 @@
       },
       {
         id: 'grammaire', niveau, nom: 'La Colline de la Grammaire', matiere: 'Grammaire', icone: '⛰️',
-        couleur: '#A67C52', couleurClaire: '#F1E6DA', bientot: true, etapes: [],
+        couleur: '#A67C52', couleurClaire: decors.clairs[2], decors: decors.grammaire,
+        etapes: ETAPES[niveau].grammaire,
       },
       {
         id: 'vocabulaire', niveau, nom: 'Le Jardin du Vocabulaire', matiere: 'Vocabulaire', icone: '🌸',
-        couleur: '#EC6F9B', couleurClaire: '#FBE3EC', bientot: true, etapes: [],
+        couleur: '#EC6F9B', couleurClaire: decors.clairs[3], decors: decors.vocabulaire,
+        etapes: ETAPES[niveau].vocabulaire,
       },
     ];
   }

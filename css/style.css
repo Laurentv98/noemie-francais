@@ -707,6 +707,9 @@ button:disabled { cursor: default; }
   font-weight: 800;
 }
 .raccourci b { color: var(--orange-fonce); }
+/* Les 4 chemins tiennent sur une ligne : leur icône et leurs étoiles (le nom est en haut de chaque chemin) */
+.raccourci:not(.raccourci-niveau) { flex: 1; justify-content: center; }
+.raccourci:not(.raccourci-niveau) > span { display: none; }
 
 .carte-aventure { display: flex; flex-direction: column; gap: 24px; }
 
@@ -999,6 +1002,15 @@ button:disabled { cursor: default; }
   animation: apparaitre .3s ease;
 }
 .indice { color: var(--brun-doux); font-size: .72em; }
+/* Grammaire et vocabulaire : le mot ou le groupe à observer */
+.souligne {
+  color: var(--orange-fonce);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--orange);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
 .precision {
   display: block;
   margin-top: 8px;
@@ -1031,6 +1043,10 @@ button:disabled { cursor: default; }
   box-shadow: 0 5px 0 var(--creme-fonce);
   transition: transform .08s, box-shadow .08s;
 }
+/* Des réponses longues (des définitions) : une seule colonne, un peu plus petit */
+.choix-longs { grid-template-columns: 1fr; }
+.choix-longs .bouton-choix { min-height: 62px; padding: 10px 18px; font-size: 1.25rem; line-height: 1.3; }
+.enonce.enonce-long { font-size: clamp(1.25rem, 3.6vw, 1.65rem); line-height: 1.5; }
 .bouton-choix:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--creme-fonce); }
 .bouton-choix:disabled:not(.juste):not(.faux) { opacity: .45; }
 .bouton-choix.juste {
@@ -1265,6 +1281,12 @@ button:disabled { cursor: default; }
   .choix-avatars { grid-template-columns: repeat(4, 1fr); }
   .grille-profils { grid-template-columns: 1fr 1fr; gap: 14px; }
   .joueur-prenom { display: none; }
+  /* Sur un téléphone, l'icône suffit (les étoiles sont en haut de chaque chemin) */
+  .raccourcis-zones { gap: 6px; }
+  .raccourci { gap: 4px; padding: 6px 12px; }
+  .raccourci:not(.raccourci-niveau) { font-size: 1.2rem; }
+  .raccourci:not(.raccourci-niveau) > b,
+  .raccourci-niveau .saison { display: none; }
   .puce-flamme { padding: 5px 10px; font-size: 1rem; }
   .grille-niveaux { gap: 12px; }
   .niveau-nom { font-size: 2.1rem; }
