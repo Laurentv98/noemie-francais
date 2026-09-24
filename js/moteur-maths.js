@@ -256,7 +256,7 @@
       },
       // (si l'énoncé écrit déjà l'unité juste après le trou, on ne la répète pas)
       solution: solution || solutionPar(enonce, ecrit
-        + (unite && !(enonce.split('___')[1] || '').trimStart().startsWith(unite) ? ESPACE + unite : '')),
+        + (unite && !(enonce.split('___')[1] || '').trimStart().startsWith(unite) ? (unite === '°' ? '' : ESPACE) + unite : '')),
       explication,
     };
   }

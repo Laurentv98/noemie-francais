@@ -1154,9 +1154,9 @@ button:disabled { cursor: default; }
 /* Un angle : les trois lettres, avec un petit chapeau au-dessus */
 .angle {
   display: inline-block;
-  padding-top: .28em;
+  padding-top: .34em;
   line-height: 1;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpolyline points='4,18 50,3 96,18' fill='none' stroke='%235A3521' stroke-width='5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") top center / 80% .3em no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpolyline points='4,18 50,3 96,18' fill='none' stroke='%235A3521' stroke-width='3' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") top center / 76% .34em no-repeat;
 }
 /* Un tableau dans une question (proportionnalité, statistiques…) */
 .tableau-maths { margin: 6px auto 12px; border-collapse: collapse; font-size: .8em; }
