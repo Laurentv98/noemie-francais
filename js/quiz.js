@@ -161,6 +161,26 @@
       else if (attendues.some(r => sansAccents(r) === sansAccents(nettoyer(valeur)))) presque = 'Presque ! Attention aux accents.';
     }
     montrerRetour(q, juste, presque);
+    ajouterSignalement(q, valeur);
+  }
+
+  // Sous la bulle de Roxy, un petit lien pour signaler une erreur par mail, avec la question déjà recopiée
+  // (jamais le prénom de l'enfant). Caché tant qu'il n'y a pas d'adresse de contact dans RM.EDITEUR.
+  function ajouterSignalement(q, valeur) {
+    const etape = partie.etape;
+    const lien = RM.lienSignalement(`Renard Malin : une erreur dans « ${etape.titre} » ?`, [
+      `Étape : ${etape.titre} (${etape.id})`,
+      `Consigne : ${RM.texteSeul(q.consigne)}`,
+      `Question : ${$('quiz-enonce').textContent.replace(/\s+/g, ' ').trim().slice(0, 400)}`,
+      `Réponse donnée : ${valeur}`,
+      `Réponse de l’appli : ${RM.texteSeul(q.solution || q.reponse)}`,
+      '',
+      'Qu’est-ce qui ne va pas ?',
+      '',
+    ].join('\n'));
+    if (!lien) return;
+    $('retour-bulle').insertAdjacentHTML('beforeend',
+      `<a class="lien-signaler" href="${RM.echapper(lien)}">🚩 Une erreur dans cette question&nbsp;?</a>`);
   }
 
   // Roxy réagit : elle saute de joie, ou elle explique la règle

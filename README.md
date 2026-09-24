@@ -2,7 +2,7 @@
 
 Une application pour réviser le français et les maths au collège, en jouant avec Roxy la renarde.
 
-👉 **Jouer : https://laurentv98.github.io/noemie-francais/**
+👉 **Jouer : https://laurentv98.github.io/renard-malin/**
 
 - **4 niveaux au choix** : 6e (les bases du CM2 et les nouveautés de 6e), 5e, 4e et 3e, chacun avec sa forêt et sa saison 🌸🍂❄️🌙.
 - **Deux côtés dans chaque forêt** : 📖 le français et 🔢 les maths. Un bouton en haut de la carte permet de passer de l'un à l'autre.
@@ -37,6 +37,8 @@ Renard Malin s'ouvre alors en plein écran, avec l'icône de Roxy.
 | `js/moteur-phrases.js` | le moteur des étapes à phrases (homophones, accords, mots soulignés à classer, grammaire, vocabulaire…) |
 | `js/moteur-maths.js` | le moteur des maths : les nombres écrits à la française, les fractions, les questions et les figures |
 | `js/course.js` | la course de Roxy : le jeu en 3D (Three.js est chargé depuis jsDelivr au lancement de la course) |
+| `js/outils.js` | les petites fonctions partagées, et l'éditeur (`RM.EDITEUR`) avec l'adresse des liens « Signaler une erreur » |
 | `js/` (autres fichiers) | le fonctionnement : quiz, carte, niveaux, profils, flamme, sauvegarde, espace parent |
+| `infos.html` | les informations légales : mentions légales, conditions d'utilisation, confidentialité |
 | `css/style.css` | les couleurs et la mise en page |
 | `img/` | Roxy et les icônes |

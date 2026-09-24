@@ -287,6 +287,8 @@
       ? profils.map(p => `<li>${RM.htmlAvatar(p, 'petit')} <span class="reglage-prenom">${RM.echapper(p.prenom)}</span>
           <button class="bouton-reglage danger" data-action="supprimer" data-profil="${p.id}">🗑️ Supprimer</button></li>`).join('')
       : '<li class="bloc-sous-titre">Aucun profil.</li>';
+    const signalement = RM.lienSignalement('Renard Malin : signaler une erreur',
+      'Bonjour,\n\nÉtape concernée (niveau, matière, titre de l’étape) :\n\nCe qui ne va pas :\n\n');
     return `<section class="carte bloc-parent reglages">
       <h3>⚙️ Réglages</h3>
 
@@ -305,6 +307,15 @@
 
       <h4>Code parent</h4>
       <button class="bouton-reglage" data-action="code">🔑 Changer le code</button>
+
+      <h4>À propos</h4>
+      <p class="bloc-sous-titre">Renard Malin est gratuit, sans publicité et sans compte. Les questions et les leçons
+        sont préparées avec soin, mais des erreurs peuvent subsister : l’application aide à réviser,
+        elle ne remplace pas les cours des professeurs.</p>
+      <div class="boutons-reglages">
+        ${signalement ? `<a class="bouton-reglage" href="${RM.echapper(signalement)}">✉️ Signaler une erreur</a>` : ''}
+        <a class="bouton-reglage" href="infos.html">📄 Mentions légales et confidentialité</a>
+      </div>
     </section>`;
   }
 

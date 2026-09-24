@@ -38,6 +38,23 @@ window.RM = {
     return div.innerHTML;
   },
 
+  // Qui publie l'application (les mentions légales complètes sont dans infos.html).
+  // Tant que l'adresse est vide, les liens « Signaler une erreur » restent cachés.
+  EDITEUR: { nom: 'TechApply', email: 'hello.techapply@gmail.com' },
+
+  // Le texte d'un bout de HTML, sans les balises (pour l'écrire dans un mail)
+  texteSeul(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent.replace(/\s+/g, ' ').trim();
+  },
+
+  // Un lien qui ouvre un mail déjà rempli pour signaler une erreur, ou null sans adresse de contact
+  lienSignalement(sujet, corps) {
+    if (!RM.EDITEUR.email) return null;
+    return `mailto:${RM.EDITEUR.email}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+  },
+
   // Le petit rond avec l'animal du joueur, sur sa couleur
   htmlAvatar(profil, taille = '') {
     const couleur = RM.COULEURS.find(c => c.nom === profil.couleur) || RM.COULEURS[0];
