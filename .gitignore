@@ -1,0 +1,15 @@
+# Ce qui reste sur l'ordinateur et ne part pas sur GitHub
+
+# Le cahier des charges (il contient des informations personnelles)
+CAHIER_DES_CHARGES.md
+
+# Les images d'origine de Roxy (les versions détourées sont dans img/)
+Gemini_Generated_Image_*.jpeg
+
+# Les réglages des outils
+.obsidian/
+.claude/
+
+# Fichiers créés par Windows
+Thumbs.db
+desktop.ini

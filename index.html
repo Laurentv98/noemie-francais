@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renard Malin</title>
+  <meta name="description" content="Révise le français avec Roxy la renarde !">
+  <meta name="theme-color" content="#FFF7EC">
+
+  <!-- Pour l'installer sur l'écran d'accueil de l'iPad, en plein écran, avec l'icône de Roxy -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="apple-touch-icon" href="img/icone-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Renard Malin">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- ⚠️ Après chaque mise à jour, changer le numéro « v= » partout dans ce fichier :
+       l'iPad saura alors qu'il doit charger la nouvelle version (et pas une ancienne gardée en mémoire). -->
+  <link rel="stylesheet" href="css/style.css?v=2026-09-24">
+</head>
+<body>
+  <main id="app">
+
+    <!-- Écran 1 : Accueil -->
+    <section class="ecran actif" id="ecran-accueil">
+      <img class="roxy roxy-accueil" src="img/roxy-ouais.png" alt="Roxy la renarde saute de joie">
+      <h1 class="titre-appli">Renard Malin</h1>
+      <p class="sous-titre">Révise le français avec Roxy !</p>
+      <button class="bouton bouton-principal bouton-geant" id="accueil-commencer">C’est parti ! 🦊</button>
+      <button class="lien-parent" id="accueil-parent">👨‍👧 Espace parent</button>
+    </section>
+
+    <!-- Écran : le code parent -->
+    <section class="ecran" id="ecran-code">
+      <header class="barre">
+        <button class="bouton-rond" id="code-retour" data-aller="accueil" aria-label="Retour">←</button>
+        <h2>Espace parent</h2>
+        <span class="bouton-rond fantome"></span>
+      </header>
+      <div class="carte carte-code">
+        <p class="code-titre" id="code-titre">Code parent</p>
+        <p class="code-aide" id="code-aide"></p>
+        <div class="code-points" id="code-points" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <p class="erreur" id="code-erreur" role="alert" hidden></p>
+        <div class="clavier" id="clavier"></div>
+        <button class="bouton-lien" id="code-oublie">Code oublié ?</button>
+      </div>
+    </section>
+
+    <!-- Écran : l'espace parent -->
+    <section class="ecran" id="ecran-parent">
+      <header class="barre">
+        <button class="bouton-rond" id="parent-quitter" aria-label="Fermer l’espace parent">🔒</button>
+        <h2>Espace parent</h2>
+        <span class="bouton-rond fantome"></span>
+      </header>
+      <nav class="onglets-profils" id="parent-onglets" aria-label="Choisir un enfant"></nav>
+      <div class="tableau-parent" id="parent-tableau"></div>
+      <div id="parent-reglages"></div>
+      <input type="file" id="parent-fichier" accept=".json,application/json" hidden>
+    </section>
+
+    <!-- Écran : Qui joue ? -->
+    <section class="ecran" id="ecran-profils">
+      <header class="barre">
+        <button class="bouton-rond" data-aller="accueil" aria-label="Accueil">🏠</button>
+        <h2>Qui joue ?</h2>
+        <span class="bouton-rond fantome"></span>
+      </header>
+      <div class="grille-profils" id="grille-profils"></div>
+    </section>
+
+    <!-- Écran : Nouveau joueur (ou modifier son profil) -->
+    <section class="ecran" id="ecran-profil-form">
+      <header class="barre">
+        <button class="bouton-rond" id="form-retour" data-aller="profils" aria-label="Retour">←</button>
+        <h2 id="form-titre">Nouveau joueur</h2>
+        <span class="bouton-rond fantome"></span>
+      </header>
+      <form class="carte formulaire-profil" id="form-profil" autocomplete="off">
+        <div id="form-apercu"></div>
+        <label class="etiquette" for="form-prenom">Comment tu t’appelles ?</label>
+        <input id="form-prenom" type="text" maxlength="12" autocomplete="off" autocorrect="off"
+               autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Ton prénom">
+        <p class="erreur" id="form-erreur" hidden></p>
+        <p class="etiquette">Choisis ton animal</p>
+        <div class="choix-avatars" id="form-avatars"></div>
+        <p class="etiquette">Choisis ta couleur</p>
+        <div class="choix-couleurs" id="form-couleurs"></div>
+        <button class="bouton bouton-principal" type="submit" id="form-valider">C’est moi ! ✔</button>
+      </form>
+    </section>
+
+    <!-- Écran : La carte d'aventure -->
+    <section class="ecran" id="ecran-carte">
+      <div class="entete-carte">
+        <header class="barre">
+          <button class="bouton-rond" data-aller="accueil" aria-label="Accueil">🏠</button>
+          <h2 id="carte-titre">La forêt</h2>
+          <button class="puce-flamme" id="carte-flamme" aria-label="Ma flamme"></button>
+          <button class="puce-joueur" id="carte-joueur" data-aller="profils" aria-label="Changer de joueur"></button>
+        </header>
+        <nav class="raccourcis-zones" id="raccourcis-zones" aria-label="Aller à une zone"></nav>
+      </div>
+      <div class="carte-aventure" id="carte-aventure"></div>
+    </section>
+
+    <!-- Écran : Combien de questions ? -->
+    <section class="ecran" id="ecran-duree">
+      <header class="barre">
+        <button class="bouton-rond" data-aller="carte" aria-label="Retour à la carte">←</button>
+        <h2 id="duree-titre"></h2>
+        <span class="bouton-rond fantome"></span>
+      </header>
+      <div class="carte carte-duree">
+        <p class="duree-sous-titre" id="duree-sous-titre"></p>
+        <img class="roxy roxy-moyenne" src="img/roxy-reflechit.png" alt="">
+        <p class="question-duree">Combien de questions ?</p>
+        <div class="choix-duree">
+          <button class="bouton-duree" data-duree="5"><span class="nombre">5</span><span>Rapide</span></button>
+          <button class="bouton-duree" data-duree="10"><span class="nombre">10</span><span>Moyen</span></button>
+          <button class="bouton-duree" data-duree="20"><span class="nombre">20</span><span>Marathon</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Écran 4 : Les questions -->
+    <section class="ecran" id="ecran-quiz">
+      <header class="barre">
+        <button class="bouton-rond" id="quiz-quitter" aria-label="Arrêter la partie">🏠</button>
+        <div class="progression">
+          <div class="progression-texte" id="quiz-numero"></div>
+          <div class="progression-barre"><div id="quiz-barre"></div></div>
+        </div>
+        <span class="compteur-points" id="quiz-points">✨ 0</span>
+        <button class="bouton-aide" id="quiz-aide">💡 Aide</button>
+      </header>
+      <div class="carte carte-question">
+        <p class="consigne" id="quiz-consigne"></p>
+        <div class="enonce" id="quiz-enonce"></div>
+        <div id="quiz-reponse"></div>
+      </div>
+      <div class="retour" id="quiz-retour" hidden>
+        <img class="roxy roxy-retour" id="retour-roxy" src="img/roxy-reflechit.png" alt="Roxy">
+        <div class="bulle" id="retour-bulle"></div>
+      </div>
+      <button class="bouton bouton-principal" id="quiz-suivant" hidden>Suivant →</button>
+    </section>
+
+    <!-- Écran 5 : Le résultat -->
+    <section class="ecran" id="ecran-resultats">
+      <img class="roxy roxy-resultat" id="resultat-roxy" src="img/roxy-ouais.png" alt="Roxy">
+      <div id="resultat-etoiles"></div>
+      <p class="resultat-score" id="resultat-score"></p>
+      <p class="resultat-message" id="resultat-message"></p>
+      <div id="resultat-flamme"></div>
+      <div class="boutons-resultat">
+        <button class="bouton bouton-secondaire" id="resultat-rejouer">🔁 Rejouer</button>
+        <button class="bouton bouton-principal" data-aller="carte">🗺️ La carte</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- La fenêtre Aide (la petite leçon) -->
+  <div class="fenetre-fond" id="aide" hidden>
+    <div class="fenetre" role="dialog" aria-labelledby="aide-titre">
+      <div class="fenetre-entete">
+        <img src="img/roxy-reflechit.png" alt="">
+        <h3 id="aide-titre"></h3>
+      </div>
+      <div class="fenetre-contenu lecon" id="aide-contenu"></div>
+      <button class="bouton bouton-principal" id="aide-fermer">J’ai compris !</button>
+    </div>
+  </div>
+
+  <!-- Petite bulle d'information (ex. : « Gagne 3 étoiles pour ouvrir cette étape ») -->
+  <div class="bulle-info" id="bulle-info" role="status" hidden></div>
+
+  <!-- L'ordre compte : d'abord les outils, puis les données, puis le moteur -->
+  <script src="js/outils.js?v=2026-09-24"></script>
+  <script src="data/verbes.js?v=2026-09-24"></script>
+  <script src="data/conjugaison.js?v=2026-09-24"></script>
+  <script src="data/orthographe.js?v=2026-09-24"></script>
+  <script src="data/foret.js?v=2026-09-24"></script>
+  <script src="js/progression.js?v=2026-09-24"></script>
+  <script src="js/flamme.js?v=2026-09-24"></script>
+  <script src="js/quiz.js?v=2026-09-24"></script>
+  <script src="js/profils.js?v=2026-09-24"></script>
+  <script src="js/carte.js?v=2026-09-24"></script>
+  <script src="js/parent.js?v=2026-09-24"></script>
+  <script src="js/app.js?v=2026-09-24"></script>
+</body>
+</html>
