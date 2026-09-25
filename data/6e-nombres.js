@@ -7,22 +7,22 @@
 
 (function () {
   const {
-    entier, parmi, entierSauf, decimal, ecrire, decimalesDe, net, arrondir, euros, mesure, lireNombre, egaux,
+    entier, parmi, entierSauf, decimal, ecrire, decimalesDe, net, arrondir, francs, mesure, lireNombre, egaux,
     frac, fracTexte, simplifier, pgcd, choix, nombre, fraction, vraiFaux, ajouterEtape, figures,
   } = RM.maths;
 
   // ======================================================================
   // Des petites aides, pour toutes les étapes
   // ======================================================================
-  // Les enfants des problèmes, avec leur pronom
-  const ENFANTS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'], ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il']];
+  // Les enfants des problèmes, avec leur pronom : des prénoms de toutes les communautés de Nouvelle-Calédonie
+  const ENFANTS = RM.maths.PRENOMS.map(({ nom, il }) => [nom, il]);
   // Deux enfants différents : { nom, il, Il, de } (de : « de Tom », « d’Inès »)
   const deuxEnfants = () => RM.melanger(ENFANTS).slice(0, 2)
-    .map(([nom, il]) => ({ nom, il, Il: il === 'il' ? 'Il' : 'Elle', de: /^[AEIOUÉ]/.test(nom) ? `d’${nom}` : `de ${nom}` }));
+    .map(([nom, il]) => ({ nom, il, Il: il === 'il' ? 'Il' : 'Elle', de: /^([AEIOUÉ]|Hu)/.test(nom) ? `d’${nom}` : `de ${nom}` }));
   const unEnfant = () => deuxEnfants()[0];
 
-  // Un prix de 5 en 5 centimes : prix(1, 4) → 2,35
-  const prix = (min, max) => entier(Math.round(min * 20), Math.round(max * 20)) / 20;
+  // Un décimal de 5 en 5 centièmes : deCinqEnCinq(1, 4) → 2,35
+  const deCinqEnCinq = (min, max) => entier(Math.round(min * 20), Math.round(max * 20)) / 20;
 
   // Les pièges vraiment faux : ni égaux à la réponse (ni à un piège déjà choisi), ni égaux entre eux, ni négatifs
   const valeurDe = p => (typeof p === 'number' ? net(p) : lireNombre(p));
@@ -1275,28 +1275,30 @@
         const [p1, p2] = deuxEnfants();
         const probleme = parmi([
           () => {
-            const [a, b] = [prix(5, 15), prix(1, 4)];
-            return { enonce: `${p1.nom} achète un livre à ${euros(a)} et un stylo à ${euros(b)}. Combien paie-t-${p1.il} en tout ?`,
-              reponse: net(a + b), unite: '€', calcul: `${euros(a)} + ${euros(b)} = <b>${euros(net(a + b))}</b>` };
+            const [a, b] = [deCinqEnCinq(0.6, 2.5), deCinqEnCinq(0.3, 1.5)];
+            return { enonce: `${p1.nom} pêche deux poissons dans le lagon : le premier pèse ${mesure(a, 'kg')}, le second ${mesure(b, 'kg')}. `
+              + 'Quelle est la masse de sa pêche ?',
+              reponse: net(a + b), unite: 'kg', calcul: `${mesure(a, 'kg')} + ${mesure(b, 'kg')} = <b>${mesure(net(a + b), 'kg')}</b>` };
           },
           () => {
             const c = entier(20, 50);
-            const a = prix(8, c - 2);
-            return { enonce: `${p1.nom} a ${euros(c)} dans sa tirelire. ${p1.Il} achète un jeu à ${euros(a)}. Combien lui reste-t-il ?`,
-              reponse: net(c - a), unite: '€', calcul: `${euros(c)} − ${euros(a)} = <b>${euros(net(c - a))}</b>` };
+            const a = deCinqEnCinq(8, c - 2);
+            return { enonce: `La tribu de sa grand-mère est à ${mesure(c, 'km')} de chez ${p1.nom}. `
+              + `En voiture, ${p1.il} a déjà fait ${mesure(a, 'km')}. Combien de kilomètres reste-t-il à faire ?`,
+              reponse: net(c - a), unite: 'km', calcul: `${mesure(c, 'km')} − ${mesure(a, 'km')} = <b>${mesure(net(c - a), 'km')}</b>` };
           },
           () => {
-            const [a, b] = [prix(0.9, 1.5), prix(0.9, 1.6)];
-            const billet = parmi([5, 10]);
-            const r = net(billet - a - b);
-            return { enonce: `${p1.nom} achète une baguette à ${euros(a)} et un croissant à ${euros(b)}. ${p1.Il} paie avec `
-              + `un billet de ${euros(billet)}. Combien la boulangère lui rend-elle ?`,
-              reponse: r, unite: '€',
-              calcul: `${euros(a)} + ${euros(b)} = ${euros(net(a + b))}, puis ${euros(billet)} − ${euros(net(a + b))} = <b>${euros(r)}</b>` };
+            const [a, b] = [deCinqEnCinq(0.9, 1.5), deCinqEnCinq(0.9, 1.6)];
+            const coupon = parmi([5, 10]);
+            const r = net(coupon - a - b);
+            return { enonce: `${p1.nom} a ${mesure(coupon, 'm')} de tissu à fleurs. ${p1.Il} en coupe ${mesure(a, 'm')} pour un coussin `
+              + `et ${mesure(b, 'm')} pour un sac. Combien de mètres de tissu lui reste-t-il ?`,
+              reponse: r, unite: 'm',
+              calcul: `${mesure(a, 'm')} + ${mesure(b, 'm')} = ${mesure(net(a + b), 'm')}, puis ${mesure(coupon, 'm')} − ${mesure(net(a + b), 'm')} = <b>${mesure(r, 'm')}</b>` };
           },
           () => {
             const [a, b] = [decimal(0.5, 3, 2), decimal(0.2, 2, 1)];
-            return { enonce: `Au marché, Mamie achète ${mesure(a, 'kg')} de pommes et ${mesure(b, 'kg')} de poires. `
+            return { enonce: `Au marché, Mamie achète ${mesure(a, 'kg')} de letchis et ${mesure(b, 'kg')} de mangues. `
               + 'Quelle masse de fruits a-t-elle achetée ?',
               reponse: net(a + b), unite: 'kg', calcul: `${mesure(a, 'kg')} + ${mesure(b, 'kg')} = <b>${mesure(net(a + b), 'kg')}</b>` };
           },
@@ -1319,7 +1321,6 @@
           enonce: probleme.enonce,
           reponse: probleme.reponse,
           unite: probleme.unite,
-          prix: probleme.unite === '€',
           explication: `${probleme.calcul}<br>On aligne bien les virgules, et on n’oublie pas les retenues.`,
         });
       }
@@ -1706,16 +1707,22 @@
         const p1 = unEnfant();
         const pb = parmi([
           () => {
-            const [a, n] = [prix(1, 4), entier(3, 8)];
-            return { enonce: `Un cahier coûte ${euros(a)}. ${p1.nom} en achète ${n}. Combien paie-t-${p1.il} ?`, a, n, unite: '€' };
+            const [a, n] = [deCinqEnCinq(0.25, 0.6), entier(3, 8)];
+            return { enonce: `Au marché, ${p1.nom} achète ${n} mangues de ${mesure(a, 'kg')} chacune. Quelle masse de mangues rapporte-t-${p1.il} ?`,
+              a, n, unite: 'kg' };
           },
           () => {
             const [a, n] = [parmi([0.75, 1.5, 0.25, 0.33]), entierSauf(2, 12, [10])];
             return { enonce: `Une bouteille contient ${mesure(a, 'L')} de jus. Combien de litres de jus y a-t-il dans ${n} bouteilles ?`, a, n, unite: 'L' };
           },
           () => {
-            const [a, n] = [parmi([2, 4, 5, 6, 8]), parmi([1.5, 2.5, 0.5, 1.2, 3.5])];
-            return { enonce: `Papi achète ${mesure(n, 'kg')} de cerises à ${euros(a)} le kilo. Combien paie-t-il ?`, a, n, unite: '€' };
+            // Le décimal est dans la quantité : le prix au kilo et le prix à payer sont des francs, sans centimes
+            // (des crevettes : 1 à 2 kg seulement, c'est cher ; des letchis : jusqu'à 3,5 kg)
+            const [quoi, a, n] = parmi([
+              ['crevettes', parmi([1800, 2000, 2400, 2500, 3000]), parmi([1.2, 1.5, 1.8])],
+              ['letchis', parmi([400, 500, 600, 800]), parmi([1.5, 2.5, 0.5, 1.2, 3.5])],
+            ]);
+            return { enonce: `Papi achète ${mesure(n, 'kg')} de ${quoi} à ${francs(a)} le kilo. Combien paie-t-il ?`, a, n, unite: 'F' };
           },
           () => {
             const [a, n] = [parmi([0.4, 0.25, 0.5, 0.8, 1.2]), entier(3, 9)];
@@ -1727,12 +1734,15 @@
           },
           () => {
             const [a, n] = [parmi([1.25, 0.75, 2.5, 1.5]), entier(3, 8)];
-            return { enonce: `Une planche mesure ${mesure(a, 'm')}. On en met ${n} bout à bout. Quelle longueur obtient-on ?`, a, n, unite: 'm' };
+            return { enonce: `Une planche de kaori mesure ${mesure(a, 'm')}. On en met ${n} bout à bout. Quelle longueur obtient-on ?`, a, n, unite: 'm' };
           },
         ])();
         const r = net(pb.a * pb.n);
-        const ecrit = x => (pb.unite === '€' ? euros(x) : mesure(x, pb.unite));
+        const enFrancs = pb.unite === 'F';
+        const ecrit = x => (enFrancs ? francs(x) : mesure(x, pb.unite));
         const oeufs = pb.unite === 'œufs';
+        // Des œufs ou des francs : pas de virgule dans les pièges
+        const entiers = oeufs || enFrancs;
         const explication = `On multiplie : ${ecrit(pb.a)} × ${ecrire(pb.n)} = <b>${ecrit(r)}</b>.<br>`
           + (oeufs ? 'On a le même nombre d’œufs dans chaque boîte : c’est une multiplication.'
             : 'Vérifie avec un ordre de grandeur, et compte bien les chiffres après la virgule.');
@@ -1742,7 +1752,7 @@
             enonce: pb.enonce,
             reponse: r,
             unite: pb.unite,
-            prix: pb.unite === '€',
+            enFrancs,
             explication,
           });
         }
@@ -1751,8 +1761,8 @@
           enonce: pb.enonce,
           reponse: ecrit(r),
           // Additionner au lieu de multiplier, la virgule mal placée, une fois de trop
-          // (des œufs : pas de virgule dans les pièges)
-          pieges: piegesAutour(r, [pb.a + pb.n, r * 10, r / 10, r + pb.a, r - pb.a].map(net).filter(p => !oeufs || Number.isInteger(p))).map(ecrit),
+          // (des œufs ou des francs : pas de virgule dans les pièges)
+          pieges: piegesAutour(r, [pb.a + pb.n, r * 10, r / 10, r + pb.a, r - pb.a].map(net).filter(p => !entiers || Number.isInteger(p))).map(ecrit),
           explication,
         });
       }
@@ -1984,11 +1994,11 @@
             const D = d * q + r;
             const quoi = Math.random() < 0.5;
             return {
-              enonce: `Mamie partage ${D} bonbons entre ${d} enfants : chaque enfant reçoit le même nombre de bonbons, le plus possible. `
-                + (quoi ? 'Combien de bonbons chaque enfant reçoit-il ?' : 'Combien de bonbons reste-t-il ?'),
+              enonce: `Mamie partage ${D} letchis entre ${d} enfants : chaque enfant reçoit le même nombre de letchis, le plus possible. `
+                + (quoi ? 'Combien de letchis chaque enfant reçoit-il ?' : 'Combien de letchis reste-t-il ?'),
               reponse: quoi ? q : r,
-              unite: 'bonbons',
-              explication: `${D} = ${d} × ${q} + ${r}, avec ${r} &lt; ${d} : chaque enfant reçoit <b>${q}</b> bonbons, et il en reste <b>${r}</b>.`,
+              unite: 'letchis',
+              explication: `${D} = ${d} × ${q} + ${r}, avec ${r} &lt; ${d} : chaque enfant reçoit <b>${q}</b> letchis, et il en reste <b>${r}</b>.`,
             };
           },
           () => {
@@ -1997,10 +2007,12 @@
             const r = entier(1, d - 1);
             const D = d * q + r;
             return {
-              enonce: `${p1.nom} range ${D} photos dans un album, ${d} photos par page. Combien de pages lui faut-il ?`,
+              enonce: `${p1.nom} range ${D} photos de ses vacances à ${parmi(['Lifou', 'Maré', 'Ouvéa', 'l’île des Pins'])} dans un album, `
+                + `${d} photos par page. Combien de pages lui faut-il ?`,
               reponse: q + 1,
               unite: 'pages',
-              explication: `${D} = ${d} × ${q} + ${r} : ${q} pages pleines, et <b>une page de plus</b> pour les ${r} dernières photos.<br>`
+              explication: `${D} = ${d} × ${q} + ${r} : ${q} pages pleines, et <b>une page de plus</b> pour `
+                + `${r === 1 ? 'la dernière photo' : `les ${r} dernières photos`}.<br>`
                 + `Il faut <b>${q + 1}</b> pages.`,
             };
           },
@@ -2009,11 +2021,12 @@
             let P;
             do { P = entier(9, 40); } while (P % n === 0);
             return {
-              enonce: `${n} amis partagent le prix d’un gâteau de ${euros(P)} en parts égales. Combien paie chacun ?`,
+              enonce: `Le sentier fait ${mesure(P, 'km')}. La famille ${p1.de} le découpe en ${n} étapes de même longueur. `
+                + 'Combien mesure chaque étape ?',
               reponse: net(P / n),
-              unite: '€',
-              explication: `${ecrire(P)} ÷ ${n} = <b>${euros(net(P / n))}</b> (on continue la division après la virgule).<br>`
-                + `Vérifie : ${euros(net(P / n))} × ${n} = ${euros(P)}.`,
+              unite: 'km',
+              explication: `${ecrire(P)} ÷ ${n} = <b>${mesure(net(P / n), 'km')}</b> (on continue la division après la virgule).<br>`
+                + `Vérifie : ${ecrire(net(P / n))} × ${n} = ${ecrire(P)}.`,
             };
           },
           () => {
@@ -2034,7 +2047,6 @@
           enonce: pb.enonce,
           reponse: pb.reponse,
           unite: pb.unite,
-          prix: pb.unite === '€',
           explication: pb.explication,
         });
       }
@@ -2188,14 +2200,14 @@
         const [p1, p2] = deuxEnfants();
         // Chaque situation a ses nombres réalistes (un livre de 40 à 120 pages, une classe de 20 à 30 élèves…)
         const situations = [
-          { min: 12, max: 60, texte: Q => `${p1.nom} a ${Q} billes. ${p1.Il} donne ${lesFraction(k, d)} de ses billes à ${p2.nom}. `
-            + `Combien de billes donne-t-${p1.il} ?`, unite: 'billes' },
+          { min: 12, max: 60, texte: Q => `${p1.nom} a ramassé ${Q} coquillages sur la plage. ${p1.Il} donne ${lesFraction(k, d)} de ses coquillages `
+            + `à ${p2.nom}. Combien de coquillages donne-t-${p1.il} ?`, unite: 'coquillages' },
           { min: 40, max: 120, texte: Q => `Le livre ${p1.de} a ${Q} pages. ${p1.Il} en a lu ${lesFraction(k, d)}. Combien de pages a-t-${p1.il} lues ?`,
             unite: 'pages' },
           { min: 20, max: 30, texte: Q => `Dans la classe ${p1.de}, il y a ${Q} élèves. À la cantine, il y a ${lesFraction(k, d)} des élèves `
             + 'de la classe. Combien d’élèves de la classe mangent à la cantine ?', unite: 'élèves' },
-          { min: 10, max: 60, texte: Q => `Mamie a cueilli ${Q} fraises. Elle en met ${lesFraction(k, d)} dans une tarte. `
-            + 'Combien de fraises met-elle dans la tarte ?', unite: 'fraises' },
+          { min: 10, max: 60, texte: Q => `Mamie a cueilli ${Q} letchis. Elle en met ${lesFraction(k, d)} dans une salade de fruits. `
+            + 'Combien de letchis met-elle dans la salade ?', unite: 'letchis' },
           { min: 6, max: 120, texte: Q => `Calcule ${lesFraction(k, d)} de ${Q}.`, unite: '' },
         ];
         if (60 % d === 0) situations.push({ min: 60, max: 60, texte: () => `Combien de minutes y a-t-il dans ${lesFraction(k, d)} d’une heure ?`, unite: 'min' });

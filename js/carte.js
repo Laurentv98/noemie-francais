@@ -34,6 +34,7 @@
     const precedente = etape.zone.etapes[etape.index - 1];
     return P.meilleuresEtoiles(profil, precedente.id) >= P.ETOILES_POUR_DEBLOQUER;
   }
+  RM.etapeOuverte = estOuverte;
 
   // La dernière étape atteinte sur un chemin : la plus loin qui soit ouverte
   function derniereOuverte(profil, zone) {
@@ -75,7 +76,9 @@
       </button>`).join('');
 
     // Les quatre chemins, puis la course de Roxy tout en bas de la forêt
-    $('carte-aventure').innerHTML = foret.map(zone => htmlZone(profil, zone)).join('') + RM.course.htmlCarte(profil, P.idForetDe(profil));
+    // En haut : le coin de Roxy (défi du jour, carnet, dressing)
+    $('carte-aventure').innerHTML = RM.defis.htmlCoin(profil)
+      + foret.map(zone => htmlZone(profil, zone)).join('') + RM.course.htmlCarte(profil, P.idForetDe(profil));
     foret.filter(zone => !zone.bientot).forEach(zone => tracerChemin(profil, zone));
     placerRoxy(profil, foret);
     RM.nouvelleEtape = null;
@@ -197,11 +200,12 @@
       return { left: left + 'px', top: (etape.index * HAUTEUR_LIGNE + 4) + 'px' };
     };
 
-    const roxy = document.createElement('img');
+    const roxy = document.createElement('div');
     roxy.className = 'roxy roxy-carte';
-    roxy.src = 'img/roxy-ouais.png';
-    roxy.alt = 'Roxy est ici';
+    roxy.dataset.pose = 'ouais';
+    roxy.innerHTML = '<img class="roxy-image" src="img/roxy-ouais.png" alt="Roxy est ici">';
     chemin.appendChild(roxy);
+    RM.poserRoxy(roxy, 'ouais'); // avec ses accessoires
 
     const memePlace = anciennePlace && anciennePlace.profil === profil.id && anciennePlace.zone === zone;
     const doitMarcher = memePlace && anciennePlace.index < cible.index;
@@ -209,6 +213,7 @@
     if (doitMarcher) {
       roxy.getBoundingClientRect(); // on laisse le navigateur placer Roxy au départ…
       roxy.classList.add('en-marche'); // …puis elle marche jusqu'à la nouvelle étape
+      RM.sons.jouer('pas');
       Object.assign(roxy.style, coordonnees(cible));
     }
     anciennePlace = { profil: profil.id, zone, index: cible.index };

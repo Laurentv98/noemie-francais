@@ -7,15 +7,16 @@
 
 (function () {
   const {
-    entier, parmi, entierSauf, decimal, ecrire, net, euros, mesure, lireNombre, egaux, relatif,
+    entier, parmi, entierSauf, decimal, ecrire, net, francs, mesure, lireNombre, egaux, relatif,
     frac, fracTexte, simplifier, pgcd, choix, nombre, fraction, vraiFaux, ajouterEtape, figures,
   } = RM.maths;
 
   // ======================================================================
   // Des petites aides, pour toutes les étapes
   // ======================================================================
-  // Les enfants des problèmes, avec leur pronom
-  const ENFANTS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'], ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il']];
+  // Les enfants des problèmes, avec leur pronom (des prénoms de toutes les communautés du pays)
+  const ENFANTS = [['Kalia', 'elle'], ['Teva', 'il'], ['Maëva', 'elle'], ['Sione', 'il'], ['Wakana', 'elle'], ['Minh', 'il'],
+    ['Léa', 'elle'], ['Tom', 'il'], ['Hinano', 'elle'], ['Wanir', 'il'], ['Inès', 'elle'], ['Noa', 'il']];
   // Deux enfants différents : { nom, il, Il }
   const deuxEnfants = () => RM.melanger(ENFANTS).slice(0, 2)
     .map(([nom, il]) => ({ nom, il, Il: il === 'il' ? 'Il' : 'Elle' }));
@@ -301,21 +302,21 @@
     const p = unEnfant();
     return parmi([
       () => {
-        // (n et b différents : avec 6 cahiers et une trousse à 6 €, « 6 + 4 × 6 » serait juste aussi)
-        const [n, a] = [entier(3, 6), entier(2, 4)];
-        const b = entierSauf(5, 9, [n]);
-        return { enonce: `${p.nom} achète ${n} cahiers à ${euros(a)} l’un et une trousse à ${euros(b)}. Combien paie-t-${p.il} en tout ?`,
-          bon: `${n} × ${a} + ${b}`, valeur: n * a + b, unite: '€',
+        // (des prix en francs, entiers et ronds : un cahier de 200 à 400 F, une trousse de 500 à 900 F)
+        const [n, a, b] = [entier(3, 6), 100 * entier(2, 4), 100 * entier(5, 9)];
+        return { enonce: `${p.nom} achète ${n} cahiers à ${francs(a)} l’un et une trousse à ${francs(b)}. Combien paie-t-${p.il} en tout ?`,
+          bon: `${n} × ${a} + ${b}`, valeur: n * a + b, unite: 'F',
           faux: [`${n} × (${a} + ${b})`, `${n} + ${a} × ${b}`, `(${n} + ${a}) × ${b}`],
-          detail: `${n} cahiers coûtent ${n} × ${a} = ${euros(n * a)}, plus la trousse : ${n * a} + ${b} = ${euros(n * a + b)}` };
+          detail: `${n} cahiers coûtent ${n} × ${a} = ${francs(n * a)}, plus la trousse : ${ecrire(n * a)} + ${b} = ${francs(n * a + b)}` };
       },
       () => {
-        const [n, a] = [entier(3, 5), entier(2, 3)];
-        const c = parmi([10, 20]) + (n * a >= 10 ? 10 : 0);
-        return { enonce: `${p.nom} a ${euros(c)}. ${p.Il} achète ${n} stylos à ${euros(a)} l’un. Combien lui reste-t-il ?`,
-          bon: `${c} − ${n} × ${a}`, valeur: c - n * a, unite: '€',
-          faux: [`(${c} − ${n}) × ${a}`, `${c} − ${n} + ${a}`, `${n} × ${a} − ${c}`],
-          detail: `les stylos coûtent ${n} × ${a} = ${euros(n * a)}, et ${c} − ${n * a} = ${euros(c - n * a)}` };
+        // (un stylo de 100 à 250 F, et assez d'argent pour tout payer)
+        const [n, a] = [entier(3, 5), parmi([100, 150, 200, 250])];
+        const c = parmi([1000, 2000]) + (n * a >= 1000 ? 1000 : 0);
+        return { enonce: `${p.nom} a ${francs(c)}. ${p.Il} achète ${n} stylos à ${francs(a)} l’un. Combien lui reste-t-il ?`,
+          bon: `${ecrire(c)} − ${n} × ${a}`, valeur: c - n * a, unite: 'F',
+          faux: [`(${ecrire(c)} − ${n}) × ${a}`, `${ecrire(c)} − ${n} + ${a}`, `${n} × ${a} − ${ecrire(c)}`],
+          detail: `les stylos coûtent ${n} × ${a} = ${francs(n * a)}, et ${ecrire(c)} − ${ecrire(n * a)} = ${francs(c - n * a)}` };
       },
       () => {
         const [n, a, b] = [entier(3, 5), parmi([6, 8, 10, 12]), entier(2, 5)];
@@ -326,13 +327,13 @@
           detail: `${n} paquets contiennent ${n} × ${a} = ${n * a} biscuits, et ${n * a} − ${b} = ${n * a - b}` };
       },
       () => {
-        const [n, a, m, b] = [entier(8, 15), entier(3, 6), entier(2, 4), entier(7, 12)];
-        return { enonce: `Pour une sortie au zoo, ${n} enfants paient ${euros(a)} chacun et ${m} adultes paient ${euros(b)} chacun. `
+        // (une place d'enfant de 300 à 600 F, une place d'adulte de 800 à 1 200 F)
+        const [n, a, m, b] = [entier(8, 15), 100 * entier(3, 6), entier(2, 4), 100 * entier(8, 12)];
+        return { enonce: `Pour une sortie à l’aquarium, ${n} enfants paient ${francs(a)} chacun et ${m} adultes paient ${francs(b)} chacun. `
           + 'Quel est le prix total ?',
-          bon: `${n} × ${a} + ${m} × ${b}`, valeur: n * a + m * b, unite: '€',
-          faux: [`(${n} + ${m}) × (${a} + ${b})`, `${n} × ${a} + ${b}`, `(${n} × ${a} + ${m}) × ${b}`],
-
-          detail: `enfants : ${n} × ${a} = ${euros(n * a)} ; adultes : ${m} × ${b} = ${euros(m * b)} ; en tout ${euros(n * a + m * b)}` };
+          bon: `${n} × ${a} + ${m} × ${ecrire(b)}`, valeur: n * a + m * b, unite: 'F',
+          faux: [`(${n} + ${m}) × (${a} + ${ecrire(b)})`, `${n} × ${a} + ${ecrire(b)}`, `(${n} × ${a} + ${m}) × ${ecrire(b)}`],
+          detail: `enfants : ${n} × ${a} = ${francs(n * a)} ; adultes : ${m} × ${ecrire(b)} = ${francs(m * b)} ; en tout ${francs(n * a + m * b)}` };
       },
     ])();
   }
@@ -396,14 +397,14 @@
       }
       if (sorte === 'probleme') {
         const pb = problemeDeCalcul();
-        const resultat = pb.unite === '€' ? euros(pb.valeur) : `${ecrire(pb.valeur)} ${pb.unite}`;
+        const resultat = pb.unite === 'F' ? francs(pb.valeur) : `${ecrire(pb.valeur)} ${pb.unite}`;
         if (Math.random() < 0.5) {
           return nombre({
             consigne: 'Résous le problème',
             enonce: pb.enonce,
             reponse: pb.valeur,
             unite: pb.unite,
-            prix: pb.unite === '€',
+            enFrancs: pb.unite === 'F',
             explication: `Le calcul est <b>${pb.bon}</b> : ${pb.detail}.<br>La réponse est <b>${resultat}</b>.`,
           });
         }
@@ -661,7 +662,8 @@
       }
       if (sorte === 'situation') {
         if (Math.random() < 0.5) {
-          // Chez qui fait-il le plus froid (ou le moins froid) ? Quatre amis qui habitent dans des villes différentes
+          // Chez qui fait-il le plus froid (ou le moins froid) ? Quatre cousins qui habitent dans des pays où l'hiver est froid
+          // (ici, il ne gèle jamais : les températures négatives viennent de loin)
           const villes = RM.melanger(ENFANTS.map(([nom]) => nom)).slice(0, 4);
           let t;
           do { t = [-entier(1, 15), -entier(1, 15), entier(-3, 8), entier(-15, 5)]; } while (new Set(t).size < 4);
@@ -671,7 +673,7 @@
           const liste = villes.map((v, k) => `${mesure(t[k], '°C')} chez ${v}`);
           return choix({
             consigne: 'Compare les températures',
-            enonce: `Ce matin, quatre amis notent la température chez eux : ${liste.slice(0, 3).join(', ')} et ${liste[3]}. `
+            enonce: `Un matin d’hiver, quatre cousins qui vivent loin du Caillou, dans des pays froids, notent la température chez eux : ${liste.slice(0, 3).join(', ')} et ${liste[3]}. `
               + `Chez qui fait-il le plus ${froid ? 'froid' : 'chaud'} ?`,
             reponse: villes[i],
             pieges: villes.filter((_, k) => k !== i),
@@ -681,14 +683,19 @@
         }
         const s = parmi([
           () => {
-            const k = entier(2, 15);
             const dessous = Math.random() < 0.7;
-            return { enonce: `Le thermomètre indique ${unOuPlus(k, 'degré')} ${dessous ? 'sous' : 'au-dessus de'} zéro. Écris cette température avec un nombre relatif.`,
+            // (le congélateur, comme dans la leçon, est vers −18 °C ; il n'est jamais au-dessus de zéro)
+            const congelateur = dessous && Math.random() < 0.3;
+            const k = congelateur ? parmi([15, 18, 20]) : entier(2, 15);
+            const ou = congelateur ? 'du congélateur' : parmi(['d’un chalet au Canada', 'd’une station de ski en France']);
+            return { enonce: `Le thermomètre ${ou} indique `
+              + `${unOuPlus(k, 'degré')} ${dessous ? 'sous' : 'au-dessus de'} zéro. Écris cette température avec un nombre relatif.`,
               reponse: dessous ? -k : k, unite: '°C',
               explication: dessous ? `Sous zéro, la température est <b>négative</b> : ${mesure(-k, '°C')}.` : `Au-dessus de zéro, la température est <b>positive</b> : ${mesure(k, '°C')}.` };
           },
           () => {
-            const [k, animal] = parmi([[entier(3, 30), 'Un plongeur nage'], [entier(2, 15), 'Une tortue nage'], [entier(2, 10), 'Un poisson nage']]);
+            const [k, animal] = parmi([[entier(3, 30), 'Un plongeur nage'], [entier(2, 15), 'Dans le lagon, une tortue nage'],
+              [entier(2, 10), 'Une raie manta nage'], [entier(2, 10), 'Un poisson-clown nage']]);
             return { enonce: `${animal} à ${mesure(k, 'm')} sous le niveau de la mer. Quelle est son altitude ?`, reponse: -k, unite: 'm',
               explication: `Le niveau de la mer est l’altitude 0. Sous la mer, l’altitude est <b>négative</b> : ${mesure(-k, 'm')}.` };
           },
@@ -745,7 +752,7 @@
         • Entre deux négatifs, le plus petit est le <b>plus loin de zéro</b> : <i>−7 &lt; −3</i> (car 7 &gt; 3) ; <i>−2,5 &lt; −2,45</i>.<br>
         👉 Dans l’ordre croissant : <i>−7 &lt; −3 &lt; −0,5 &lt; 0 &lt; 2</i></p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> pense au thermomètre ! À −7 °C, il fait plus froid qu’à −3 °C : −7 &lt; −3.</div>
-      <p>Dans la vie : les températures (−5 °C, 5 degrés sous zéro), les altitudes (−20 m, 20 m sous le niveau de la mer),
+      <p>Dans la vie : les températures (−18&nbsp;°C dans le congélateur, −5&nbsp;°C l’hiver au Canada), les altitudes (un plongeur à −20&nbsp;m, 20&nbsp;m sous le niveau de la mer),
         les étages (−1, le premier sous-sol).</p>
     `,
   });
@@ -799,14 +806,15 @@
         const t0 = monte ? entierSauf(-10, 5, [0]) : entierSauf(-6, 8, [0]);
         const k = monte ? entier(3, 15) : entier(3, 10);
         const t1 = monte ? t0 + k : t0 - k;
-        return { enonce: `Le matin, il fait ${mesure(t0, '°C')}. Dans la journée, la température ${monte ? 'monte' : 'baisse'} de ${mesure(k, '°C')}. `
+        return { enonce: `En voyage au Canada, ${p.nom} note le matin ${mesure(t0, '°C')}. Dans la journée, la température ${monte ? 'monte' : 'baisse'} de ${mesure(k, '°C')}. `
           + 'Quelle température fait-il ensuite ?',
           reponse: t1, unite: '°C', calcul: `${relatif(t0)} + ${relatif(monte ? k : -k)}`,
           faux: [t0 + (monte ? -k : k), -t1, -(t0 + (monte ? -k : k)), Math.abs(t0) + k, -(Math.abs(t0) + k)] };
       },
       () => {
-        const [froid, chaud] = [-entier(2, 12), entier(2, 15)];
-        return { enonce: `La nuit, il fait ${mesure(froid, '°C')} ; l’après-midi, il fait ${mesure(chaud, '°C')}. `
+        // (à la montagne, un écart jour/nuit crédible : au plus 18 °C)
+        const [froid, chaud] = [-entier(2, 8), entier(2, 10)];
+        return { enonce: `À la montagne, en France, il fait ${mesure(froid, '°C')} la nuit et ${mesure(chaud, '°C')} l’après-midi. `
           + 'De combien de degrés la température a-t-elle monté ?',
           reponse: chaud - froid, unite: '°C', calcul: `${relatif(chaud)} − ${relatif(froid)} = ${relatif(chaud)} + ${relatif(-froid)}`,
           faux: [chaud + froid, -(chaud + froid), froid - chaud] };
@@ -822,7 +830,8 @@
       () => {
         const z0 = -entier(8, 30);
         const k = entier(3, -z0 - 2);
-        return { enonce: `Un plongeur est à l’altitude ${mesure(z0, 'm')}. Il remonte de ${mesure(k, 'm')}. Quelle est sa nouvelle altitude ?`,
+        return { enonce: `Au large ${parmi(['de Lifou', 'de Maré', 'd’Ouvéa', 'de l’île des Pins', 'de Hienghène'])}, un plongeur est à l’altitude ${mesure(z0, 'm')}. `
+          + `Il remonte de ${mesure(k, 'm')}. Quelle est sa nouvelle altitude ?`,
           reponse: z0 + k, unite: 'm', calcul: `${relatif(z0)} + ${relatif(k)}`, faux: [z0 - k, -(z0 + k), k - z0, z0 + k - 10, z0 + k + 10] }; // (± 10 : une retenue oubliée)
 
       },
@@ -1161,8 +1170,8 @@
         const [k, d] = fractionSimple(parmi([4, 5, 6, 8, 10]));
         const p = unEnfant();
         const situations = [
-          { min: 12, max: 60, texte: Q => `${p.nom} a ${Q} billes. ${p.Il} en donne ${lesFraction(k, d)} à sa sœur. Combien de billes donne-t-${p.il} ?`,
-            unite: 'billes' },
+          { min: 12, max: 60, texte: Q => `${p.nom} a ramassé ${Q} coquillages sur la plage. ${p.Il} en donne ${lesFraction(k, d)} à sa sœur. `
+            + `Combien de coquillages donne-t-${p.il} ?`, unite: 'coquillages' },
           { min: 40, max: 160, texte: Q => `Un livre a ${Q} pages. ${p.nom} en a lu ${lesFraction(k, d)}. Combien de pages a-t-${p.il} lues ?`, unite: 'pages' },
           { min: 20, max: 30, texte: Q => `Dans une classe de ${Q} élèves, ${lesFraction(k, d)} des élèves mangent à la cantine. Combien d’élèves cela fait-il ?`,
             unite: 'élèves' },
@@ -1328,11 +1337,11 @@
     const situation = parmi([
       { texte: `${p1.nom} mange ${x} d’une tarte et ${p2.nom} en mange ${y}.`,
         question: reste ? 'Quelle fraction de la tarte reste-t-il ?' : 'Quelle fraction de la tarte ont-ils mangée en tout ?' },
-      { texte: `Pour aller chez Mamie, ${p1.nom} fait ${x} du trajet à vélo le matin et ${y} du trajet l’après-midi.`,
+      { texte: `Pour aller à la tribu de sa grand-mère, ${p1.nom} fait ${x} du trajet à vélo le matin et ${y} du trajet l’après-midi.`,
         question: reste ? 'Quelle fraction du trajet lui reste-t-il à faire ?' : 'Quelle fraction du trajet a-t-il fait en tout ?' },
       { texte: `Papi plante des tomates sur ${x} de son jardin et des salades sur ${y} du jardin.`,
         question: reste ? 'Quelle fraction du jardin n’est pas plantée ?' : 'Quelle fraction du jardin est plantée ?' },
-      { texte: `${p1.nom} boit ${x} d’une bouteille de jus et ${p2.nom} en boit ${y}.`,
+      { texte: `${p1.nom} boit ${x} d’une bouteille de jus de mangue et ${p2.nom} en boit ${y}.`,
         question: reste ? 'Quelle fraction de la bouteille reste-t-il ?' : 'Quelle fraction de la bouteille ont-ils bue en tout ?' },
     ]);
     // On accorde avec les enfants : « a-t-elle faite », « ont-elles mangée »
@@ -1596,9 +1605,9 @@
           aide: `Le ${MULTIPLES[k]} de x, c’est ${k}x ; on lui ajoute ${m} : <b>${k}x + ${m}</b>.` };
       },
       () => {
-        const p = entier(2, 6);
-        return { phrase: `le prix en euros de n cahiers à ${euros(p)} l’un`, bon: `${p}n`, pieges: [`n + ${p}`, `n ÷ ${p}`, `${p}n + ${p}`],
-          aide: `Un cahier coûte ${euros(p)}, n cahiers coûtent ${p} × n = <b>${p}n</b> euros.` };
+        const p = parmi([150, 200, 250, 300, 350, 400]);
+        return { phrase: `le prix en francs de n cahiers à ${francs(p)} l’un`, bon: `${p}n`, pieges: [`n + ${p}`, `n ÷ ${p}`, `${p}n + ${p}`],
+          aide: `Un cahier coûte ${francs(p)}, n cahiers coûtent ${p} × n = <b>${p}n</b> francs.` };
       },
       () => {
         const k = entier(2, 12);

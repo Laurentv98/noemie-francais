@@ -6,7 +6,7 @@
 (function () {
   const {
     entier, parmi, ecrire, mesure, net, arrondir, frac, fracTexte, simplifier, angle, ESPACE,
-    choix, nombre, fraction, vraiFaux, ajouterEtape, figures,
+    choix, nombre, fraction, vraiFaux, ajouterEtape, figures, PRENOMS,
   } = RM.maths;
   const F = figures; // les dessins : F.segment, F.point, F.arc…
 
@@ -64,9 +64,9 @@
 
   // Des noms de triangles sans lettres qui se lisent comme un mot (on évite E, L, I, O, U…)
   const TRIANGLES = ['ABC', 'MNP', 'RST', 'FGH', 'KMN', 'PRS', 'BCD', 'GHK', 'NPR', 'CDF'];
-  const PRENOMS = ['Léa', 'Tom', 'Zoé', 'Hugo', 'Inès', 'Sami', 'Lina', 'Noé'];
-  const FILLES = ['Léa', 'Zoé', 'Inès', 'Lina']; // pour écrire « doit-elle » ou « doit-il »
-  const pronom = prenom => (FILLES.includes(prenom) ? 'elle' : 'il');
+  // Les prénoms des problèmes (de toutes les communautés de Nouvelle-Calédonie, voir le moteur) : { nom, il }
+  // « de » devant un prénom : « de Teva », « d’Hugo »
+  const de = prenom => (/^([AEIOUÉ]|Hu)/.test(prenom) ? `d’${prenom}` : `de ${prenom}`);
   // Un segment du triangle « nom », ses deux lettres dans l'ordre du nom : dans le triangle RST, on écrit RT (et pas TR)
   const seg = (nom, X, Y) => (nom.indexOf(X) < nom.indexOf(Y) ? X + Y : Y + X);
   // Un triangle rectangle au hasard : son nom, le sommet R de l'angle droit, et les deux autres sommets P et Q
@@ -353,8 +353,8 @@
       // L'échelle contre le mur (une échelle bien droite fait environ 70° avec le sol)
       const [pied, haut, echelle] = parmi([[0.7, 2.4, 2.5], [1.4, 4.8, 5], [1, 2.4, 2.6], [1.6, 3, 3.4]]);
       return {
-        enonce: `L’échelle de Papi mesure ${mesure(echelle, 'm')}. Il la pose contre un mur vertical, son pied à ${mesure(pied, 'm')} du mur `
-          + 'sur un sol horizontal. À quelle hauteur arrive le haut de l’échelle ?'
+        enonce: `Avant la saison des cyclones, Papi vérifie son toit. Son échelle mesure ${mesure(echelle, 'm')}. `
+          + `Il la pose contre un mur vertical, son pied à ${mesure(pied, 'm')} du mur sur un sol horizontal. À quelle hauteur arrive le haut de l’échelle ?`
           + (Number.isInteger(haut) ? '' : ` (Aide : ${carre(haut)} = ${ecrire(auCarre(haut))}.)`),
         reponse: haut,
         unite: 'm',
@@ -380,8 +380,9 @@
       // La diagonale d'un rectangle : elle le partage en deux triangles rectangles
       const [objet, unite, dimensions] = parmi([
         ['Le potager de Mamie', 'm', [[12, 5, 13], [8, 6, 10], [15, 8, 17], [16, 12, 20]]],
-        ['L’écran de la tablette de Lina', 'cm', [[24, 18, 30], [20, 15, 25], [16, 12, 20]]],
-        ['La porte de la grange de Papi', 'm', [[2.4, 1.8, 3], [2, 1.5, 2.5]]],
+        ['L’écran de la tablette de Wakana', 'cm', [[24, 18, 30], [20, 15, 25], [16, 12, 20]]],
+        ['La porte du garage de Papi', 'm', [[2.4, 1.8, 3], [2, 1.5, 2.5]]],
+        ['Le terrain de beach-volley que Teva trace sur le sable de la plage', 'm', [[15, 8, 17], [12, 9, 15]]],
       ]);
       const [L, l, d] = parmi(dimensions);
       return {
@@ -396,12 +397,13 @@
     () => {
       // Le cerf-volant
       const [sol, haut, fil] = parmi([[30, 40, 50], [40, 30, 50], [60, 80, 100], [50, 120, 130], [90, 120, 150]]);
+      const p = parmi(PRENOMS).nom;
       return {
-        enonce: `Le fil tendu du cerf-volant de Tom mesure ${mesure(fil, 'm')}. Le cerf-volant est juste au-dessus d’un arbre `
-          + `qui est à ${mesure(sol, 'm')} de Tom. À quelle hauteur vole-t-il ? (Tom tient le fil au ras du sol.)`,
+        enonce: `Sur la plage de l’Anse Vata, le fil tendu du cerf-volant ${de(p)} mesure ${mesure(fil, 'm')}. Le cerf-volant est juste au-dessus d’un cocotier `
+          + `qui est à ${mesure(sol, 'm')} ${de(p)}. À quelle hauteur vole-t-il ? (${p} tient le fil au ras du sol.)`,
         reponse: haut,
         unite: 'm',
-        explication: 'Le sol, la verticale de l’arbre et le fil forment un triangle rectangle ; le fil est l’hypoténuse.<br>'
+        explication: 'Le sol, la verticale du cocotier et le fil forment un triangle rectangle ; le fil est l’hypoténuse.<br>'
           + `hauteur² = ${carre(fil)} − ${carre(sol)} = ${ecrire(fil * fil)} − ${ecrire(sol * sol)} = ${ecrire(haut * haut)}, `
           + `donc hauteur = <b>${mesure(haut, 'm')}</b>${carDe(haut)}.`,
       };
@@ -588,13 +590,13 @@
   function questionProblemeReciproque() {
     const t = parmi([[30, 40, 50], [60, 80, 100], [90, 120, 150], [45, 60, 75], [36, 48, 60], [50, 120, 130]]);
     const [a, b, c] = Math.random() < 0.5 ? t : [t[1], t[0], t[2]];
-    const prenom = parmi(PRENOMS);
+    const { nom: prenom, il } = parmi(PRENOMS);
     const debut = `Pour vérifier que le coin de sa cabane est droit, ${prenom} fait une marque sur un mur à ${cm(a)} du coin, `
       + `et une autre sur l’autre mur à ${cm(b)} du coin.`;
     if (Math.random() < 0.5) {
       return nombre({
         consigne: 'Résous le problème',
-        enonce: `${debut} Quelle distance doit-${pronom(prenom)} trouver entre les deux marques ?`,
+        enonce: `${debut} Quelle distance doit-${il} trouver entre les deux marques ?`,
         reponse: c,
         unite: 'cm',
         explication: `Le coin est droit si ${ecrire(a)}² + ${ecrire(b)}² = distance², c’est-à-dire si distance² = ${ecrire(a * a)} + ${ecrire(b * b)} = ${ecrire(c * c)}.<br>`
@@ -606,7 +608,7 @@
     const droit = d === c;
     return choix({
       consigne: 'Le coin est-il droit ?',
-      enonce: `${debut} Entre les deux marques, ${pronom(prenom)} trouve ${cm(d)}. Le coin est-il droit ?`,
+      enonce: `${debut} Entre les deux marques, ${il} trouve ${cm(d)}. Le coin est-il droit ?`,
       reponse: droit ? 'Oui' : 'Non',
       choix: ['Oui', 'Non'],
       explication: `${ecrire(a)}² + ${ecrire(b)}² = ${ecrire(a * a)} + ${ecrire(b * b)} = ${ecrire(a * a + b * b)} et ${ecrire(d)}² = ${ecrire(d * d)}.<br>`

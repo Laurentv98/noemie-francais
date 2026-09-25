@@ -438,6 +438,40 @@
     jeu.vitesseArrivee = 15 + indexNiveau * 0.8;
     roxy.rotation.y = Math.PI; // au départ, Roxy nous regarde
     redimensionner();
+    // Roxy met ses accessoires du dressing (ils arrivent un tout petit peu après)
+    const partieDuMonde = monde;
+    RM.dressing.imagesPourLaCourse(P.profilActif()).then(images => {
+      if (jeu?.monde === partieDuMonde) habillerRoxy3D(partieDuMonde, images);
+    }).catch(() => { /* sans accessoires, tant pis */ });
+  }
+
+  // Les accessoires en 3D : des images (sprites) qui regardent toujours la caméra
+  function habillerRoxy3D(monde, images) {
+    const sprite = ({ canvas }, taille) => {
+      const texture = new T.CanvasTexture(canvas);
+      texture.colorSpace = T.SRGBColorSpace;
+      const s = new T.Sprite(new T.SpriteMaterial({ map: texture, transparent: true }));
+      s.scale.setScalar(taille);
+      return s;
+    };
+    const { corps } = monde.roxy.userData;
+    if (images.tete) {
+      const petit = ['noeud', 'hibiscus'].includes(images.tete.accessoire.id);
+      const chapeau = sprite(images.tete, petit ? 0.5 : 0.8);
+      chapeau.position.set(petit ? -0.26 : 0, petit ? 1.55 : 1.66, -0.3);
+      corps.add(chapeau);
+    }
+    if (images.yeux) {
+      const lunettes = sprite(images.yeux, 0.52);
+      lunettes.position.set(0, 1.19, -0.75);
+      corps.add(lunettes);
+      monde.roxy.userData.lunettes = lunettes; // on ne les voit que quand Roxy nous regarde
+    }
+    if (images.ami) {
+      const ami = sprite(images.ami, 0.95);
+      monde.scene.add(ami);
+      monde.ami = ami; // l'ami court à côté de Roxy
+    }
   }
 
   function placerArbre(arbre, z) {
@@ -839,6 +873,15 @@
     }
     // Quand elle trébuche, Roxy clignote
     roxy.visible = jeu.invincible === 0 || Math.floor(t * 12) % 2 === 0;
+    // Ses accessoires : les lunettes (seulement de face) et l'ami qui court à côté d'elle
+    if (roxy.userData.lunettes) roxy.userData.lunettes.visible = Math.cos(roxy.rotation.y) < -0.3;
+    if (jeu.monde.ami) {
+      const ami = jeu.monde.ami;
+      const cote = jeu.voie === 2 ? -1.15 : 1.15;
+      ami.position.x += (jeu.x + cote - ami.position.x) * Math.min(1, dt * 6);
+      ami.position.y = 0.55 + Math.abs(Math.sin(t * (court ? 9 : 3))) * (court ? 0.35 : 0.12);
+      ami.position.z = 0.35;
+    }
     ombre.position.x = jeu.x;
     ombre.scale.setScalar(0.62 * (1 - Math.min(0.5, jeu.y / 5)));
 
@@ -872,6 +915,7 @@
   // Les événements de la course
   // ======================================================================
   function gagnerEtoiles(nombre) {
+    if (nombre === 1) RM.sons.jouer('ramasser');
     jeu.etoiles += nombre;
     const compteur = $('course-etoiles');
     compteur.textContent = `⭐ ${jeu.etoiles}`;
@@ -885,6 +929,7 @@
     $('course-etoiles').textContent = `⭐ ${jeu.etoiles}`;
     jeu.trebuche = 0.6;
     jeu.invincible = 1.3;
+    RM.sons.jouer('choc');
     montrerMessage(jeu.premierTronc
       ? `Aïe ! −${PERTE_TRONC} ⭐<br><small>Saute par-dessus les troncs avec ⬆️ (ou glisse ton doigt vers le haut)</small>`
       : `Aïe ! −${PERTE_TRONC} ⭐`, 'rate');
@@ -917,9 +962,11 @@
     $('course-question').hidden = true;
     if (juste) {
       jeu.bonnes++;
+      RM.sons.jouer('bonnePorte');
       gagnerEtoiles(BONUS_PORTE);
       montrerMessage(`✔ ${RM.hasard(['Bravo', 'Super', 'Génial', 'Bien joué'])} ! +${BONUS_PORTE} ⭐`, 'juste');
     } else {
+      RM.sons.jouer('mauvaisePorte');
       const debut = choisie ? 'Oups !' : 'Il fallait choisir une porte !';
       montrerMessage(`${debut}<br><small>La bonne réponse&nbsp;: ${porte.question.solution}</small>`, 'rate', 3200);
     }
@@ -939,7 +986,7 @@
     if (!jeu || jeu.etat !== 'course') return;
     if (action === 'gauche') jeu.voie = Math.max(0, jeu.voie - 1);
     if (action === 'droite') jeu.voie = Math.min(2, jeu.voie + 1);
-    if (action === 'saut' && jeu.saut < 0) jeu.saut = 0;
+    if (action === 'saut' && jeu.saut < 0) { jeu.saut = 0; RM.sons.jouer('saut'); }
   }
 
   // ---------- Le départ : 3, 2, 1, partez ! ----------
@@ -957,6 +1004,7 @@
       compte.getBoundingClientRect();
       compte.classList.add('pop');
       if (i === 1) jeu.monde.roxy.rotation.y = 0; // Roxy se tourne vers le chemin
+      RM.sons.jouer(i === etapes.length - 1 ? 'juste' : 'clic');
       if (i === etapes.length - 1) {
         jeu.etat = 'course';
         setTimeout(() => { compte.hidden = true; }, 700);
@@ -970,9 +1018,15 @@
     jeu.arrivee = 0;
     $('course-question').hidden = true;
     let resultat = null;
-    if (!jeu.essai) resultat = P.enregistrerCourse(jeu.foret, { etoiles: jeu.etoiles, bonnes: jeu.bonnes, duree: jeu.temps });
+    jeu.cadeaux = [];
+    if (!jeu.essai) {
+      const avant = RM.dressing.gagnes(P.profilActif());
+      resultat = P.enregistrerCourse(jeu.foret, { etoiles: jeu.etoiles, bonnes: jeu.bonnes, duree: jeu.temps });
+      jeu.cadeaux = RM.dressing.gagnes(P.profilActif()).filter(id => !avant.includes(id)).map(RM.dressing.trouver);
+    }
     jeu.resultat = resultat;
     RM.lancerConfettis?.();
+    RM.sons.jouer('fanfare');
     setTimeout(montrerDiplome, 1800);
   }
 
@@ -1011,7 +1065,10 @@
       <p class="diplome-score">⭐ <b>${jeu.etoiles}</b> étoiles · 🚪 <b>${jeu.bonnes}</b> bonne${jeu.bonnes > 1 ? 's' : ''} porte${jeu.bonnes > 1 ? 's' : ''} sur ${total}</p>
       ${r && r.record ? '<p class="record">🎉 Nouveau record !</p>' : ''}
       ${r && !r.record && !r.premiere ? `<p class="diplome-record">Ton record&nbsp;: ${r.meilleur}&nbsp;⭐</p>` : ''}
-      ${jeu.essai ? '<p class="diplome-record">Un essai n’enregistre pas de score.</p>' : ''}`;
+      ${jeu.essai ? '<p class="diplome-record">Un essai n’enregistre pas de score.</p>' : ''}
+      ${jeu.cadeaux.map(a => `<p class="deblocage cadeau">🎁 Nouvel ami&nbsp;: ${a.image ? `<img class="diplome-cadeau" src="${a.image}" alt="">` : a.emoji}
+        ${a.nom.replace(/^(Le|La|Les) /, m => m.toLowerCase())}&nbsp;! Retrouve-le dans le dressing de Roxy.</p>`).join('')}`;
+    if (jeu.cadeaux.length) setTimeout(() => RM.sons.jouer('cadeau'), 600);
     $('course-retour').textContent = { parent: '↩️ Espace parent', accueil: '🏠 Accueil' }[jeu.retour] || '🗺️ La carte';
     montrerPanneau('course-fin');
   }

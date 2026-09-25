@@ -14,9 +14,9 @@
   // ======================================================================
   // Les petits outils communs à toutes les étapes
   // ======================================================================
-  // Des prénoms, avec le pronom qui va avec (pour écrire « a-t-elle » ou « a-t-il »)
-  const PRENOMS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'],
-    ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il'], ['Mamie', 'elle'], ['Papi', 'il']];
+  // Des prénoms de toutes les communautés du pays, avec le pronom qui va avec (pour écrire « a-t-elle » ou « a-t-il »)
+  const PRENOMS = [['Kalia', 'elle'], ['Teva', 'il'], ['Maëva', 'elle'], ['Sione', 'il'], ['Wakana', 'elle'], ['Minh', 'il'],
+    ['Hinano', 'elle'], ['Wanir', 'il'], ['Léa', 'elle'], ['Tom', 'il'], ['Inès', 'elle'], ['Noa', 'il'], ['Mamie', 'elle'], ['Papi', 'il']];
   // Vrai une fois sur deux (ou avec la probabilité donnée)
   const auHasard = (probabilite = 0.5) => Math.random() < probabilite;
   // Une majuscule au début d’une phrase
@@ -307,7 +307,7 @@
       () => [auHasard(0.25) ? entier(3, 13) + 0.5 : entier(3, 14), entier(2, 12)], 'cm'],
     [(b, h) => `Un fanion triangulaire a une base de ${mesure(b, 'cm')} et une hauteur de ${mesure(h, 'cm')}. Aire : ___${ESPACE}cm².`,
       () => [parmi([10, 12, 15, 16, 18, 20]), parmi([15, 20, 24, 25, 30])], 'cm'],
-    [(b, h) => `La voile du bateau de Papi est un triangle de base ${mesure(b, 'm')} et de hauteur ${mesure(h, 'm')}. Aire : ___${ESPACE}m².`,
+    [(b, h) => `Papi fait de la voile dans le lagon. Sa voile est un triangle de base ${mesure(b, 'm')} et de hauteur ${mesure(h, 'm')}. Aire : ___${ESPACE}m².`,
       () => [parmi([2, 2.5, 3, 3.5, 4]), parmi([4, 5, 6, 7, 8])], 'm'],
     [(b, h) => `Le toit de la cabane de Roxy est un triangle de base ${mesure(b, 'm')} et de hauteur ${mesure(h, 'm')}. Aire : ___${ESPACE}m².`,
       () => [parmi([2, 3, 4, 5]), parmi([1.5, 2, 2.5, 3])], 'm'],
@@ -668,7 +668,8 @@
     const [R, C] = [net(L * l), net(c * c)];
     return {
       enonce: jardin
-        ? `Le jardin de Papi est un rectangle de ${mesure(L, 'm')} sur ${mesure(l, 'm')}, avec une mare carrée de ${mesure(c, 'm')} de côté. `
+        ? `Le jardin de Papi, à ${parmi(['Bourail', 'Koné', 'La Foa', 'Poindimié'])}, est un rectangle de ${mesure(L, 'm')} sur ${mesure(l, 'm')}, `
+          + `avec une mare carrée de ${mesure(c, 'm')} de côté. `
           + `Aire de la pelouse : ___${ESPACE}m².`
         : `Une chambre mesure ${mesure(L, 'm')} sur ${mesure(l, 'm')}. On y pose un tapis carré de ${mesure(c, 'm')} de côté. `
           + `Aire du sol qu’on voit encore : ___${ESPACE}m².`,
@@ -1094,7 +1095,20 @@
       }
       if (sorte === 'probleme') {
         const [prenom] = parmi(PRENOMS);
-        const cas = parmi(['pizza', 'roue', 'piste', 'bassin', 'horloge']);
+        const cas = parmi(['pizza', 'roue', 'piste', 'bassin', 'horloge', 'fare']);
+        if (cas === 'fare') {
+          // Une guirlande autour du toit d'un faré rond (un abri de plage, au toit de paille) : un cercle
+          const d = parmi([4, 5, 6, 8]);
+          const L = foisPi(d);
+          return nombre({
+            consigne: 'Résous le problème',
+            enonce: `Pour la fête, ${prenom} pose une guirlande tout autour du toit d’un faré rond de ${mesure(d, 'm')} de diamètre. `
+              + 'Avec π ≈ 3,14, quelle longueur de guirlande faut-il ?',
+            reponse: L,
+            unite: 'm',
+            explication: `La guirlande fait le tour du toit : un cercle de diamètre ${mesure(d, 'm')}. π × d ≈ 3,14 × ${d} = <b>${mesure(L, 'm')}</b>.`,
+          });
+        }
         if (cas === 'pizza' || cas === 'bassin') {
           const pizza = cas === 'pizza';
           const d = pizza ? parmi([20, 24, 30]) : null;
@@ -1615,11 +1629,11 @@
 
   // Des terrains : [le début de la phrase, l’unité de départ, l’unité d’arrivée, les mesures possibles]
   const TERRAINS = [
-    ['Le champ de Papi mesure', 'ha', 'm²', [1.5, 2, 2.5, 3, 0.8, 1.2]],
+    ['Le champ de Papi, en brousse, mesure', 'ha', 'm²', [1.5, 2, 2.5, 3, 0.8, 1.2]],
     ['Le jardin de Mamie mesure', 'a', 'm²', [2, 3, 4, 5, 2.5, 3.5]],
     ['La forêt de Roxy mesure', 'ha', 'a', [3, 5, 12, 2.5, 40, 7.5]],
     ['Le parc de la ville mesure', 'm²', 'ha', [15000, 25000, 8000, 32000, 45000]],
-    ['Le terrain de football du village mesure', 'm²', 'ha', [7000, 6400, 7500]],
+    ['Le terrain de football de la tribu mesure', 'm²', 'ha', [7000, 6400, 7500]],
     ['Le lac de la forêt mesure', 'km²', 'ha', [2, 3.5, 1.2, 0.8]],
     ['Le potager de l’école mesure', 'm²', 'a', [150, 250, 300, 80]],
   ];
@@ -1660,7 +1674,7 @@
       const v = parmi([40, 45, 60, 75, 80, 120]);
       return nombre({
         consigne: 'Résous le problème',
-        enonce: `La piscine du camping contient ${mesure(v, 'm³')} d’eau. Combien de litres est-ce ?`,
+        enonce: `${parmi(['La piscine du camping', 'La piscine de l’hôtel', 'La piscine du collège'])} contient ${mesure(v, 'm³')} d’eau. Combien de litres est-ce ?`,
         reponse: v * 1000,
         unite: 'L',
         explication: `1${ESPACE}m³ = 1${ESPACE}000${ESPACE}dm³ = 1${ESPACE}000${ESPACE}L.<br>${v} × 1${ESPACE}000 = <b>${mesure(v * 1000, 'L')}</b>.`,
@@ -1686,7 +1700,7 @@
       const enCm3 = litres * 1000;
       return nombre({
         consigne: 'Résous le problème',
-        enonce: `Une bouteille de ${mesure(litres, 'L')} de jus remplit des verres de ${mesure(verre, 'cm³')}. Combien de verres peut-on remplir ?`,
+        enonce: `Une bouteille de ${mesure(litres, 'L')} de jus de mangue remplit des verres de ${mesure(verre, 'cm³')}. Combien de verres peut-on remplir ?`,
         reponse: enCm3 / verre,
         unite: 'verres',
         explication: (litres === 1 ? `1${ESPACE}L = 1${ESPACE}000${ESPACE}cm³.<br>`
@@ -1968,14 +1982,18 @@
         const x = net(q + f);
         const D = 60 * q + m;
         const [prenom, pronom] = parmi(PRENOMS);
+        // (la sortie en va’a part entre 6 h et 13 h : on ne rentre pas de nuit en pirogue)
+        const enVaa = auHasard(0.25);
         let t1;
-        do { t1 = 60 * entier(7, 17) + 5 * entier(1, 11); } while ((t1 % 60) + m < 60 && auHasard(0.7));
+        do { t1 = 60 * (enVaa ? entier(6, 12) : entier(7, 17)) + 5 * entier(1, 11); } while ((t1 % 60) + m < 60 && auHasard(0.7));
         const t2 = t1 + D;
-        const phrase = parmi([
-          `Le train part à ${horaire(t1)} et roule pendant ${mesure(x, 'h')}. Il arrive à ___.`,
-          `Roxy part en randonnée à ${horaire(t1)}. Elle marche ${mesure(x, 'h')}. Elle arrive à ___.`,
-          `${prenom} part faire une balade à vélo à ${horaire(t1)}. La balade dure ${mesure(x, 'h')}. ${majuscule(pronom)} rentre à ___.`,
-        ]);
+        const phrase = enVaa
+          ? `${prenom} part en va’a à ${horaire(t1)}. La sortie dure ${mesure(x, 'h')}. ${majuscule(pronom)} revient à ___.`
+          : parmi([
+            `Le car part de Nouméa à ${horaire(t1)} et roule pendant ${mesure(x, 'h')}. Il arrive à ___.`,
+            `Roxy part en randonnée à ${horaire(t1)}. Elle marche ${mesure(x, 'h')}. Elle arrive à ___.`,
+            `${prenom} part faire une balade à vélo à ${horaire(t1)}. La balade dure ${mesure(x, 'h')}. ${majuscule(pronom)} rentre à ___.`,
+          ]);
         const etapes = [q ? `+ ${q}${ESPACE}h → ${horaire(t1 + 60 * q)}` : '', `+ ${mesure(m, 'min')} → <b>${horaire(t2)}</b>`].filter(Boolean);
         return choix({
           consigne: 'Trouve l’horaire',
@@ -2003,7 +2021,8 @@
         const enHeures = auHasard(0.6);
         const enonce = lecture
           ? `${prenom} lit ${mesure(d, 'min')} par jour pendant ${n}${ESPACE}jours. Combien de temps a-t-${pronom} lu en tout, `
-          : `${prenom} fait ${n} séances de natation de ${duree(d)} cette semaine. Combien de temps nage-t-${pronom} en tout, `;
+          : `${prenom} fait ${n} séances ${auHasard() ? `de natation de ${duree(d)} cette semaine. Combien de temps nage-t-${pronom}`
+            : `de va’a de ${duree(d)} cette semaine. Combien de temps pagaie-t-${pronom}`} en tout, `;
         return nombre({
           consigne: 'Résous le problème',
           enonce: enonce + (enHeures ? 'en heures ?' : 'en minutes ?'),

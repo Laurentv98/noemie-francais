@@ -5,19 +5,16 @@
 
 (function () {
   const {
-    entier, parmi, entierSauf, net, ecrire, mesure, euros, parentheses, frac, fracTexte, simplifier, tableau,
+    entier, parmi, entierSauf, net, ecrire, mesure, euros, francs, parentheses, frac, fracTexte, simplifier, tableau,
     choix, nombre, fraction, vraiFaux, ajouterEtape, figures, MOINS, ESPACE,
   } = RM.maths;
 
   // ======================================================================
   // Des petites aides, pour toutes les étapes
   // ======================================================================
-  // Les enfants des problèmes (« il » ou « elle », pour les accords)
-  const ENFANTS = [
-    { nom: 'Léa', il: 'elle' }, { nom: 'Tom', il: 'il' }, { nom: 'Zoé', il: 'elle' }, { nom: 'Hugo', il: 'il' },
-    { nom: 'Inès', il: 'elle' }, { nom: 'Sami', il: 'il' }, { nom: 'Lina', il: 'elle' }, { nom: 'Noé', il: 'il' },
-    { nom: 'Jade', il: 'elle' }, { nom: 'Malo', il: 'il' },
-  ];
+  // Les enfants des problèmes (« il » ou « elle », pour les accords) : des prénoms de toutes les communautés
+  // de Nouvelle-Calédonie (voir le moteur)
+  const ENFANTS = RM.maths.PRENOMS;
   // « de » et « que » devant une voyelle : d’abricots, qu’Inès, d’Hugo
   const VOYELLE = /^([aeiouéèêàâîôœ]|hu)/i;
   const de = mot => (VOYELLE.test(mot) ? `d’${mot}` : `de ${mot}`);
@@ -47,8 +44,6 @@
   const liste = valeurs => valeurs.map(v => ecrire(v)).join(`${ESPACE}; `);
   // Les pièges : des nombres positifs, sans les erreurs de calcul de l'ordinateur
   const positifs = valeurs => valeurs.map(net).filter(v => v > 0);
-  // Un prix sans le signe €, pour les cases d'un tableau « Prix (€) » : 22,50 (et pas 22,5)
-  const ecrirePrix = v => euros(v).replace(`${ESPACE}€`, '');
   // Au plus 2 chiffres après la virgule : pas de 3,333… sur un bouton
   const auCentieme = v => Number.isInteger(net(v * 100));
   const OUI_NON = ['Oui', 'Non'];
@@ -74,15 +69,16 @@
   // Les tableaux : les titres des deux lignes, les nombres du haut possibles, les coefficients (la valeur du bas pour 1 en haut),
   // et les décalages d'une case pour fabriquer un tableau qui n'est pas proportionnel
   const TABLEAUX = [
-    { x: 'Masse (kg)', y: 'Prix (€)', xs: intervalle(2, 9), coefs: [1.2, 1.5, 1.8, 2.4, 2.5, 3.5, 4.5], ecarts: [0.1, -0.1, 0.2, -0.2] },
-    { x: 'Nombre de cahiers', y: 'Prix (€)', xs: intervalle(2, 12), coefs: [0.8, 1.2, 1.5, 2.5, 3.5], ecarts: [0.1, -0.1, 0.2, -0.2] },
+    // (des prix en francs Pacifique : des nombres entiers)
+    { x: 'Masse (kg)', y: 'Prix (F)', xs: intervalle(2, 9), coefs: [300, 400, 500, 600, 800, 1200, 1500], ecarts: [50, -50, 100, -100] },
+    { x: 'Nombre de cahiers', y: 'Prix (F)', xs: intervalle(2, 12), coefs: [120, 150, 180, 250, 350], ecarts: [10, -10, 20, -20] },
     { x: 'Nombre de personnes', y: 'Farine (g)', xs: intervalle(2, 10), coefs: [30, 40, 45, 60, 75], ecarts: [5, -5, 10, -10] },
     { x: 'Distance (km)', y: 'Essence (L)', xs: [50, 150, 200, 250, 300, 350, 400, 450], coefs: [0.05, 0.06, 0.07, 0.08], ecarts: [0.5, -0.5, 1, -1] },
     { x: 'Sur la carte (cm)', y: 'En vrai (km)', xs: intervalle(2, 12), coefs: [0.5, 1.5, 2.5, 4, 5], ecarts: [0.5, -0.5, 1, -1] },
     { x: 'Durée (min)', y: 'Eau (L)', xs: intervalle(3, 15), coefs: [1.5, 2.5, 6, 8, 12], ecarts: [0.5, -0.5, 1, -1] },
   ];
-  // Les nombres du bas s'écrivent comme des prix dans une ligne « Prix (€) » (10,50)
-  const ecritureBas = T => (T.y === 'Prix (€)' ? ecrirePrix : ecrire);
+  // Les nombres du bas s'écrivent comme les autres (les prix en francs sont des nombres entiers)
+  const ecritureBas = () => ecrire;
 
   // Deux colonnes proportionnelles : 4 nombres tous différents, et x2 n'est pas un multiple de x1
   // (sinon, on n'a pas besoin du produit en croix)
@@ -120,7 +116,7 @@
       consigne: 'Complète le tableau de proportionnalité',
       enonce: tableauAvec(T, grille, i, j, '___'),
       reponse: valeur,
-      prix: i === 1 && T.y === 'Prix (€)',
+      enFrancs: i === 1 && T.y === 'Prix (F)',
       solution: tableauAvec(T, grille, i, j, `<b>${ecrit(i, valeur)}</b>`),
       explication: `Les produits en croix sont égaux : ${ecrit(1 - i, r)} × ? = ${ecrit(i, p)} × ${ecrit(1 - i, q)}.<br>`
         + `Donc ? = ${ecrit(i, p)} × ${ecrit(1 - i, q)} ÷ ${ecrit(1 - i, r)} = ${ecrire(net(p * q))} ÷ ${ecrit(1 - i, r)} = <b>${ecrit(i, valeur)}</b>.`,
@@ -132,9 +128,17 @@
     const T = parmi(TABLEAUX);
     const i = entier(0, 1);
     // (la case « ? » en haut : on divise par un nombre du bas, qui doit être entier pour calculer sans calculatrice)
-    const { grille } = colonnes(T, i === 0);
-    const j = entier(0, 1);
-    const { p, q, r, valeur } = produitEnCroix(grille, i, j);
+    // (des prix en francs à 4 chiffres font des boutons longs : on retire les nombres, 10 fois au plus, pour des boutons courts)
+    let grille;
+    let j;
+    let calcul;
+    for (let essai = 0; essai < 10; essai++) {
+      ({ grille } = colonnes(T, i === 0));
+      j = entier(0, 1);
+      calcul = produitEnCroix(grille, i, j);
+      if (`${ecrire(calcul.p)} × ${ecrire(calcul.q)} ÷ ${ecrire(calcul.r)}`.length <= 16) break;
+    }
+    const { p, q, r, valeur } = calcul;
     const ecrit = (l, v) => (l === 1 ? ecritureBas(T)(v) : ecrire(v));
     const [P, Q, R] = [ecrit(i, p), ecrit(1 - i, q), ecrit(1 - i, r)];
     const bon = `${P} × ${Q} ÷ ${R}`;
@@ -152,16 +156,20 @@
   // Les problèmes : chaque situation donne les titres du tableau (tx, ty), les nombres (x1, x2 en haut ; y1, y2 en bas ;
   // la case cherchée vaut null), comment écrire les valeurs (ex, ey), l'énoncé, et l'unité (ou prix) de la réponse.
   // pas : l'écart entre deux réponses voisines (pour les pièges) ; pieges : des pièges en plus
+  // (des prix réalistes en francs Pacifique, arrondis : ce ne sont pas des prix officiels)
   const OBJETS = [
-    { des: 'cahiers', lieu: 'À la papeterie', prix: [1.2, 1.5, 2.5] },
-    { des: 'croissants', lieu: 'À la boulangerie', prix: [0.9, 1.1, 1.2] },
-    { des: 'yaourts', lieu: 'Au marché', prix: [0.4, 0.45, 0.6] },
-    { des: 'stylos', lieu: 'À la papeterie', prix: [0.8, 1.5, 2.5] },
+    { des: 'cahiers', lieu: 'À la papeterie', prix: [150, 200, 250] },
+    { des: 'baguettes', lieu: 'À la boulangerie', prix: [60, 70, 80] },
+    { des: 'canettes', lieu: 'Au snack', prix: [150, 200, 250] },
+    { des: 'glaces', lieu: 'À la Baie des Citrons', prix: [300, 400, 500] },
+    { des: 'stylos', lieu: 'À la papeterie', prix: [100, 150, 250] },
   ];
-  const FRUITS = [['pommes', [1.8, 2.4, 2.5]], ['poires', [2.4, 2.8, 3.5]], ['tomates', [2.5, 3.2, 3.5]],
-    ['abricots', [3.5, 4.5, 5.5]], ['carottes', [1.2, 1.5, 1.8]]];
+  const FRUITS = [['letchis', [600, 800, 1000]], ['mangues', [400, 500, 600]], ['tomates', [400, 600, 800]],
+    ['avocats', [400, 500, 600]], ['carottes', [300, 400, 500]]];
   const INGREDIENTS = [['farine', [30, 40, 45, 60, 75]], ['sucre', [15, 20, 25, 30, 35]], ['beurre', [15, 20, 25, 30]],
-    ['chocolat', [25, 30, 40, 50]]];
+    ['chocolat', [25, 30, 40, 50]], ['coco râpée', [20, 25, 30, 40]]];
+  // Les marchés, pour les problèmes
+  const MARCHES = ['Au marché', 'Au marché', 'Au marché de Nouméa', 'Au marché de Koné', 'Au marché de La Foa', 'Au marché de Bourail'];
   const kg = v => mesure(v, 'kg');
   const SITUATIONS = [
     () => {
@@ -169,8 +177,8 @@
       const k = parmi(prix);
       const [x1, x2] = paire(intervalle(2, 7));
       return {
-        tx: 'Masse (kg)', ty: 'Prix (€)', x1, x2, y1: net(k * x1), y2: null, ex: kg, ey: euros, prix: true,
-        enonce: `Au marché, ${kg(x1)} ${de(fruit)} coûtent ${euros(k * x1)}. Combien coûtent ${kg(x2)} ${de(fruit)} ?`,
+        tx: 'Masse (kg)', ty: 'Prix (F)', x1, x2, y1: net(k * x1), y2: null, ex: kg, ey: francs, enFrancs: true,
+        enonce: `${parmi(MARCHES)}, ${kg(x1)} ${de(fruit)} coûtent ${francs(k * x1)}. Combien coûtent ${kg(x2)} ${de(fruit)} ?`,
       };
     },
     () => {
@@ -182,9 +190,9 @@
       do { [x1, x2] = paire(intervalle(2, 7)); } while (!Number.isInteger(net(k * x1)));
       const p = parmi(ENFANTS);
       return {
-        tx: 'Masse (kg)', ty: 'Prix (€)', x1, x2: null, y1: net(k * x1), y2: net(k * x2), ex: kg, ey: euros, unite: 'kg',
-        enonce: `Au marché, ${kg(x1)} ${de(fruit)} coûtent ${euros(k * x1)}. Combien de kilos ${de(fruit)} ${p.nom} `
-          + `peut-${p.il} acheter avec ${euros(k * x2)} ?`,
+        tx: 'Masse (kg)', ty: 'Prix (F)', x1, x2: null, y1: net(k * x1), y2: net(k * x2), ex: kg, ey: francs, unite: 'kg',
+        enonce: `${parmi(MARCHES)}, ${kg(x1)} ${de(fruit)} coûtent ${francs(k * x1)}. Combien de kg ${p.nom} `
+          + `peut-${p.il} en acheter avec ${francs(k * x2)} ?`,
       };
     },
     () => {
@@ -192,8 +200,16 @@
       const k = parmi(O.prix);
       const [x1, x2] = paire(intervalle(2, 12));
       return {
-        tx: `Nombre de ${O.des}`, ty: 'Prix (€)', x1, x2, y1: net(k * x1), y2: null, ex: v => `${ecrire(v)} ${O.des}`, ey: euros, prix: true,
-        enonce: `${O.lieu}, ${ecrire(x1)} ${O.des} coûtent ${euros(k * x1)}. Combien coûtent ${ecrire(x2)} ${O.des} ?`,
+        tx: `Nombre de ${O.des}`, ty: 'Prix (F)', x1, x2, y1: net(k * x1), y2: null, ex: v => `${ecrire(v)} ${O.des}`, ey: francs, enFrancs: true,
+        enonce: `${O.lieu}, ${ecrire(x1)} ${O.des} coûtent ${francs(k * x1)}. Combien coûtent ${ecrire(x2)} ${O.des} ?`,
+      };
+    },
+    () => {
+      // Changer des francs en euros pour un voyage (la parité est fixe : 1 000 F ≈ 8,38 €)
+      const x2 = parmi([2000, 3000, 4000, 5000, 6000, 10000]);
+      return {
+        tx: 'Francs (F)', ty: 'Euros (€)', x1: 1000, x2, y1: 8.38, y2: null, ex: francs, ey: euros, euros: true, pas: 1000,
+        enonce: `Voyage en France : on prend 1${ESPACE}000${ESPACE}F = 8,38${ESPACE}€ (arrondi). Combien d’euros valent environ ${francs(x2)} ?`,
       };
     },
     () => {
@@ -229,7 +245,7 @@
       const km = v => mesure(v, 'km');
       return {
         tx: 'Sur la carte (cm)', ty: 'En vrai (km)', x1, x2, y1: net(k * x1), y2: null, ex: v => mesure(v, 'cm'), ey: km, unite: 'km',
-        enonce: `Sur une carte, ${mesure(x1, 'cm')} représentent ${km(k * x1)} en vrai. Combien de kilomètres représentent ${mesure(x2, 'cm')} ?`,
+        enonce: `Sur une carte ${k <= 1.5 ? 'de randonnée' : 'de la Grande Terre'}, ${mesure(x1, 'cm')} représentent ${km(k * x1)} en vrai. Combien de kilomètres représentent ${mesure(x2, 'cm')} ?`,
       };
     },
     () => {
@@ -260,7 +276,9 @@
       const N = parmi([200, 250, 400, 500, 600, 800]);
       const t = parmi([12, 15, 18, 24, 26, 32, 35, 36, 42, 45, 48, 55, 64, 68, 72, 85].filter(v => Number.isInteger(N * v / 100)));
       const n = N * t / 100;
-      const activite = parmi(['font du sport en club', 'viennent à vélo', 'mangent à la cantine', 'jouent d’un instrument', 'ont un animal']);
+      // (le va’a est un sport de club : seulement pour les petits pourcentages)
+      const activite = parmi(['font du sport en club', 'viennent à vélo', 'mangent à la cantine', 'jouent d’un instrument', 'ont un animal',
+        'prennent le car', ...(t <= 20 ? ['font du va’a', 'font du va’a'] : [])]);
       const pc = v => mesure(v, '%');
       return {
         tx: 'Élèves', ty: 'Pourcentage (%)', x1: N, x2: n, y1: 100, y2: null, ex: v => combien(v, 'élève'), ey: pc, unite: '%',
@@ -274,7 +292,7 @@
   function problemeCroix() {
     const S = parmi(SITUATIONS)();
     const enBas = S.y2 === null;
-    const nb = S.ty === 'Prix (€)' ? ecrirePrix : ecrire; // les nombres du bas
+    const nb = S.euros ? v => euros(v).replace(`${ESPACE}€`, '') : ecrire; // les nombres du bas (8,38 € : 8,38)
     const [P, Q, R] = enBas ? [S.x2, S.y1, S.x1] : [S.y2, S.x1, S.y1];
     const calcul = enBas ? `${ecrire(P)} × ${nb(Q)} ÷ ${ecrire(R)}` : `${nb(P)} × ${ecrire(Q)} ÷ ${nb(R)}`;
     const V = net(P * Q / R);
@@ -288,17 +306,20 @@
     const { S, enBas, P, Q, R, V } = C;
     if (!avecBoutons) {
       return nombre({
-        consigne: 'Résous le problème', enonce: S.enonce, reponse: V, unite: S.unite || '', prix: Boolean(S.prix), explication: C.explication,
+        consigne: 'Résous le problème', enonce: S.enonce, reponse: V, unite: S.unite || '', enFrancs: Boolean(S.enFrancs), prix: Boolean(S.euros),
+        explication: C.explication,
       });
     }
     // Les erreurs : l'addition (ajouter en bas ce qu'on ajoute en haut), le rapport à l'envers (y1 × x1 ÷ x2),
     // la mauvaise diagonale, s'arrêter à la valeur pour 1, oublier de diviser (toujours du même ordre de grandeur que la réponse)
     const ajout = net(enBas ? S.y1 + S.x2 - S.x1 : S.x1 + S.y2 - S.y1);
+    // (en francs, ajouter 3 F à un prix de 1 650 F n’est pas une erreur crédible : on ne la propose pas quand elle est trop proche)
+    const ajoutCredible = !(S.enFrancs && enBas && Math.abs(ajout - S.y1) < V / 10);
     // (un pourcentage : entre 0 et 100, sans autre condition de taille : 0,15 % est l’erreur « oublier × 100 »)
     const vraisemblable = v => v > 0 && auCentieme(v) && v !== V && (S.pourcentage ? v < 100
-      : v >= V / 5 && v <= 5 * V && (enBas || Number.isInteger(v)));
+      : v >= V / 5 && v <= 5 * V && ((enBas && !S.enFrancs) || Number.isInteger(v)));
     const erreurs = S.pourcentage ? S.pieges
-      : [ajout, Q * R / P, P * R / Q, enBas ? S.y1 / S.x1 : S.x1 / S.y1, P * Q];
+      : [...(ajoutCredible ? [ajout] : []), Q * R / P, P * R / Q, enBas ? S.y1 / S.x1 : S.x1 / S.y1, P * Q];
     let pieges = [...new Set(erreurs.map(net).filter(vraisemblable))];
     // (en dernier secours, une unité de plus ou de moins en haut : une personne, un kilo, une minute…)
     const k = S.y1 / S.x1;
@@ -306,7 +327,7 @@
     const voisins = [...RM.melanger(enBas ? [k * (S.x2 + pas), k * (S.x2 - pas)] : [V + pas, V - pas]),
       ...RM.melanger(enBas ? [k * (S.x2 + 2 * pas), k * (S.x2 - 2 * pas)] : [V + 2 * pas, V - 2 * pas])];
     if (pieges.length < 3) pieges = [...new Set([...pieges, ...voisins.map(net).filter(vraisemblable)])].slice(0, 3);
-    const aGarder = !S.pourcentage && pieges.includes(ajout) ? [ajout] : [];
+    const aGarder = !S.pourcentage && ajoutCredible && pieges.includes(ajout) ? [ajout] : [];
     const q = choix({
       consigne: 'Résous le problème',
       // (selon la situation, les erreurs sont presque toutes plus grandes, ou plus petites : on mélange les boutons)
@@ -371,7 +392,8 @@
     const { p, q, r, valeur, ajout } = produitEnCroix(grille, i, j);
     const ecrit = (l, v) => (l === 1 ? ecritureBas(T)(v) : ecrire(v));
     // (une erreur du même ordre de grandeur que la réponse)
-    const faux = parmi(positifs([ajout, p * r / q, q * r / p])
+    // (dans un tableau de prix, « la case vaut 1 801 » à côté de 1 800 n’est pas crédible : pas d’addition)
+    const faux = parmi(positifs([...(T.y === 'Prix (F)' && i === 1 ? [] : [ajout]), p * r / q, q * r / p])
       .filter(v => v !== valeur && auCentieme(v) && (i === 1 || Number.isInteger(v)) && v >= valeur / 5 && v <= 5 * valeur));
     const annonce = vrai || faux === undefined ? valeur : faux;
     return vraiFaux({
@@ -398,12 +420,14 @@
     lecon: `
       <p>Dans un tableau de proportionnalité, on connaît trois nombres et on cherche le quatrième :
         c’est la <b>quatrième proportionnelle</b>.</p>
-      ${tableau([['Masse (kg)', 6, 7], ['Prix (€)', 9, '?']])}
+      ${tableau([['Masse (kg)', 6, 7], ['Prix (F)', 3000, '?']])}
       <h4>Le produit en croix</h4>
-      <p>Dans un tableau de proportionnalité, les <b>produits en croix</b> sont égaux : <i>6 × ? = 7 × 9</i>.
+      <p>Dans un tableau de proportionnalité, les <b>produits en croix</b> sont égaux : <i>6 × ? = 7 × 3&nbsp;000</i>.
         Autrement dit : si ${frac('a', 'b')} = ${frac('c', 'd')}, alors <b>a × d = b × c</b>.</p>
       <p>Pour trouver « ? », on multiplie les deux nombres de la <b>diagonale complète</b>, puis on divise par le <b>troisième</b> :
-        <i>? = 7 × 9 ÷ 6 = 63 ÷ 6 = 10,5</i>. Donc 7&nbsp;kg coûtent 10,50&nbsp;€.</p>
+        <i>? = 7 × 3&nbsp;000 ÷ 6 = 21&nbsp;000 ÷ 6 = 3&nbsp;500</i>. Donc 7&nbsp;kg coûtent 3&nbsp;500&nbsp;F.</p>
+      <p>👉 Pour changer de l’argent : <i>1&nbsp;000&nbsp;F valent environ 8,38&nbsp;€, donc 5&nbsp;000&nbsp;F valent environ
+        5&nbsp;000 × 8,38 ÷ 1&nbsp;000 = 41,90&nbsp;€.</i></p>
       <p>👉 Ça marche aussi pour un pourcentage : <i>45 élèves sur 250, c’est ? % : 250 → 100 % et 45 → ? %,
         donc ? = 45 × 100 ÷ 250 = 18&nbsp;%.</i></p>
       <h4>Reconnaître un tableau de proportionnalité</h4>
@@ -411,7 +435,8 @@
         S’ils sont différents, ce n’est pas proportionnel.</p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> le nombre par lequel on divise est toujours celui qui est <b>en face</b>
         de la case « ? », sur la même diagonale.</div>
-      <p>⚠️ On n’ajoute pas : 7&nbsp;kg, c’est 1&nbsp;kg de plus que 6&nbsp;kg, mais le prix n’augmente pas de 1&nbsp;€ !</p>
+      <p>⚠️ On n’ajoute pas : 7&nbsp;kg, c’est 1&nbsp;kg de plus que 6&nbsp;kg, mais le prix n’augmente pas de 1 :
+        il augmente du prix d’un kilo (3&nbsp;000 ÷ 6 = 500&nbsp;F) !</p>
     `,
   });
 
@@ -423,7 +448,8 @@
   // traces : [{ f, a }] (une fonction, de 0 à a) ; points : [{ x, y, nom }]
   function graphique({ xmax, ymax, pasX, pasY, etiqX = pasX, etiqY = pasY, nomAxes = ['', ''], traces = [], points = [] }) {
     const [largeur, hauteur] = [420, 290];
-    const [gauche, droite, haut, bas] = [46, 22, 30, 46];
+    // (des nombres à 4 chiffres sur l'axe vertical, comme « 6 400 » : une marge gauche plus large)
+    const [gauche, droite, haut, bas] = [ymax >= 1000 ? 60 : 46, 22, 30, 46];
     const X = v => gauche + v / xmax * (largeur - gauche - droite);
     const Y = v => haut + (ymax - v) / ymax * (hauteur - haut - bas);
     let html = '';
@@ -448,17 +474,17 @@
   // (k : le coefficient ; xs : les abscisses où la droite passe pile sur un croisement du quadrillage)
   const GRAPHIQUES = [
     {
-      intro: fruit => `Le graphique donne le prix des ${fruit} en fonction de leur masse.`,
-      choses: ['pommes', 'poires', 'tomates', 'carottes'],
-      axes: ['masse (kg)', 'prix (€)'], ex: kg, ey: euros, uniteX: 'kg', prixY: true,
+      intro: fruit => `Au marché, le graphique donne le prix des ${fruit} en fonction de leur masse.`,
+      choses: ['mangues', 'letchis', 'tomates', 'avocats'],
+      axes: ['masse (kg)', 'prix (F)'], ex: kg, ey: francs, uniteX: 'kg', prixY: true,
       configs: [
-        { k: 1.5, xmax: 8, pasX: 1, ymax: 12, pasY: 1, etiqY: 2, xs: [2, 4, 6] },
-        { k: 2, xmax: 8, pasX: 1, ymax: 16, pasY: 1, etiqY: 2, xs: [2, 3, 4, 5, 6, 7] },
-        { k: 2.5, xmax: 8, pasX: 1, ymax: 20, pasY: 2.5, etiqY: 5, xs: [2, 3, 4, 5, 6] },
-        { k: 3, xmax: 8, pasX: 1, ymax: 24, pasY: 2, etiqY: 4, xs: [2, 4, 6] },
+        { k: 400, xmax: 8, pasX: 1, ymax: 3200, pasY: 200, etiqY: 400, xs: [2, 3, 4, 5, 6, 7] },
+        { k: 500, xmax: 8, pasX: 1, ymax: 4000, pasY: 500, etiqY: 1000, xs: [2, 3, 4, 5, 6] },
+        { k: 600, xmax: 8, pasX: 1, ymax: 4800, pasY: 400, etiqY: 800, xs: [2, 4, 6] },
+        { k: 800, xmax: 8, pasX: 1, ymax: 6400, pasY: 400, etiqY: 800, xs: [2, 3, 4, 5, 6, 7] },
       ],
       lireY: (x, fruit) => `Combien coûtent ${kg(x)} ${de(fruit)} ?`,
-      lireX: (y, fruit) => `Quelle masse ${de(fruit)} peut-on acheter avec ${euros(y)} ?`,
+      lireX: (y, fruit) => `Quelle masse ${de(fruit)} peut-on acheter avec ${francs(y)} ?`,
       coefficient: fruit => `Quel est le prix d’un kilo ${de(fruit)} ?`,
       // hors du graphique : une grande masse (un multiple d'une masse qu'on sait lire)
       loin: (C, fruit) => {
@@ -468,7 +494,7 @@
     },
     {
       intro: p => `${p.nom} roule à vélo, à vitesse constante. Le graphique donne la distance parcourue en fonction de la durée.`,
-      choses: [{ nom: 'Papi', il: 'il' }, { nom: 'Mamie', il: 'elle' }, { nom: 'Hugo', il: 'il' }, { nom: 'Léa', il: 'elle' }],
+      choses: [{ nom: 'Papi', il: 'il' }, { nom: 'Mamie', il: 'elle' }, { nom: 'Teva', il: 'il' }, { nom: 'Kalia', il: 'elle' }],
       axes: ['durée (h)', 'distance (km)'], ex: v => mesure(v, 'h'), ey: v => mesure(v, 'km'), uniteX: 'h', uniteY: 'km',
       configs: [
         { k: 10, xmax: 6, pasX: 1, ymax: 60, pasY: 5, etiqY: 10, xs: [2, 3, 4, 5] },
@@ -526,7 +552,7 @@
     if (!avecBoutons) {
       return nombre({
         consigne: 'Lis le graphique', enonce: `${intro}${figure}${question}`, reponse: V,
-        unite: surY ? (G.uniteY || '') : G.uniteX, prix: surY && Boolean(G.prixY), explication,
+        unite: surY ? (G.uniteY || '') : G.uniteX, enFrancs: surY && Boolean(G.prixY), explication,
       });
     }
     // Les erreurs : une ligne de trop ou de moins, une colonne de trop ou de moins, lire sur le mauvais axe
@@ -551,9 +577,9 @@
       enonce: `${intro}${figure}Le point A est sur la droite. ${G.coefficient(qui)}`,
       reponse: C.k,
       unite: G.uniteK || '',
-      prix: Boolean(G.prixY),
+      enFrancs: Boolean(G.prixY),
       explication: `Le point A a pour coordonnées (${ecrire(A)}${ESPACE}; ${ecrire(yA)}) : ${G.ex(A)} pour ${G.ey(yA)}.<br>`
-        + `Le coefficient : ${ecrire(yA)} ÷ ${ecrire(A)} = <b>${G.prixY ? euros(C.k) : mesure(C.k, G.uniteK)}</b>.`,
+        + `Le coefficient : ${ecrire(yA)} ÷ ${ecrire(A)} = <b>${G.prixY ? francs(C.k) : mesure(C.k, G.uniteK)}</b>.`,
     });
   }
 
@@ -569,7 +595,7 @@
       enonce: `${intro}${figure}${L.question}`,
       reponse: V,
       unite: G.uniteY || '',
-      prix: Boolean(G.prixY),
+      enFrancs: Boolean(G.prixY),
       explication: `On lit : ${G.ex(L.lu)} pour ${G.ey(yLu)}. C’est proportionnel :<br>`
         + (fois > 1
           ? `${G.ex(L.x)}, c’est ${ecrire(fois)} fois plus, donc ${ecrire(yLu)} × ${ecrire(fois)} = <b>${G.ey(V)}</b>.`
@@ -677,12 +703,12 @@
     ['Une situation de proportionnalité est représentée par une droite qui passe par l’origine.',
       'Une situation de proportionnalité est représentée par une droite qui ne passe pas par l’origine.',
       'Le graphique d’une situation de proportionnalité est une <b>droite qui passe par l’origine</b>.'],
-    ['Si le prix est proportionnel à la masse, le graphique passe par l’origine : 0 kg coûte 0 €.',
+    ['Si le prix est proportionnel à la masse, le graphique passe par l’origine : 0 kg coûte 0 F.',
       'Si le prix est proportionnel à la masse, le graphique ne passe pas par l’origine.',
-      'Si c’est proportionnel, 0&nbsp;kg coûte 0&nbsp;€ : le graphique passe par l’<b>origine</b>.'],
-    ['Un taxi coûte 3 € au départ, puis 2 € par km. Son graphique ne passe pas par l’origine.',
-      'Un taxi coûte 3 € au départ, puis 2 € par km. Son graphique passe par l’origine.',
-      'Pour 0&nbsp;km, on paie déjà 3&nbsp;€ : le graphique part de 3, il ne passe <b>pas</b> par l’origine. Ce n’est pas proportionnel.'],
+      'Si c’est proportionnel, 0&nbsp;kg coûte 0&nbsp;F : le graphique passe par l’<b>origine</b>.'],
+    ['Un taxi coûte 400 F au départ, puis 250 F par km. Son graphique ne passe pas par l’origine.',
+      'Un taxi coûte 400 F au départ, puis 250 F par km. Son graphique passe par l’origine.',
+      'Pour 0&nbsp;km, on paie déjà 400&nbsp;F : le graphique part de 400, il ne passe <b>pas</b> par l’origine. Ce n’est pas proportionnel.'],
     ['Un graphique qui passe par l’origine, mais qui n’est pas une droite, ne représente pas une situation de proportionnalité.',
       'Tout graphique qui passe par l’origine représente une situation de proportionnalité.',
       'Il faut les deux : une <b>droite</b>, et qui passe par l’<b>origine</b>.'],
@@ -692,7 +718,7 @@
     const vrai = Math.random() < 0.5;
     if (Math.random() < 0.5) {
       const [juste, faux, pourquoi] = parmi(REGLES_GRAPHIQUES);
-      return vraiFaux({ enonce: (vrai ? juste : faux).replace(/(\d) (€|km)/g, `$1${ESPACE}$2`), vrai, explication: pourquoi });
+      return vraiFaux({ enonce: (vrai ? juste : faux).replace(/(\d) (F|km|kg)\b/g, `$1${ESPACE}$2`), vrai, explication: pourquoi });
     }
     const [a, b] = pointDeDepart();
     const m = entier(2, 5);
@@ -725,15 +751,15 @@
       <h4>La règle</h4>
       <p>Une situation de proportionnalité est représentée par une <b>droite qui passe par l’origine</b> du repère (le point (0 ; 0)).
         Et une droite qui passe par l’origine représente toujours une situation de proportionnalité.</p>
-      ${graphique({ xmax: 6, ymax: 15, pasX: 1, pasY: 1, etiqY: 5, nomAxes: ['masse (kg)', 'prix (€)'], traces: [{ f: x => 2.5 * x, a: 6 }], points: [{ x: 4, y: 10, nom: 'A' }] })}
+      ${graphique({ xmax: 6, ymax: 3000, pasX: 1, pasY: 250, etiqY: 500, nomAxes: ['masse (kg)', 'prix (F)'], traces: [{ f: x => 500 * x, a: 6 }], points: [{ x: 4, y: 2000, nom: 'A' }] })}
       <h4>Lire le graphique</h4>
-      <p>On part de 4&nbsp;kg sur l’axe horizontal, on monte jusqu’à la droite, puis on lit sur l’axe vertical : <i>4&nbsp;kg coûtent 10&nbsp;€</i>.
-        Le point A a pour coordonnées (4 ; 10).</p>
-      <p><b>Le coefficient</b> : on divise l’ordonnée d’un point par son abscisse : <i>10 ÷ 4 = 2,5</i>. Un kilo coûte 2,50&nbsp;€.
-        Les coordonnées de tous les points de la droite sont proportionnelles : <i>(2 ; 5), (4 ; 10), (6 ; 15)…</i></p>
+      <p>On part de 4&nbsp;kg sur l’axe horizontal, on monte jusqu’à la droite, puis on lit sur l’axe vertical : <i>4&nbsp;kg coûtent 2&nbsp;000&nbsp;F</i>.
+        Le point A a pour coordonnées (4 ; 2&nbsp;000).</p>
+      <p><b>Le coefficient</b> : on divise l’ordonnée d’un point par son abscisse : <i>2&nbsp;000 ÷ 4 = 500</i>. Un kilo coûte 500&nbsp;F.
+        Les coordonnées de tous les points de la droite sont proportionnelles : <i>(2 ; 1&nbsp;000), (4 ; 2&nbsp;000), (6 ; 3&nbsp;000)…</i></p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> pour une valeur qui sort du graphique, lis une valeur facile, puis calcule :
-        20&nbsp;kg, c’est 5 fois 4&nbsp;kg, donc 5 × 10 = 50&nbsp;€.</div>
-      <p>⚠️ Pas proportionnel : une droite qui ne passe pas par l’origine (un taxi qui coûte déjà 3&nbsp;€ au départ),
+        20&nbsp;kg, c’est 5 fois 4&nbsp;kg, donc 5 × 2&nbsp;000 = 10&nbsp;000&nbsp;F.</div>
+      <p>⚠️ Pas proportionnel : une droite qui ne passe pas par l’origine (un taxi qui coûte déjà 400&nbsp;F au départ),
         ou une courbe, même si elle passe par l’origine.</p>
     `,
   });
@@ -751,11 +777,14 @@
 
   // Ce qui augmente ou diminue : l'énoncé, les valeurs de départ possibles, comment écrire le résultat
   // [l'article, « le prix du… », les prix possibles]
+  // (des prix réalistes en francs Pacifique, arrondis)
   const ARTICLES = [
-    ['un jeu de société', 'du jeu de société', [20, 30, 40, 50]], ['un sac à dos', 'du sac à dos', [30, 40, 50, 60]],
-    ['un vélo', 'du vélo', [150, 200, 250, 300]], ['un casque audio', 'du casque audio', [40, 50, 60, 80]],
-    ['une paire de baskets', 'de la paire de baskets', [50, 60, 80, 90]],
-    ['un abonnement au cinéma', 'de l’abonnement au cinéma', [100, 120, 150, 200]],
+    ['un jeu de société', 'du jeu de société', [2000, 3000, 4000, 5000]], ['un sac à dos', 'du sac à dos', [3000, 4000, 5000, 6000]],
+    ['un vélo', 'du vélo', [20000, 30000, 40000, 50000]], ['un casque audio', 'du casque audio', [4000, 5000, 6000, 8000]],
+    ['un maillot de bain', 'du maillot de bain', [2000, 3000, 4000, 5000]],
+    ['un masque de plongée', 'du masque de plongée', [2000, 3000, 4000, 5000]],
+    ['un bodyboard', 'du bodyboard', [6000, 8000, 10000, 12000]],
+    ['un abonnement au cinéma', 'de l’abonnement au cinéma', [10000, 12000, 15000, 20000]],
   ];
   const EVOLUTIONS = [
     // un prix qui augmente ou qui baisse
@@ -763,15 +792,15 @@
       if (t > (hausse ? 30 : 40)) return null;
       const [article, , prix] = parmi(ARTICLES);
       const p = parmi(prix);
-      return { p, e: euros, prix: true,
-        enonce: `${majuscule(article)} coûte ${euros(p)}. Son prix ${hausse ? 'augmente' : 'baisse'} de ${pc(t)}. Quel est son nouveau prix ?` };
+      return { p, e: francs, enFrancs: true,
+        enonce: `${majuscule(article)} coûte ${francs(p)}. Son prix ${hausse ? 'augmente' : 'baisse'} de ${pc(t)}. Quel est son nouveau prix ?` };
     },
     // les soldes (seulement une baisse)
     (t, hausse) => {
       if (hausse) return null;
       const [article, , prix] = parmi(ARTICLES);
       const p = parmi(prix);
-      return { p, e: euros, prix: true, enonce: `Pendant les soldes, ${article} à ${euros(p)} est à ${MOINS}${pc(t)}. Quel est son prix soldé ?` };
+      return { p, e: francs, enFrancs: true, enonce: `Pendant les soldes, ${article} à ${francs(p)} est à ${MOINS}${pc(t)}. Quel est son prix soldé ?` };
     },
     // la population d'un village
     (t, hausse) => {
@@ -786,7 +815,7 @@
       if (t > 40) return null;
       const p = parmi([40, 60, 80, 120, 160, 200].filter(v => Number.isInteger(v * t / 100)));
       if (!p) return null;
-      const club = parmi(['de judo', 'de théâtre', 'de foot', 'd’échecs']);
+      const club = parmi(['de judo', 'de théâtre', 'de foot', 'd’échecs', 'de va’a', 'de surf']);
       return { p, e: v => combien(v, 'membre'), unite: 'membres',
         enonce: `Le club ${club} avait ${ecrire(p)} membres. Cette année, le nombre de membres a ${hausse ? 'augmenté' : 'baissé'} de ${pc(t)}. `
           + 'Combien de membres a-t-il maintenant ?' };
@@ -798,7 +827,8 @@
       const hausse = Math.random() < 0.5;
       const t = parmi(hausse ? [5, 10, 15, 20, 25, 30, 40, 50, 12, 8, 35] : [5, 10, 15, 20, 25, 30, 40, 50, 12, 35, 60, 75]);
       const S = parmi(EVOLUTIONS)(t, hausse);
-      if (S && Number.isInteger(net(S.p * t)) && (S.prix || Number.isInteger(net(S.p * t / 100)))) {
+      // (en francs comme pour les habitants : un résultat entier, il n'y a pas de centimes)
+      if (S && Number.isInteger(net(S.p * t / 100))) {
         const variation = net(S.p * t / 100);
         return { ...S, t, hausse, variation, r: net(hausse ? S.p + variation : S.p - variation), c: coefficientDe(t, hausse) };
       }
@@ -858,7 +888,7 @@
     const E = evolution();
     if (!avecBoutons) {
       return nombre({
-        consigne: 'Calcule la nouvelle valeur', enonce: E.enonce, reponse: E.r, unite: E.unite || '', prix: Boolean(E.prix),
+        consigne: 'Calcule la nouvelle valeur', enonce: E.enonce, reponse: E.r, unite: E.unite || '', enFrancs: Boolean(E.enFrancs),
         explication: expliquerEvolution(E),
       });
     }
@@ -866,10 +896,12 @@
     // Les erreurs : ajouter (ou enlever) t unités, donner la variation seule, se tromper de sens,
     // une virgule mal placée (20 % → × 1,02), compter la variation deux fois
     const ajoutT = net(E.hausse ? p + t : p - t);
+    // (pour un prix en francs, ajouter ou enlever t francs n’est pas une erreur crédible : on la garde pour les habitants et les clubs)
+    const avecAjout = E.enFrancs ? [] : [ajoutT];
     const candidats = E.hausse
-      ? [ajoutT, variation, p - variation, p * (1 + t / 1000), p + 2 * variation]
-      : [ajoutT, variation, p + variation, p * (1 - t / 1000), p - 2 * variation];
-    const pieges = positifs(candidats).filter(v => (E.prix ? auCentieme(v) : Number.isInteger(v)) && v >= r / 10 && v !== r);
+      ? [...avecAjout, variation, p - variation, p * (1 + t / 1000), p + 2 * variation]
+      : [...avecAjout, variation, p + variation, p * (1 - t / 1000), p - 2 * variation];
+    const pieges = positifs(candidats).filter(v => Number.isInteger(v) && v >= r / 10 && v !== r);
     const q = choix({
       consigne: 'Calcule la nouvelle valeur',
       enonce: E.enonce,
@@ -893,13 +925,13 @@
     do { p = parmi(prix); t = parmi([5, 10, 15, 20, 25, 30, 40, 12, 35]); } while (!Number.isInteger(p * t / 100));
     const variation = p * t / 100;
     const r = hausse ? p + variation : p - variation;
-    const enonce = `Le prix ${du} passe de ${euros(p)} à ${euros(r)}. De quel pourcentage a-t-il ${hausse ? 'augmenté' : 'baissé'} ?`;
-    const explication = `${hausse ? 'L’augmentation' : 'La baisse'} : ${ecrire(Math.max(p, r))} − ${ecrire(Math.min(p, r))} = ${euros(variation)}.<br>`
+    const enonce = `Le prix ${du} passe de ${francs(p)} à ${francs(r)}. De quel pourcentage a-t-il ${hausse ? 'augmenté' : 'baissé'} ?`;
+    const explication = `${hausse ? 'L’augmentation' : 'La baisse'} : ${ecrire(Math.max(p, r))} − ${ecrire(Math.min(p, r))} = ${francs(variation)}.<br>`
       + `On la compare au prix de <b>départ</b> : ${ecrire(variation)} ÷ ${ecrire(p)} = ${ecrire(t / 100)} = <b>${pc(t)}</b>.`;
     if (!avecBoutons) {
       return nombre({ consigne: 'Trouve le pourcentage d’évolution', enonce, reponse: t, unite: '%', explication });
     }
-    // Les erreurs : la variation en euros prise pour un pourcentage, le nouveau prix ÷ l'ancien (115 % ou 85 %),
+    // Les erreurs : la variation en francs prise pour un pourcentage (quand elle est assez petite), le nouveau prix ÷ l'ancien (115 % ou 85 %),
     // comparer au nouveau prix au lieu du prix de départ, doubler ou partager le taux
     const candidats = [variation, r / p * 100, variation / r * 100, 2 * t, t / 2].map(net)
       .filter(v => Number.isInteger(v) && v > 0 && v <= 200 && v !== t);
@@ -913,25 +945,25 @@
       garder: candidats.includes(variation) ? [pc(variation)] : [],
       explication,
     });
-    // (avec 100 € au départ, la variation en euros est bien le pourcentage : pas de mise en garde)
-    if (variation !== t && q.choix.includes(pc(variation))) q.explication += `<br>⚠️ ${euros(variation)} de plus ou de moins, ce n’est pas ${pc(variation)} !`;
+    // (avec 100 F au départ, la variation en francs est bien le pourcentage : pas de mise en garde)
+    if (variation !== t && q.choix.includes(pc(variation))) q.explication += `<br>⚠️ ${francs(variation)} de plus ou de moins, ce n’est pas ${pc(variation)} !`;
     return q;
   }
 
   // Le piège : + t % puis − t %, on ne revient pas au prix de départ
-  // (prix : les prix possibles ; avec 25 %, un multiple de 4, pour tomber au centime près)
-  function allerRetour(prix = [20, 40, 50, 60, 80, 100]) {
+  // (prix : les prix possibles, en francs ; on ne garde que ceux qui tombent juste au franc près : pas de centimes)
+  function allerRetour(prix = [2000, 4000, 5000, 6000, 8000, 10000]) {
     const t = parmi([10, 20, 25, 50]);
-    const p = parmi(t === 25 ? prix.filter(v => v % 4 === 0) : prix);
     const hausseDabord = Math.random() < 0.6;
     const [c1, c2] = hausseDabord ? [1 + t / 100, 1 - t / 100] : [1 - t / 100, 1 + t / 100];
+    const p = parmi(prix.filter(v => Number.isInteger(net(v * c1)) && Number.isInteger(net(net(v * c1) * c2))));
     const m = net(p * c1);
     const r = net(m * c2);
     return { t, p, hausseDabord, c1: net(c1), c2: net(c2), m, r };
   }
   const phraseAllerRetour = A => (A.hausseDabord ? `augmente de ${pc(A.t)}, puis baisse de ${pc(A.t)}` : `baisse de ${pc(A.t)}, puis augmente de ${pc(A.t)}`);
-  const expliquerAllerRetour = A => `Après ${A.hausseDabord ? 'la hausse' : 'la baisse'} : ${ecrire(A.p)} × ${ecrire(A.c1)} = ${euros(A.m)}.<br>`
-    + `Après ${A.hausseDabord ? 'la baisse' : 'la hausse'} : ${ecrire(A.m)} × ${ecrire(A.c2)} = <b>${euros(A.r)}</b>.`;
+  const expliquerAllerRetour = A => `Après ${A.hausseDabord ? 'la hausse' : 'la baisse'} : ${ecrire(A.p)} × ${ecrire(A.c1)} = ${francs(A.m)}.<br>`
+    + `Après ${A.hausseDabord ? 'la baisse' : 'la hausse'} : ${ecrire(A.m)} × ${ecrire(A.c2)} = <b>${francs(A.r)}</b>.`;
 
   function questionAllerRetour() {
     const [article, , prix] = parmi(ARTICLES);
@@ -940,11 +972,11 @@
       consigne: 'Calcule le prix final',
       // (les erreurs sont presque toutes du même côté : on mélange les boutons au lieu de les ranger)
       ordre: 'melange',
-      enonce: `${majuscule(article)} coûte ${euros(A.p)}. Son prix ${phraseAllerRetour(A)}. Quel est son prix final ?`,
-      reponse: euros(A.r),
+      enonce: `${majuscule(article)} coûte ${francs(A.p)}. Son prix ${phraseAllerRetour(A)}. Quel est son prix final ?`,
+      reponse: francs(A.r),
       // le piège : revenir au prix de départ
-      pieges: positifs([A.p, A.m, A.p * (1 - A.t / 100), A.p * (1 + A.t / 100), A.r - (A.p - A.r), A.p + (A.p - A.r)]).map(euros),
-      explication: `${expliquerAllerRetour(A)}<br>⚠️ On ne revient pas à ${euros(A.p)} : les ${pc(A.t)} de la 2<sup>e</sup> évolution se calculent sur ${euros(A.m)}.`,
+      pieges: positifs([A.p, A.m, A.p * (1 - A.t / 100), A.p * (1 + A.t / 100), A.r - (A.p - A.r), A.p + (A.p - A.r)]).filter(v => Number.isInteger(v)).map(francs),
+      explication: `${expliquerAllerRetour(A)}<br>⚠️ On ne revient pas à ${francs(A.p)} : les ${pc(A.t)} de la 2<sup>e</sup> évolution se calculent sur ${francs(A.m)}.`,
     });
   }
 
@@ -955,7 +987,7 @@
       // (les faux : revenir au prix de départ, oublier la 2e évolution, compter deux fois la perte, ne faire que la baisse)
       const annonce = vrai ? A.r : parmi(positifs([A.p, A.m, 2 * A.r - A.p, A.p * (1 - A.t / 100)]).filter(v => v !== A.r));
       return vraiFaux({
-        enonce: `Un prix de ${euros(A.p)} ${phraseAllerRetour(A)}. Il vaut alors ${euros(annonce)}.`,
+        enonce: `Un prix de ${francs(A.p)} ${phraseAllerRetour(A)}. Il vaut alors ${francs(annonce)}.`,
         vrai: annonce === A.r,
         explication: expliquerAllerRetour(A),
       });
@@ -993,15 +1025,15 @@
         <tr><th>Évolution</th><th>+ 20&nbsp;%</th><th>+ 5&nbsp;%</th><th>− 15&nbsp;%</th><th>− 40&nbsp;%</th></tr>
         <tr><td>On multiplie par</td><td>1,2</td><td>1,05</td><td>0,85</td><td>0,6</td></tr>
       </table>
-      <p>👉 <i>Un jeu à 40&nbsp;€ augmente de 15&nbsp;% : 40 × 1,15 = 46&nbsp;€.</i>
-        On peut aussi calculer 15&nbsp;% de 40 = 6, puis 40 + 6 = 46.</p>
+      <p>👉 <i>Un jeu à 4&nbsp;000&nbsp;F augmente de 15&nbsp;% : 4&nbsp;000 × 1,15 = 4&nbsp;600&nbsp;F.</i>
+        On peut aussi calculer 15&nbsp;% de 4&nbsp;000 = 600, puis 4&nbsp;000 + 600 = 4&nbsp;600.</p>
       <p>Un coefficient plus grand que 1 fait augmenter ; plus petit que 1, il fait diminuer : <i>× 0,7, c’est une baisse de 30&nbsp;%.</i></p>
       <h4>Retrouver le pourcentage d’évolution</h4>
-      <p>On divise la variation par la valeur de <b>départ</b> : <i>de 80&nbsp;€ à 68&nbsp;€, la baisse est de 12&nbsp;€ ;
-        12 ÷ 80 = 0,15 = 15&nbsp;%.</i></p>
+      <p>On divise la variation par la valeur de <b>départ</b> : <i>de 8&nbsp;000&nbsp;F à 6&nbsp;800&nbsp;F, la baisse est de 1&nbsp;200&nbsp;F ;
+        1&nbsp;200 ÷ 8&nbsp;000 = 0,15 = 15&nbsp;%.</i></p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> + 5&nbsp;%, c’est × 1,05 (et pas × 1,5, qui fait + 50&nbsp;%) !</div>
-      <p>⚠️ + 20&nbsp;% puis − 20&nbsp;% ne ramène <b>pas</b> au prix de départ : <i>50 × 1,2 = 60, puis 60 × 0,8 = 48&nbsp;€.</i>
-        La baisse se calcule sur 60, pas sur 50.</p>
+      <p>⚠️ + 20&nbsp;% puis − 20&nbsp;% ne ramène <b>pas</b> au prix de départ : <i>5&nbsp;000 × 1,2 = 6&nbsp;000, puis 6&nbsp;000 × 0,8 = 4&nbsp;800&nbsp;F.</i>
+        La baisse se calcule sur 6&nbsp;000, pas sur 5&nbsp;000.</p>
     `,
   });
 
@@ -1016,10 +1048,12 @@
   const SERIES = [
     { texte: p => `Voici les notes ${de(p.nom)} ce trimestre, sur 20 :`, min: 5, max: 19, n: [5, 6, 7, 8], unite: '' },
     { texte: p => `${p.nom} a chronométré ses tours de piste, en secondes :`, min: 48, max: 75, n: [5, 6, 7], unite: 's' },
-    { texte: () => 'Voici les températures relevées à midi pendant plusieurs jours, en °C :', min: 8, max: 24, n: [5, 6, 7, 8, 9], unite: '°C' },
+    { texte: () => 'Voici les températures relevées à midi à Nouméa pendant plusieurs jours, en °C :', min: 20, max: 31, n: [5, 6, 7, 8, 9], unite: '°C' },
     { texte: () => 'Voici les tailles de quelques élèves de la classe, en cm :', min: 138, max: 168, n: [5, 6, 7, 9], unite: 'cm' },
     { texte: p => `${p.nom} a noté le nombre de pages lues chaque jour de la semaine :`, min: 5, max: 40, n: [7], unite: 'pages', ecrit: v => combien(v, 'page') },
     { texte: () => 'Voici le nombre de buts marqués par l’équipe à chaque match :', min: 0, max: 6, n: [7, 8, 9], unite: 'buts', ecrit: v => combien(v, 'but') },
+    { texte: p => `${p.nom} a compté les tortues vues à chaque sortie de snorkeling dans le lagon :`, min: 0, max: 7, n: [5, 6, 7],
+      unite: 'tortues', ecrit: v => combien(v, 'tortue') },
   ];
   // La médiane d'une liste de nombres
   function mediane(valeurs) {
@@ -1148,8 +1182,8 @@
       diagramme: 'Le diagramme donne le nombre d’élèves qui ont 0, 1, 2, 3 ou 4 frères et sœurs.' },
     { titre: 'Note sur 10', valeurs: [5, 6, 7, 8, 9, 10], qui: 'élèves', intro: 'Voici les notes d’un contrôle, sur 10.',
       diagramme: 'Le diagramme donne le nombre d’élèves pour chaque note d’un contrôle, sur 10.' },
-    { titre: 'Buts marqués', valeurs: [0, 1, 2, 3, 4], qui: 'matchs', intro: 'Voici les buts marqués par l’équipe de Hugo pendant la saison.',
-      diagramme: 'Le diagramme donne le nombre de matchs où l’équipe de Hugo a marqué 0, 1, 2, 3 ou 4 buts.' },
+    { titre: 'Buts marqués', valeurs: [0, 1, 2, 3, 4], qui: 'matchs', intro: 'Voici les buts marqués par l’équipe de Sione pendant la saison.',
+      diagramme: 'Le diagramme donne le nombre de matchs où l’équipe de Sione a marqué 0, 1, 2, 3 ou 4 buts.' },
   ];
 
   function questionMedianeEffectifs() {
@@ -1393,7 +1427,7 @@
     if (forme === 'decimal') {
       const p = entier(11, 89) / 100;
       const [evenement, contraire] = parmi([['La probabilité qu’il pleuve demain', 'qu’il ne pleuve pas'],
-        ['La probabilité que Sami gagne la partie', 'qu’il ne la gagne pas'], ['La probabilité que le bus soit en retard', 'qu’il ne soit pas en retard'],
+        ['La probabilité que Wanir gagne la partie', 'qu’il ne la gagne pas'], ['La probabilité que le bus soit en retard', 'qu’il ne soit pas en retard'],
         ['Sur une roue de loterie, la probabilité que la flèche s’arrête sur le rouge', 'qu’elle ne s’arrête pas sur le rouge']]);
       return nombre({
         consigne: 'Calcule la probabilité',
@@ -1568,8 +1602,8 @@
 
   // Des phrases, écrites deux fois (juste et fausse), avec la même forme
   const REGLES_PROBA = [
-    ['Léa lance une pièce équilibrée 10 fois et obtient 7 fois « pile ». La fréquence de « pile » est 0,7.',
-      'Léa lance une pièce équilibrée 10 fois et obtient 7 fois « pile ». La probabilité d’obtenir « pile » est 0,7.',
+    ['Hinano lance une pièce équilibrée 10 fois et obtient 7 fois « pile ». La fréquence de « pile » est 0,7.',
+      'Hinano lance une pièce équilibrée 10 fois et obtient 7 fois « pile ». La probabilité d’obtenir « pile » est 0,7.',
       '7 ÷ 10 = 0,7, c’est la <b>fréquence</b> observée. La probabilité d’obtenir « pile » avec une pièce équilibrée est 0,5.'],
     ['Quand on répète une expérience un très grand nombre de fois, la fréquence d’un événement se rapproche de sa probabilité.',
       'Quand on répète une expérience un très grand nombre de fois, la fréquence d’un événement devient égale à 0,5.',

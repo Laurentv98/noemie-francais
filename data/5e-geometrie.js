@@ -52,8 +52,9 @@
   // et les voyelles A et E, ainsi que L, pour ne pas écrire des mots : « CAR », « SAC », « MA », « LE », « SE »…)
   const LETTRES = ['B', 'C', 'D', 'F', 'G', 'H', 'K', 'M', 'N', 'P', 'R', 'S', 'T'];
   const lettres = (n, interdites = []) => RM.melanger(LETTRES.filter(l => !interdites.includes(l))).slice(0, n);
-  const PRENOMS = ['Léa', 'Tom', 'Zoé', 'Hugo', 'Inès', 'Sami', 'Lina', 'Noé'];
-  const FILLES = ['Léa', 'Zoé', 'Inès', 'Lina']; // pour écrire « peut-elle » ou « peut-il »
+  // Des prénoms de toutes les communautés du pays
+  const PRENOMS = ['Kalia', 'Teva', 'Maëva', 'Sione', 'Wakana', 'Minh', 'Léa', 'Tom', 'Hinano', 'Noa'];
+  const FILLES = ['Kalia', 'Maëva', 'Wakana', 'Léa', 'Hinano']; // pour écrire « peut-elle » ou « peut-il »
   const pronom = prenom => (FILLES.includes(prenom) ? 'elle' : 'il');
   // Un nombre entier ou un nombre avec un demi (2 ; 2,5 ; 3…), entre min et max
   function entierOuDemi(min, max) {
@@ -1176,7 +1177,8 @@
       return nombre({
         consigne: 'Calcule',
         enonce: potager
-          ? `Le potager de Mamie a la forme d’un parallélogramme de côtés ${mesure(x, 'm')} et ${mesure(y, 'm')}. Quel est son périmètre ?`
+          ? `${parmi(['Le potager de Mamie, à la tribu,', 'Le potager de l’école', 'Le jardin de Papi, à Lifou,'])} a la forme `
+            + `d’un parallélogramme de côtés ${mesure(x, 'm')} et ${mesure(y, 'm')}. Quel est son périmètre ?`
           : `${nom} est un parallélogramme${svg ? '' : ` : ${S[0]}${S[1]} = ${cm(a)} et ${S[1]}${S[2]} = ${cm(b)}`}. Quel est son périmètre ?${svg}`,
         reponse: net(2 * (x + y)),
         unite,
@@ -1820,7 +1822,7 @@
     return nombre({
       consigne: 'Écris le nombre',
       enonce: tresor
-        ? `Sur la carte au trésor de Roxy, le trésor est au point T${coord(x, y)}. Quelle est l’${quoi} de ce point ?`
+        ? `Sur la carte au trésor de Roxy, le trésor est caché sur un îlot du lagon, au point T${coord(x, y)}. Quelle est l’${quoi} de ce point ?`
         : `Quelle est l’${quoi} du point ${P}${coord(x, y)} ?`,
       reponse: v,
       touches: TOUCHES_RELATIFS,

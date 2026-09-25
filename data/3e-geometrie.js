@@ -58,7 +58,8 @@
 
   // Des noms de triangles sans lettres qui se lisent comme un mot (on évite E, L, I, O, U…)
   const TRIANGLES = ['ABC', 'MNP', 'RST', 'FGH', 'KMN', 'PRS', 'BCD', 'GHK', 'NPR', 'CDF'];
-  const PRENOMS = ['Léa', 'Tom', 'Zoé', 'Hugo', 'Inès', 'Sami', 'Lina', 'Noé'];
+  // (des prénoms de toutes les communautés de Nouvelle-Calédonie)
+  const PRENOMS = ['Kalia', 'Teva', 'Léa', 'Sione', 'Wakana', 'Minh', 'Anaïs', 'Noa', 'Hinano', 'Wanir', 'Mei', 'Tom'];
   // Un segment du triangle « nom », ses deux lettres dans l'ordre du nom : dans le triangle RST, on écrit RT (et pas TR)
   const seg = (nom, X, Y) => (nom.indexOf(X) < nom.indexOf(Y) ? X + Y : Y + X);
   // Un triangle rectangle au hasard : son nom, le sommet R de l'angle droit, et les deux autres sommets P et Q
@@ -1220,7 +1221,7 @@
   // Des problèmes de la vie de Roxy (réponse en mètres)
   function questionProblemeTrigo() {
     const prenom = parmi(PRENOMS);
-    const variante = parmi(['cerfVolant', 'sapin', 'toboggan', 'echelle', 'fil']);
+    const variante = parmi(['cerfVolant', 'arbre', 'toboggan', 'echelle', 'fil']);
     const probleme = (enonce, reponse, explication) => nombre({ consigne: 'Résous le problème', enonce, reponse, unite: 'm', explication });
     if (variante === 'cerfVolant' || variante === 'toboggan' || variante === 'echelle') {
       const [a, v, exact] = (() => {
@@ -1234,7 +1235,7 @@
       const egal = exact ? '=' : '≈';
       const debut = onDonne('sin', a, v, exact);
       const textes = {
-        cerfVolant: [`${debut} Le fil tendu du cerf-volant ${/^[AEIOUÉ]/.test(prenom) ? 'd’' : 'de '}${prenom} mesure ${mesure(L, 'm')} `
+        cerfVolant: [`${debut} ${parmi(['Le', 'Sur la plage de l’Anse Vata, le'])} fil tendu du cerf-volant ${/^[AEIOUÉ]/.test(prenom) ? 'd’' : 'de '}${prenom} mesure ${mesure(L, 'm')} `
           + `et fait un angle de ${a}° avec le sol. À quelle hauteur vole le cerf-volant ? (Le fil part du sol.)`,
         'le fil est l’hypoténuse, la hauteur est le côté opposé à l’angle de'],
         toboggan: [`${debut} La glissière droite d’un toboggan mesure ${mesure(L, 'm')} et fait un angle de ${a}° avec le sol. `
@@ -1245,14 +1246,15 @@
       return probleme(textes[0], h,
         `On a un triangle rectangle : ${textes[1]} ${a}°.<br>hauteur = ${ecrire(L)} × sin ${a}° ${egal} ${ecrire(L)} × ${ecrire(v)} = <b>${mesure(h, 'm')}</b>.`);
     }
-    if (variante === 'sapin') {
+    if (variante === 'arbre') {
+      const arbre = parmi(['pin colonnaire', 'cocotier']);
       const a = parmi([35, 40, 50, 55]);
       const v = valeurTrigo('tan', a);
       const ombre = parmi([6, 8, 10, 12]);
       const h = net(ombre * v);
-      return probleme(`On donne tan ${a}° ≈ ${ecrire(v)}. L’ombre d’un sapin mesure ${mesure(ombre, 'm')} sur le sol horizontal, `
-        + `et les rayons du soleil font un angle de ${a}° avec le sol. Quelle est la hauteur du sapin ?`, h,
-      `Le sapin, son ombre et le rayon forment un triangle rectangle : l’ombre est le côté adjacent à l’angle de ${a}°, le sapin le côté opposé.<br>`
+      return probleme(`On donne tan ${a}° ≈ ${ecrire(v)}. L’ombre d’un ${arbre} mesure ${mesure(ombre, 'm')} sur le sol horizontal, `
+        + `et les rayons du soleil font un angle de ${a}° avec le sol. Quelle est la hauteur du ${arbre} ?`, h,
+      `Le ${arbre}, son ombre et le rayon forment un triangle rectangle : l’ombre est le côté adjacent à l’angle de ${a}°, le ${arbre} le côté opposé.<br>`
         + `hauteur = ${ecrire(ombre)} × tan ${a}° ≈ ${ecrire(ombre)} × ${ecrire(v)} = <b>${mesure(h, 'm')}</b>.`);
     }
     // Le fil : on connaît la hauteur, on divise par sin 30°

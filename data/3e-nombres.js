@@ -7,15 +7,16 @@
 
 (function () {
   const {
-    entier, parmi, entierSauf, ecrire, decimalesDe, net, euros, mesure, lireNombre, egaux, MOINS, parentheses,
+    entier, parmi, entierSauf, ecrire, decimalesDe, net, francs, mesure, lireNombre, egaux, MOINS, parentheses,
     frac, fracTexte, simplifier, pgcd, ppcm, puissance, puissanceTexte, choix, nombre, fraction, vraiFaux, ajouterEtape,
   } = RM.maths;
 
   // ======================================================================
   // Des petites aides, pour toutes les étapes
   // ======================================================================
-  // Les enfants des problèmes, avec leur pronom
-  const ENFANTS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'], ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il']];
+  // Les enfants des problèmes, avec leur pronom (des prénoms de toutes les communautés de Nouvelle-Calédonie)
+  const ENFANTS = [['Kalia', 'elle'], ['Teva', 'il'], ['Léa', 'elle'], ['Sione', 'il'], ['Wakana', 'elle'], ['Minh', 'il'],
+    ['Anaïs', 'elle'], ['Noa', 'il'], ['Hinano', 'elle'], ['Wanir', 'il'], ['Maëva', 'elle'], ['Tom', 'il']];
   const voyelle = nom => /^[AEIOUÉ]/.test(nom);
   // Deux enfants différents : { nom, il, Il, de, que } (de : « de Tom », « d’Inès » ; que : « que Tom », « qu’Inès »)
   const deuxEnfants = () => RM.melanger(ENFANTS).slice(0, 2).map(([nom, il]) => ({
@@ -400,14 +401,16 @@
         const [A, B] = [a * g, b * g];
         const [p1] = deuxEnfants();
         const situation = parmi([
-          { texte: `Un fleuriste a ${A} roses et ${B} tulipes. Il veut faire le plus grand nombre possible de bouquets identiques, avec toutes les fleurs.`,
-            paquets: 'bouquets', chose1: 'roses', chose2: 'tulipes', ou: 'dans chaque bouquet' },
+          { texte: `Au marché, une vendeuse a ${A} mangues et ${B} avocats. Elle veut faire le plus grand nombre possible de tas identiques, avec tous les fruits.`,
+            paquets: 'tas', chose1: 'mangues', chose2: 'avocats', ou: 'dans chaque tas' },
+          { texte: `Un fleuriste a ${A} roses et ${B} orchidées. Il veut faire le plus grand nombre possible de bouquets identiques, avec toutes les fleurs.`,
+            paquets: 'bouquets', chose1: 'roses', chose2: 'orchidées', ou: 'dans chaque bouquet' },
           { texte: `Mamie a ${A} bonbons à la fraise et ${B} bonbons au citron. Elle prépare le plus grand nombre possible de sachets identiques, avec tous les bonbons.`,
             paquets: 'sachets', chose1: 'bonbons à la fraise', chose2: 'bonbons au citron', ou: 'dans chaque sachet' },
           { texte: `Pour un tournoi, ${A} élèves de 4e et ${B} élèves de 3e forment le plus grand nombre possible d’équipes identiques, sans oublier personne.`,
             paquets: 'équipes', chose1: 'élèves de 4e', chose2: 'élèves de 3e', ou: 'dans chaque équipe' },
-          { texte: `${p1.nom} a ${A} photos de vacances et ${B} photos de la forêt. ${p1.Il} les colle sur le plus grand nombre possible de pages identiques, sans en laisser.`,
-            paquets: 'pages', chose1: 'photos de vacances', chose2: 'photos de la forêt', ou: 'sur chaque page' },
+          { texte: `${p1.nom} a ${A} photos de ses vacances à Lifou et ${B} photos de la foire de Bourail. ${p1.Il} les colle sur le plus grand nombre possible de pages identiques, sans en laisser.`,
+            paquets: 'pages', chose1: 'photos de Lifou', chose2: 'photos de la foire de Bourail', ou: 'sur chaque page' },
         ]);
         const quoi = parmi(['paquets', 'chose1', 'chose2']);
         const reponse = { paquets: g, chose1: a, chose2: b }[quoi];
@@ -1399,7 +1402,7 @@
     }
   }
 
-  // Un problème à mettre en équation : { situation, question, quoi, equation, eq, pieges, x, unite, prix, traduction, resolution }
+  // Un problème à mettre en équation : { situation, question, quoi, equation, eq, pieges, x, unite, enFrancs, traduction, resolution }
   // (eq et les pièges : [a, b, c, d] pour ax + b = cx + d ; null pour une équation qui n'est pas du premier degré)
   function problemeAuHasard() {
     const [p1, p2] = deuxEnfants();
@@ -1441,23 +1444,25 @@
         };
       },
       () => {
+        // Des prix en francs (XPF) : un cahier de 150 à 400 F, un classeur de 300 à 800 F
         const n = entier(2, 6);
-        const x = parmi(n % 2 === 0 ? [1.5, 2, 2.5, 3, 3.5] : [2, 3, 4]);
-        const c = entierSauf(3, 9, [n]);
+        const x = parmi([150, 200, 250, 300, 350, 400]);
+        const c = parmi([300, 400, 450, 500, 600, 750, 800].filter(v => v !== x));
         const T = n * x + c;
+        const C = ecrire(c);
         return {
-          situation: `${p1.nom} achète ${n} cahiers au même prix et un classeur à ${euros(c)}. ${p1.Il} paie ${euros(T)} en tout. `
-            + 'On note x le prix d’un cahier, en euros.',
+          situation: `${p1.nom} achète ${n} cahiers au même prix et un classeur à ${francs(c)}. ${p1.Il} paie ${francs(T)} en tout. `
+            + 'On note x le prix d’un cahier, en francs.',
           question: 'Combien coûte un cahier ?',
-          equation: `${n}x + ${c} = ${ecrire(T)}`,
+          equation: `${n}x + ${C} = ${ecrire(T)}`,
           eq: [n, c, 0, T],
-          pieges: [[`${n}(x + ${c}) = ${ecrire(T)}`, [n, n * c, 0, T]], [`x + ${c} = ${ecrire(T)}`, [1, c, 0, T]],
-            [`${n}x = ${ecrire(T)} + ${c}`, [n, 0, 0, T + c]], [`${c}x + ${n} = ${ecrire(T)}`, [c, n, 0, T]]],
+          pieges: [[`${n}(x + ${C}) = ${ecrire(T)}`, [n, n * c, 0, T]], [`x + ${C} = ${ecrire(T)}`, [1, c, 0, T]],
+            [`${n}x = ${ecrire(T)} + ${C}`, [n, 0, 0, T + c]], [`${C}x + ${n} = ${ecrire(T)}`, [c, n, 0, T]]],
           x,
-          unite: '€',
-          prix: true,
-          traduction: `${n} cahiers coûtent ${n}x € ; avec le classeur : ${n}x + ${c}.`,
-          resolution: `${n}x = ${ecrire(T)} ${MOINS} ${c} = ${ecrire(n * x)}, donc x = ${ecrire(n * x)} ÷ ${n} = <b>${ecrire(x)}</b> : un cahier coûte ${euros(x)}.`,
+          unite: 'F',
+          enFrancs: true,
+          traduction: `${n} cahiers coûtent ${n}x F ; avec le classeur : ${n}x + ${C}.`,
+          resolution: `${n}x = ${ecrire(T)} ${MOINS} ${C} = ${ecrire(n * x)}, donc x = ${ecrire(n * x)} ÷ ${n} = <b>${ecrire(x)}</b> : un cahier coûte ${francs(x)}.`,
         };
       },
       () => {
@@ -1518,19 +1523,24 @@
         let b;
         let x;
         let F;
-        do { [a, b, x] = [entier(6, 10), entier(2, 5), entier(4, 15)]; F = (a - b) * x; } while (a - b < 2 || F > 60 || F < 12);
+        // Des prix en francs : une place de 1 000 à 1 500 F, de 400 à 900 F avec la carte
+        do {
+          [a, b, x] = [100 * entier(10, 15), 100 * entier(4, 9), entier(4, 15)];
+          F = (a - b) * x;
+        } while (a - b < 300 || F > 9000 || F < 2000);
+        const [A, B, Fe] = [ecrire(a), ecrire(b), ecrire(F)];
         return {
-          situation: `Au cinéma, le tarif A coûte ${euros(a)} la séance. Le tarif B coûte ${euros(F)} par an, plus ${euros(b)} la séance. `
+          situation: `Au cinéma, le tarif A coûte ${francs(a)} la séance. Le tarif B coûte ${francs(F)} par an, plus ${francs(b)} la séance. `
             + 'On note x le nombre de séances.',
           question: 'Pour combien de séances les deux tarifs coûtent-ils le même prix ?',
           quoi: 'Quelle équation traduit « les deux tarifs coûtent le même prix » ?',
-          equation: `${a}x = ${F} + ${b}x`,
+          equation: `${A}x = ${Fe} + ${B}x`,
           eq: [a, 0, b, F],
-          pieges: [[`${a}x = ${F}x + ${b}`, [a, 0, F, b]], [`${a} = ${F} + ${b}x`, [0, a, b, F]], [`${a}x + ${b}x = ${F}`, [a + b, 0, 0, F]]],
+          pieges: [[`${A}x = ${Fe}x + ${B}`, [a, 0, F, b]], [`${A} = ${Fe} + ${B}x`, [0, a, b, F]], [`${A}x + ${B}x = ${Fe}`, [a + b, 0, 0, F]]],
           x,
           unite: 'séances',
-          traduction: `Avec le tarif A, x séances coûtent ${a}x € ; avec le tarif B, ${F} + ${b}x €.`,
-          resolution: `${a}x ${MOINS} ${b}x = ${F}, soit ${a - b}x = ${F}, donc x = ${F} ÷ ${a - b} = <b>${x}</b> séances.`,
+          traduction: `Avec le tarif A, x séances coûtent ${A}x F ; avec le tarif B, ${Fe} + ${B}x F.`,
+          resolution: `${A}x ${MOINS} ${B}x = ${Fe}, soit ${ecrire(a - b)}x = ${Fe}, donc x = ${Fe} ÷ ${ecrire(a - b)} = <b>${x}</b> séances.`,
         };
       },
       () => {
@@ -1603,7 +1613,7 @@
           enonce: `${pb.situation} ${pb.question}`,
           reponse: pb.x,
           unite: pb.unite,
-          prix: Boolean(pb.prix),
+          enFrancs: Boolean(pb.enFrancs),
           touches: TOUCHES,
           explication: `${pb.traduction} Équation : ${pb.equation}.<br>${pb.resolution}`,
         });
@@ -1672,8 +1682,8 @@
       <h4>Mettre un problème en équation</h4>
       <p>1. On choisit l’inconnue x (dire ce qu’elle représente). 2. On traduit l’énoncé par une équation.
         3. On la résout. 4. On vérifie et on répond par une phrase.</p>
-      <p>👉 Hugo a 3 ans de plus que Léa ; à eux deux, ils ont 29 ans. x = l’âge de Léa, donc Hugo a x + 3 ans :
-        <i>x + (x + 3) = 29</i> → 2x + 3 = 29 → 2x = 26 → x = 13. Léa a 13 ans, Hugo 16 ans.</p>
+      <p>👉 Teva a 3 ans de plus que Léa ; à eux deux, ils ont 29 ans. x = l’âge de Léa, donc Teva a x + 3 ans :
+        <i>x + (x + 3) = 29</i> → 2x + 3 = 29 → 2x = 26 → x = 13. Léa a 13 ans, Teva 16 ans.</p>
       <p>Pour traduire : « le double » → 2x ; « 5 de plus » → x + 5 ; « j’ajoute 7, puis je multiplie le résultat par 3 » → 3(x + 7) ;
         le périmètre d’un rectangle → 2 × largeur + 2 × longueur.</p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> vérifie toujours ta solution dans l’énoncé de départ :

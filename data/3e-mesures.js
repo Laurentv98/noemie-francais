@@ -8,7 +8,7 @@
 
 (function () {
   const {
-    ESPACE, entier, parmi, net, arrondir, ecrire, mesure, euros, decimalesDe, lireNombre, egaux,
+    ESPACE, entier, parmi, net, arrondir, ecrire, mesure, francs, PRENOMS, decimalesDe, lireNombre, egaux,
     frac, pgcd, choix, nombre, vraiFaux, ajouterEtape, figures,
   } = RM.maths;
   const F = figures; // les dessins : F.segment, F.polygone, F.angleDroit…
@@ -276,10 +276,10 @@
         }
         // Le volume de la boule, avec π ≈ 3,14
         const [r, debut] = parmi([
-          [3, 'Une boule de glace a un rayon de'],
+          [3, 'Une boule de glace à la mangue a un rayon de'],
           [parmi([3, 6, 9]), 'Une boule a un rayon de'],
           [6, 'Un pamplemousse a la forme d’une boule de rayon'],
-          [1.5, 'Une bille a un rayon de'],
+          [1.5, 'Un letchi a la forme d’une boule de rayon'],
           [4.5, 'Une orange a la forme d’une boule de rayon'],
         ]);
         const exact = volumeBoule(r);
@@ -944,12 +944,16 @@
   // Pour calculer une vitesse sans calculatrice : des durées qui divisent 60 min, ou faites de quarts ou de moitiés d’heure
   const DUREES_VITESSE = [3, 6, 12, 15, 30, 45, 60, 90, 120, 150];
 
-  // Les voyageurs : le trajet (« Léa court 3 km »), la façon d’avancer, des vitesses réalistes (km/h), des durées (min)
+  // Les voyageurs : le trajet (« Kalia court 3 km »), la façon d’avancer, des vitesses réalistes (km/h), des durées (min)
   const VOYAGEURS = [
-    { trajet: d => `Hugo fait ${mesure(d, 'km')} à vélo`, avance: 'Hugo roule à vélo', pronom: 'il',
+    { trajet: d => `Teva fait ${mesure(d, 'km')} à vélo`, avance: 'Teva roule à vélo', pronom: 'il',
       vitesses: [12, 15, 16, 18, 20, 24], durees: DUREES_TRAJET.filter(t => t <= 150) },
-    { trajet: d => `Léa court ${mesure(d, 'km')}`, avance: 'Léa court', pronom: 'elle',
+    { trajet: d => `Kalia court ${mesure(d, 'km')}`, avance: 'Kalia court', pronom: 'elle',
       vitesses: [8, 9, 10, 12], durees: DUREES_TRAJET.filter(t => t <= 60) },
+    { trajet: d => `En va’a, Wakana parcourt ${mesure(d, 'km')}`, avance: 'Wakana pagaie en va’a', pronom: 'elle',
+      vitesses: [6, 8, 9, 10, 12], durees: DUREES_TRAJET.filter(t => t <= 90) },
+    { trajet: d => `Un catamaran parcourt ${mesure(d, 'km')}`, avance: 'Un catamaran navigue', pronom: 'il',
+      vitesses: [30, 36, 40, 45, 50], durees: DUREES_TRAJET },
     { trajet: d => `Roxy fait un sprint de ${mesure(d, 'km')}`, avance: 'Roxy fait un sprint', pronom: 'elle',
       vitesses: [20, 30, 40], durees: [3, 6] },
     { trajet: d => `La voiture de Papi parcourt ${mesure(d, 'km')}`, avance: 'La voiture de Papi roule', pronom: 'elle',
@@ -986,7 +990,7 @@
 
   // Les appareils électriques : [le nom, la puissance en W, des durées d’utilisation en minutes]
   const APPAREILS = [
-    ['Un radiateur électrique de 2&nbsp;000&nbsp;W', 2000, [120, 180, 240, 300]],
+    ['Un climatiseur de 1&nbsp;000&nbsp;W', 1000, [120, 180, 240, 300]],
     ['Un four de 2&nbsp;500&nbsp;W', 2500, [30, 60, 90]],
     ['Une bouilloire de 2&nbsp;000&nbsp;W', 2000, [3, 6]],
     ['Un sèche-cheveux de 1&nbsp;500&nbsp;W', 1500, [6, 12]],
@@ -1107,15 +1111,16 @@
         const E = net(P / 1000 * t / 60);
         const enonce = `${appareil} fonctionne pendant ${duree(t)}.`;
         const cas = parmi(['nombre', 'choix', 'choix', 'prix']);
-        const prixKwh = parmi([0.2, 0.25]);
-        if (cas === 'prix' && decimalesDe(net(E * prixKwh)) <= 2 && E * prixKwh >= 0.1) {
+        // Le prix d’un kWh en francs (XPF) : un prix entier, sans centimes
+        const prixKwh = parmi([20, 30, 40]);
+        if (cas === 'prix' && Number.isInteger(net(E * prixKwh)) && E * prixKwh >= 5) {
           const prix = net(E * prixKwh);
           return nombre({
             consigne: 'Calcule le prix',
-            enonce: `${enonce} Le kWh coûte ${euros(prixKwh)}. Combien coûte l’énergie consommée ?`,
+            enonce: `${enonce} Le kWh coûte ${francs(prixKwh)}. Combien coûte l’énergie consommée ?`,
             reponse: prix,
-            prix: true,
-            explication: `${expliquerEnergie(P, t)}<br>Prix : ${ecrire(E)} × ${ecrire(prixKwh)} = <b>${euros(prix)}</b>.`,
+            enFrancs: true,
+            explication: `${expliquerEnergie(P, t)}<br>Prix : ${ecrire(E)} × ${ecrire(prixKwh)} = <b>${francs(prix)}</b>.`,
           });
         }
         if (cas !== 'choix') {
@@ -1148,9 +1153,11 @@
           if (cas === 'douche') {
             const debit = parmi([8, 10, 12, 15]);
             const t = parmi([4, 5, 6, 8, 10]);
+            const p = parmi(PRENOMS);
             return nombre({
               consigne: 'Calcule le débit',
-              enonce: `Inès prend une douche de ${mesure(t, 'min')}. Elle utilise ${mesure(debit * t, 'L')} d’eau. `
+              enonce: `${p.nom} prend une douche de ${mesure(t, 'min')}${parmi(['', ' en rentrant de la plage'])}. `
+                + `${p.il === 'il' ? 'Il' : 'Elle'} utilise ${mesure(debit * t, 'L')} d’eau. `
                 + 'Quel est le débit de la douche, en L/min ?',
               reponse: debit,
               unite: 'L/min',
@@ -1254,7 +1261,7 @@
       <p>👉 <i>36&nbsp;km en 1&nbsp;h&nbsp;30&nbsp;min : en 30&nbsp;min, 36 ÷ 3 = 12&nbsp;km ; en 1&nbsp;h, 2 × 12 = 24&nbsp;km. Donc v = 24&nbsp;km/h
         (c’est aussi 36 ÷ 1,5, car 1&nbsp;h&nbsp;30&nbsp;min = 1,5&nbsp;h).</i>
         Et d = v × t, t = d ÷ v.</p>
-      <p>👉 <i>Un radiateur de 2&nbsp;000&nbsp;W = 2&nbsp;kW allumé 3&nbsp;h : E = 2 × 3 = 6&nbsp;kWh.</i></p>
+      <p>👉 <i>Un climatiseur de 2&nbsp;000&nbsp;W = 2&nbsp;kW allumé 3&nbsp;h : E = 2 × 3 = 6&nbsp;kWh.</i></p>
       <p>👉 <i>Le fer : 7,8&nbsp;g/cm³, chaque cm³ pèse 7,8&nbsp;g : masse = 7,8 × volume.</i> De même, volume = débit × durée,
         et durée = volume ÷ débit (180&nbsp;L à 12&nbsp;L/min : 180 ÷ 12 = 15&nbsp;min).</p>
       <h4>Convertir</h4>
@@ -1265,7 +1272,7 @@
       <p><b>Minutes → heures :</b> on divise par 60 (45&nbsp;min = 45 ÷ 60 = 0,75&nbsp;h) ; <b>heures → minutes :</b> on multiplie
         par 60 (0,9&nbsp;h = 54&nbsp;min). Pour une vitesse, on peut aussi passer par l’heure : 4&nbsp;km en 12&nbsp;min,
         c’est 5 × 4 = 20&nbsp;km en 60&nbsp;min, donc 20&nbsp;km/h.</p>
-      <p><b>Prix de l’énergie</b> = énergie (en kWh) × prix d’un kWh : 6&nbsp;kWh à 0,20&nbsp;€ coûtent 6 × 0,20 = 1,20&nbsp;€.</p>
+      <p><b>Prix de l’énergie</b> = énergie (en kWh) × prix d’un kWh : 1,5&nbsp;kWh à 30&nbsp;F le kWh coûtent 1,5 × 30 = 45&nbsp;F.</p>
       <p>⚠️ 1&nbsp;h&nbsp;30&nbsp;min = 1,5&nbsp;h, et pas 1,30&nbsp;h. Et une énergie s’écrit en kWh, pas en « kW/h ».</p>
     `,
   });
@@ -1639,6 +1646,8 @@
       'O veut dire <b>ouest</b> : le point est à 20° <b>à l’ouest</b> du méridien de Greenwich.'],
     ['Un point de latitude 40° S est ___ de l’équateur.', 'au sud', ['au nord', 'à l’est', 'à l’ouest'],
       'S veut dire <b>sud</b> : le point est à 40° <b>au sud</b> de l’équateur, dans l’hémisphère Sud.'],
+    [`Nouméa a pour coordonnées environ (${geo(-22, 166)}). Nouméa est ___ de l’équateur.`, 'au sud', ['au nord', 'à l’est', 'à l’ouest'],
+      'S veut dire <b>sud</b> : Nouméa est à environ 22° <b>au sud</b> de l’équateur. La Nouvelle-Calédonie est dans l’hémisphère Sud.'],
   ];
 
   const REGLES_REPERAGE = [

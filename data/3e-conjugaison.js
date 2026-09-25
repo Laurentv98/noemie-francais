@@ -59,7 +59,7 @@
     chanter: 'une chanson', jouer: 'dehors', parler: 'plus fort', aimer: 'ce livre', manger: 'sa soupe',
     commencer: 'ses devoirs', arriver: 'à l’heure', finir: 'son travail', choisir: 'un cadeau',
     être: { il: 'prêt', elle: 'prête' }, avoir: 'raison', faire: 'ses devoirs', dire: 'la vérité',
-    prendre: 'le train', venir: 'avec nous', voir: 'un médecin', pouvoir: 'partir', vouloir: 'bien venir',
+    prendre: 'le bateau', venir: 'avec nous', voir: 'un médecin', pouvoir: 'partir', vouloir: 'bien venir',
     aller: 'à l’école', savoir: 'sa leçon',
   };
 
@@ -197,9 +197,9 @@
   // [phrase, verbe, personne dans la phrase rapportée, temps des paroles de départ]
   const DISCOURS_INDIRECT = [
     ['Roxy a dit : « Je viendrai demain. » → Roxy a dit qu’elle ___ le lendemain.', 'venir', 2, 'futur'],
-    ['Tom a dit : « J’ai faim. » → Tom a dit qu’il ___ faim.', 'avoir', 2, 'present'],
-    ['Léa a annoncé : « J’ai gagné ! » → Léa a annoncé qu’elle ___.', 'gagner', 2, 'passeCompose'],
-    ['Papa a promis : « Nous irons à la mer. » → Papa a promis que nous ___ à la mer.', 'aller', 3, 'futur'],
+    ['Teva a dit : « J’ai faim. » → Teva a dit qu’il ___ faim.', 'avoir', 2, 'present'],
+    ['Maëva a annoncé : « J’ai gagné ! » → Maëva a annoncé qu’elle ___.', 'gagner', 2, 'passeCompose'],
+    ['Papa a promis : « Nous irons à l’île des Pins. » → Papa a promis que nous ___ à l’île des Pins.', 'aller', 3, 'futur'],
     ['Les enfants ont crié : « Nous sommes prêts ! » → Les enfants ont crié qu’ils ___ prêts.', 'être', 5, 'present'],
     ['Roxy a expliqué : « J’ai trouvé un trésor. » → Roxy a expliqué qu’elle ___ un trésor.', 'trouver', 2, 'passeCompose'],
     ['Le maître a dit : « Vous réussirez. » → Le maître a dit que nous ___.', 'réussir', 3, 'futur'],

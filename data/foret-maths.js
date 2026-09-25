@@ -134,7 +134,7 @@
         etape('4e-mesures-aires', 'Les aires : révision', 'triangle, disque, parallélogramme…'),
         etape('4e-mesures-vitesse', 'La vitesse moyenne', 'distance ÷ durée'),
         etape('4e-mesures-conversions-vitesses', 'Convertir des vitesses', 'km/h et m/s'),
-        etape('4e-mesures-grandeurs-quotients', 'Débits et prix', 'L/min, €/kg'),
+        etape('4e-mesures-grandeurs-quotients', 'Débits et prix', 'L/min, F/kg'),
         etape('4e-mesures-prefixes', 'Du nano au giga', 'les préfixes des unités'),
       ],
       donnees: [

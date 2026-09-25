@@ -62,6 +62,20 @@
   const mesure = (x, unite) => ecrire(x) + ESPACE + unite;
   // Un prix : euros(3.5) → « 3,50 € » ; euros(12) → « 12 € »
   const euros = x => (Number.isInteger(net(x)) ? ecrire(x) : ecrire(arrondir(x, 2)).replace(/,(\d)$/, ',$10')) + ESPACE + '€';
+  // Un prix en francs Pacifique (XPF), la monnaie de la Nouvelle-Calédonie : francs(1500) → « 1 500 F ».
+  // Il n'y a pas de centimes : le prix est arrondi au franc.
+  const francs = x => ecrire(arrondir(x)) + ESPACE + 'F';
+
+  // Des prénoms qu'on entend en Nouvelle-Calédonie (il : « il » ou « elle », pour accorder les phrases)
+  const PRENOMS = [
+    { nom: 'Kalia', il: 'elle' }, { nom: 'Wakana', il: 'elle' }, { nom: 'Maëva', il: 'elle' }, { nom: 'Hinano', il: 'elle' },
+    { nom: 'Léa', il: 'elle' }, { nom: 'Lina', il: 'elle' }, { nom: 'Mei', il: 'elle' }, { nom: 'Sélène', il: 'elle' },
+    { nom: 'Teva', il: 'il' }, { nom: 'Noa', il: 'il' }, { nom: 'Kylian', il: 'il' }, { nom: 'Sione', il: 'il' },
+    { nom: 'Wanir', il: 'il' }, { nom: 'Tom', il: 'il' }, { nom: 'Hugo', il: 'il' }, { nom: 'Minh', il: 'il' },
+  ];
+  // Des lieux de Nouvelle-Calédonie, pour les petits problèmes
+  const LIEUX = ['Nouméa', 'Lifou', 'Maré', 'Ouvéa', 'l’île des Pins', 'Bourail', 'Koné', 'Hienghène', 'Poindimié',
+    'La Foa', 'Thio', 'Dumbéa', 'Païta', 'Mont-Dore', 'Koumac', 'Pouébo'];
 
   // Le nombre de chiffres après la virgule : decimalesDe(3.25) → 2
   const decimalesDe = x => (ecrire(x).split(',')[1] || '').length;
@@ -230,10 +244,12 @@
   // unite : s'affiche à côté de la case (« cm »), l'élève n'a que le nombre à taper
   // touches : les boutons d'aide sous la case (par défaut la virgule ; ajoute '−' pour les nombres relatifs)
   // prix : true pour un prix en euros (la réponse s'écrit 3,50 et le signe € est à côté de la case)
-  function nombre({ consigne, enonce, reponse, unite = '', explication, solution, touches = [','], prix = false }) {
+  // enFrancs : true pour un prix en francs (XPF) : un nombre entier, et « F » à côté de la case
+  function nombre({ consigne, enonce, reponse, unite = '', explication, solution, touches = [','], prix = false, enFrancs = false }) {
     const valeur = net(reponse);
     const ecrit = prix ? euros(valeur).replace(ESPACE + '€', '') : ecrire(valeur);
     if (prix) unite = '€';
+    if (enFrancs) { unite = 'F'; if (touches.length === 1 && touches[0] === ',') touches = []; }
     return {
       type: 'ecrire',
       saisie: 'nombre',
@@ -540,7 +556,7 @@
     // le hasard
     entier, parmi, entierSauf, decimal,
     // les nombres
-    MOINS, ESPACE, net, arrondir, ecrire, mesure, euros, decimalesDe, relatif, parentheses, lireNombre, egaux,
+    MOINS, ESPACE, net, arrondir, ecrire, mesure, euros, francs, PRENOMS, LIEUX, decimalesDe, relatif, parentheses, lireNombre, egaux,
     // les fractions et les puissances
     pgcd, ppcm, simplifier, frac, fracTexte, avecFractions, lireFraction, puissance, puissanceTexte,
     // les angles et les tableaux

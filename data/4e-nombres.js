@@ -7,17 +7,16 @@
 
 (function () {
   const {
-    entier, parmi, decimal, decimalesDe, ecrire, net, lireNombre, egaux, parentheses, MOINS, ESPACE, mesure, euros,
+    entier, parmi, decimal, decimalesDe, ecrire, net, lireNombre, egaux, parentheses, MOINS, ESPACE, mesure, francs, PRENOMS,
     frac, fracTexte, simplifier, pgcd, ppcm, puissance, puissanceTexte, choix, nombre, fraction, vraiFaux, ajouterEtape,
   } = RM.maths;
 
   // ======================================================================
   // Des petites aides, pour toutes les étapes
   // ======================================================================
-  // Les enfants des problèmes, avec leur pronom
-  const ENFANTS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'], ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il']];
+  // Les enfants des problèmes, avec leur pronom : des prénoms de toutes les communautés de Nouvelle-Calédonie (voir le moteur)
   const unEnfant = () => {
-    const [nom, il] = parmi(ENFANTS);
+    const { nom, il } = parmi(PRENOMS);
     return { nom, il, Il: il === 'il' ? 'Il' : 'Elle' };
   };
 
@@ -323,14 +322,15 @@
             };
           },
           () => {
-            const [vitesse, duree] = [parmi([2, 3]), entier(4, 12)];
+            // (le lagon fait souvent de 10 à 30 m de fond : au plus 3 × 8 = 24 m)
+            const [vitesse, duree] = [parmi([2, 3]), entier(4, 8)];
             return {
-              enonce: `Un phoque part de la surface de l’eau (altitude 0) et descend de ${mesure(vitesse, 'm')} chaque seconde pendant ${duree} secondes. `
+              enonce: `Dans le lagon, un plongeur part de la surface de l’eau (altitude 0) et descend de ${mesure(vitesse, 'm')} chaque minute pendant ${duree} minutes. `
                 + 'À quelle altitude arrive-t-il ?',
               reponse: -vitesse * duree,
               unite: 'm',
               explication: `Descendre de ${mesure(vitesse, 'm')}, c’est ${mesure(-vitesse, 'm')}. ${duree} × (${MOINS}${vitesse}) = <b>${ecrire(-vitesse * duree)}</b> : `
-                + `le phoque est à l’altitude ${mesure(-vitesse * duree, 'm')} (sous la surface).`,
+                + `le plongeur est à l’altitude ${mesure(-vitesse * duree, 'm')} (sous la surface).`,
             };
           },
           () => {
@@ -339,7 +339,7 @@
             const heures = fin - heure;
             const t = depart - baisse * heures;
             return {
-              enonce: `À ${mesure(heure, 'h')}, il fait ${mesure(depart, '°C')}. La température baisse de ${mesure(baisse, '°C')} par heure `
+              enonce: `En voyage au Canada, ${p1.nom} note qu’à ${mesure(heure, 'h')}, il fait ${mesure(depart, '°C')}. La température baisse de ${mesure(baisse, '°C')} par heure `
                 + `jusqu’à ${mesure(fin, 'h')}. Quelle température fait-il à ${mesure(fin, 'h')} ?`,
               reponse: t,
               unite: '°C',
@@ -677,9 +677,13 @@
         const enonce = parmi([
           () => `Il reste ${lesFraction(p, q)} d’une tarte. ${enfant.nom} mange ${lesFraction(r, s)} de ce reste. `
             + `Quelle fraction de la tarte entière ${enfant.nom} a-t-${enfant.il} mangée ?`,
-          () => `Dans une classe, ${lesFraction(p, q)} des élèves font du sport, et ${lesFraction(r, s)} de ces sportifs font du foot. `
-            + 'Quelle fraction des élèves de la classe fait du foot ?',
-          () => `Papi plante des légumes sur ${lesFraction(p, q)} de son jardin. Les carottes occupent ${lesFraction(r, s)} du coin des légumes. `
+          // (le va’a est un sport de club : seulement quand la fraction d’élèves qui en font est petite)
+          () => (p * r * 2 <= q * s
+            ? `Dans une classe, ${lesFraction(p, q)} des élèves font du sport, et ${lesFraction(r, s)} de ces sportifs font du va’a (la pirogue). `
+              + 'Quelle fraction des élèves de la classe fait du va’a ?'
+            : `Dans une classe, ${lesFraction(p, q)} des élèves font du sport, et ${lesFraction(r, s)} de ces sportifs font du foot. `
+              + 'Quelle fraction des élèves de la classe fait du foot ?'),
+          () => `À la tribu, Papi plante des légumes sur ${lesFraction(p, q)} de son jardin. Les carottes occupent ${lesFraction(r, s)} du coin des légumes. `
             + 'Quelle fraction du jardin est plantée de carottes ?',
           () => `Calcule ${lesFraction(r, s)} de ${frac(p, q)}.`,
         ])();
@@ -989,8 +993,9 @@
             // Un enfant a quelques dizaines de billes ; les grands nombres sont pour le magasin
             const b = entier(3, 5);
             return {
-              enonce: `${enfant.nom} range ses billes dans ${b} boîtes. Chaque boîte contient ${b} sachets, et chaque sachet contient ${b} billes. Combien a-t-${enfant.il} de billes ?`,
-              b, n: 3, unite: 'billes',
+              enonce: `Dans la cour de l’école, ${enfant.nom} a ramassé des graines de flamboyant. ${enfant.Il} les range dans ${b} boîtes. `
+                + `Chaque boîte contient ${b} sachets, et chaque sachet contient ${b} graines. Combien a-t-${enfant.il} de graines ?`,
+              b, n: 3, unite: 'graines',
             };
           },
           () => {
@@ -1726,20 +1731,22 @@
         };
       },
       () => {
-        let n;
-        let p;
-        do { [n, p] = [entier(2, 6), entier(4, 9)]; } while (n === p);
-        const x = entier(2, 4);
+        // Des prix en francs Pacifique : un cahier de 150 à 400 F, une trousse de 400 à 900 F
+        const n = entier(2, 6);
+        const p = parmi([400, 500, 600, 700, 800, 900]);
+        const x = parmi([150, 200, 250, 300, 350, 400]);
         const T = n * x + p;
+        const [E, Ep] = [ecrire(T), ecrire(p)];
         return {
-          enonce: `${enfant.nom} achète ${n} cahiers au même prix x € et une trousse à ${euros(p)}. ${enfant.Il} paie ${euros(T)} en tout.`,
+          enonce: `Pour la rentrée, à ${parmi(['Nouméa', 'Koné', 'Bourail', 'Dumbéa', 'Païta', 'Koumac', 'La Foa'])}, ${enfant.nom} achète ${n} cahiers au même prix x F et une trousse à ${francs(p)}. `
+            + `${enfant.Il} paie ${francs(T)} en tout.`,
           question: 'Quel est le prix d’un cahier ?',
-          equation: `${n}x + ${p} = ${T}`,
-          traduction: `${n} cahiers à x € coûtent ${n}x € ; avec la trousse : ${n}x + ${p}.`,
-          pieges: [[`${p}x + ${n} = ${T}`, (T - n) / p], [`${n}(x + ${p}) = ${T}`, T / n - p], [`${n}x = ${T} + ${p}`, (T + p) / n]],
+          equation: `${n}x + ${Ep} = ${E}`,
+          traduction: `${n} cahiers à x F coûtent ${n}x F ; avec la trousse : ${n}x + ${Ep}.`,
+          pieges: [[`${Ep}x + ${n} = ${E}`, (T - n) / p], [`${n}(x + ${Ep}) = ${E}`, T / n - p], [`${n}x = ${E} + ${Ep}`, (T + p) / n]],
           x,
-          unite: '€',
-          resolution: `${n}x = ${T} ${MOINS} ${p} = ${n * x}, puis x = ${n * x} ÷ ${n} = <b>${x}</b> : un cahier coûte ${euros(x)}.`,
+          unite: 'F',
+          resolution: `${n}x = ${E} ${MOINS} ${Ep} = ${ecrire(n * x)}, puis x = ${ecrire(n * x)} ÷ ${n} = <b>${x}</b> : un cahier coûte ${francs(x)}.`,
         };
       },
       () => {
@@ -1763,7 +1770,7 @@
         do { [k, x] = [entier(5, 7), entier(8, 14)]; } while (k * x < 55 || k * x > 85);
         const S = x + k * x;
         return {
-          enonce: `${enfant.nom} a x ans. Papi a ${k} fois l’âge ${/^[AEIOUÉ]/.test(enfant.nom) ? 'd’' : 'de '}${enfant.nom}. À eux deux, ils ont ${S} ans.`,
+          enonce: `${enfant.nom} a x ans. Papi a ${k} fois l’âge ${/^([AEIOUÉ]|Hu)/.test(enfant.nom) ? 'd’' : 'de '}${enfant.nom}. À eux deux, ils ont ${S} ans.`,
           question: `Quel âge a ${enfant.nom} ?`,
           equation: `x + ${k}x = ${S}`,
           traduction: `Papi a ${k}x ans ; à eux deux : x + ${k}x.`,
@@ -1873,7 +1880,7 @@
           enonce: `${pb.enonce} Quelle équation traduit ce problème ?`,
           reponse: pb.equation,
           pieges: RM.melanger(pb.pieges).slice(0, 3),
-          explication: `${pb.traduction}<br>L’équation est donc <b>${pb.equation}</b> (sa solution est x = ${pb.x}).`,
+          explication: `${pb.traduction}<br>L’équation est donc <b>${pb.equation}</b> (sa solution est x = ${ecrire(pb.x)}).`,
         });
       }
       if (sorte === 'probleme') {
@@ -1883,7 +1890,7 @@
           enonce: `${pb.enonce} ${pb.question}`,
           reponse: pb.x,
           unite: pb.unite || '',
-          prix: pb.unite === '€',
+          enFrancs: pb.unite === 'F',
           touches: TOUCHES,
           explication: `${pb.traduction} L’équation est <b>${pb.equation}</b>.<br>${pb.resolution}`,
         });

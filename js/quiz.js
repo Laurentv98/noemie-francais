@@ -9,6 +9,7 @@
   const ETIQUETTES = { Vrai: '✔ Vrai', Faux: '✘ Faux' };
 
   const $ = id => document.getElementById(id);
+  const P = RM.progression;
   let partie = null;
 
   RM.lancerPartie = function (etape, nombre) {
@@ -26,10 +27,41 @@
     afficherQuestion();
   };
 
+  // Une partie spéciale (le défi du jour, le carnet de Roxy) : des questions de plusieurs étapes.
+  // Chaque question sait de quelle étape elle vient (q.etape), pour l'aide et le carnet.
+  RM.lancerPartieSpeciale = function ({ special, titre, questions }) {
+    partie = {
+      etape: null,
+      special,
+      titre,
+      nombre: questions.length,
+      questions,
+      index: 0,
+      bonnes: 0,
+      points: 0,
+      repondu: false,
+      debut: Date.now(),
+      resultatsEtapes: {}, // pour le carnet : chaque étape revue est-elle réussie ?
+    };
+    RM.afficherEcran('quiz');
+    afficherQuestion();
+  };
+
+  const etapeDe = q => q.etape || partie.etape;
+
   function afficherQuestion() {
     const q = partie.questions[partie.index];
     partie.repondu = false;
-    $('quiz-numero').textContent = `Question ${partie.index + 1} / ${partie.nombre}`;
+    RM.voix.arreter();
+    $('quiz-numero').textContent = (partie.special ? partie.titre + ' · ' : '') + `Question ${partie.index + 1} / ${partie.nombre}`;
+    // Dans une partie spéciale, on rappelle d'où vient la question
+    const origine = $('quiz-origine');
+    origine.hidden = !partie.special;
+    if (partie.special) {
+      const etape = etapeDe(q);
+      const matiere = RM.MATIERES.find(m => m.id === etape.zone.matiere);
+      origine.textContent = `${matiere ? matiere.icone : etape.zone.icone} ${etape.titre}`;
+    }
     $('quiz-barre').style.width = (partie.index / partie.nombre * 100) + '%';
     $('quiz-points').textContent = '✨ ' + partie.points;
     $('quiz-consigne').textContent = RM.insecables(q.consigne);
@@ -143,6 +175,15 @@
     }
 
     // Le « ? » de la phrase se remplit avec le bon mot
+    RM.sons.jouer(juste ? 'juste' : 'faux');
+    // Le carnet de Roxy : une erreur y range l'étape ; pendant une révision du carnet, on note si l'étape est réussie
+    const etape = etapeDe(q);
+    if (partie.special === 'carnet') {
+      partie.resultatsEtapes[etape.id] = (partie.resultatsEtapes[etape.id] ?? true) && juste;
+    } else if (!juste) {
+      P.noterErreur(etape.id);
+    }
+
     const trou = document.querySelector('#quiz-enonce .trou');
     if (trou) {
       if (q.etiquettes?.[q.reponse]) trou.innerHTML = q.etiquettes[q.reponse];
@@ -167,7 +208,7 @@
   // Sous la bulle de Roxy, un petit lien pour signaler une erreur par mail, avec la question déjà recopiée
   // (jamais le prénom de l'enfant). Caché tant qu'il n'y a pas d'adresse de contact dans RM.EDITEUR.
   function ajouterSignalement(q, valeur) {
-    const etape = partie.etape;
+    const etape = etapeDe(q);
     const lien = RM.lienSignalement(`Renard Malin : une erreur dans « ${etape.titre} » ?`, [
       `Étape : ${etape.titre} (${etape.id})`,
       `Consigne : ${RM.texteSeul(q.consigne)}`,
@@ -186,13 +227,12 @@
   // Roxy réagit : elle saute de joie, ou elle explique la règle
   function montrerRetour(q, juste, presque) {
     const retour = $('quiz-retour');
-    const roxy = $('retour-roxy');
     if (juste) {
-      roxy.src = 'img/roxy-ouais.png';
+      RM.poserRoxy('retour-roxy', 'ouais');
       $('retour-bulle').innerHTML =
         `<p class="bulle-titre">${RM.hasard(BRAVOS)} <span class="gain">+${POINTS_PAR_BONNE_REPONSE} ✨</span></p>`;
     } else {
-      roxy.src = 'img/roxy-reflechit.png';
+      RM.poserRoxy('retour-roxy', 'reflechit');
       $('retour-bulle').innerHTML = `
         <p class="bulle-titre">${presque || 'Oups, pas tout à fait…'}</p>
         <p class="solution">La bonne réponse&nbsp;: ${RM.insecables(q.solution)}</p>
@@ -234,5 +274,18 @@
     }
   });
 
-  $('quiz-aide').addEventListener('click', () => RM.ouvrirAide(partie.etape));
+  $('quiz-aide').addEventListener('click', () => RM.ouvrirAide(etapeDe(partie.questions[partie.index])));
+
+  // 🗣️ Roxy lit la question (et les réponses possibles) ; après la réponse, elle lit son explication
+  $('quiz-ecouter').hidden = !RM.voix.disponible;
+  $('quiz-ecouter').addEventListener('click', () => {
+    const q = partie.questions[partie.index];
+    if (partie.repondu) {
+      RM.voix.lire([$('retour-bulle').innerHTML], $('quiz-ecouter'));
+      return;
+    }
+    const reponses = q.type === 'ecrire' ? '' : 'Réponses possibles : '
+      + [...document.querySelectorAll('.bouton-choix')].map(b => RM.voix.aLire(b.innerHTML)).join(' ; ');
+    RM.voix.lire([q.consigne, $('quiz-enonce').innerHTML, reponses], $('quiz-ecouter'));
+  });
 })();

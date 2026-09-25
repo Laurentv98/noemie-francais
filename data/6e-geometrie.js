@@ -54,12 +54,13 @@
   // et E et L, pour ne pas écrire des segments qui se lisent comme des mots : « LE », « SE », « DE », « LA »…)
   const LETTRES = ['A', 'B', 'C', 'D', 'F', 'G', 'H', 'K', 'M', 'N', 'P', 'R', 'S', 'T'];
   const lettres = (n, interdites = []) => RM.melanger(LETTRES.filter(l => !interdites.includes(l))).slice(0, n);
-  const PRENOMS = ['Léa', 'Tom', 'Zoé', 'Hugo', 'Inès', 'Sami', 'Lina', 'Noé'];
-  const FILLES = ['Léa', 'Zoé', 'Inès', 'Lina']; // pour écrire « doit-elle » ou « doit-il »
+  // Des prénoms de toutes les communautés de Nouvelle-Calédonie
+  const PRENOMS = RM.maths.PRENOMS.map(p => p.nom);
+  const FILLES = RM.maths.PRENOMS.filter(p => p.il === 'elle').map(p => p.nom); // pour écrire « doit-elle » ou « doit-il »
   // Les lettres qu'on peut coller à O sans écrire un mot (« OK », « ON », « OR », « OH »…)
   const LETTRES_AVEC_O = ['A', 'B', 'C', 'D', 'M', 'P', 'T'];
   // « de Tom », mais « d’Inès »
-  const de = prenom => (/^[AEIOUÉÈÂÎ]/.test(prenom) ? `d’${prenom}` : `de ${prenom}`);
+  const de = prenom => (/^([AEIOUÉÈÂÎ]|Hu)/.test(prenom) ? `d’${prenom}` : `de ${prenom}`);
   // Un nombre entier ou un nombre avec un demi (2 ; 2,5 ; 3…), entre min et max
   function entierOuDemi(min, max) {
     const possibles = [];
@@ -1326,7 +1327,7 @@
   // Le rayon et le diamètre, dans la vie de Roxy
   function questionDiametreRayon() {
     const prenom = parmi(PRENOMS);
-    const variante = parmi(['roue', 'pizza', 'trampoline', 'bassin', 'compas', 'cercleRayon', 'cercleDiametre']);
+    const variante = parmi(['roue', 'tarte', 'trampoline', 'bassin', 'compas', 'cercleRayon', 'cercleDiametre']);
     const versRayon = (enonce, d, unite) => nombre({
       consigne: 'Calcule', enonce, reponse: net(d / 2), unite,
       explication: `Le rayon est <b>la moitié</b> du diamètre : ${ecrire(d)} ÷ 2 = <b>${mesure(net(d / 2), unite)}</b>.`,
@@ -1339,9 +1340,9 @@
       const d = parmi([50, 56, 60, 64, 66, 70]);
       return versRayon(`La roue du vélo ${de(prenom)} a un diamètre de ${mesure(d, 'cm')}. Quel est son rayon ?`, d, 'cm');
     }
-    if (variante === 'pizza') {
+    if (variante === 'tarte') {
       const d = parmi([26, 28, 30, 32, 34, 36]);
-      return versRayon(`Une pizza ronde a un diamètre de ${mesure(d, 'cm')}. Quel est son rayon ?`, d, 'cm');
+      return versRayon(`Une tarte ronde à la noix de coco a un diamètre de ${mesure(d, 'cm')}. Quel est son rayon ?`, d, 'cm');
     }
     if (variante === 'trampoline') {
       const r = parmi([1.2, 1.5, 1.8, 2, 2.5]);

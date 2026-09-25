@@ -8,12 +8,17 @@
   RM.afficherEcran = function (nom) {
     // Pas de carte (ni de niveau) sans joueur : on passe d'abord par « Qui joue ? »
     if ((nom === 'carte' || nom === 'niveau') && !P.profilActif()) nom = 'profils';
+    // Changer d'écran : Roxy se tait et les sons prévus sont annulés
+    RM.voix.arreter();
+    RM.sons.annuler();
     document.querySelectorAll('.ecran').forEach(ecran => {
       ecran.classList.toggle('actif', ecran.id === 'ecran-' + nom);
     });
     window.scrollTo(0, 0);
     // On prépare l'écran une fois visible : la carte a besoin de connaître sa largeur
     RM.ecrans[nom]?.();
+    // Roxy porte ses accessoires sur tous les écrans
+    RM.habillerToutesLesRoxy();
   };
 
   document.addEventListener('click', e => {
@@ -64,9 +69,12 @@
 
   RM.terminerPartie = function (partie) {
     dernierePartie = partie;
+    if (partie.special) return terminerPartieSpeciale(partie);
     const foret = partie.etape.zone.foret;
     const courseFermee = !RM.course.estOuverte(P.profilActif(), foret);
+    const avant = RM.dressing.gagnes(P.profilActif());
     const { etoiles, record, ancienMeilleur, flamme } = P.enregistrerPartie(partie);
+    const cadeaux = RM.dressing.gagnes(P.profilActif()).filter(id => !avant.includes(id));
     const prenom = RM.echapper(P.profilActif().prenom);
 
     // Est-ce que cette partie ouvre l'étape suivante du chemin ?
@@ -87,17 +95,53 @@
     }
 
     const pluriel = partie.bonnes > 1 ? 's' : '';
-    $('resultat-roxy').src = etoiles >= 3 ? 'img/roxy-ouais.png' : 'img/roxy-reflechit.png';
+    $('resultat-rejouer').hidden = false;
+    RM.poserRoxy('resultat-roxy', etoiles >= 3 ? 'ouais' : 'reflechit');
     $('resultat-etoiles').innerHTML = htmlEtoiles(etoiles, 'etoiles-grandes');
     $('resultat-score').innerHTML =
       `<b>${partie.bonnes}</b> bonne${pluriel} réponse${pluriel} sur ${partie.nombre} · <b>+${partie.points}</b> ✨`;
     $('resultat-message').innerHTML = MESSAGES[etoiles](prenom)
       + (record ? '<span class="record">🎉 Nouveau record !</span>' : '')
-      + deblocage;
+      + deblocage
+      + RM.dressing.htmlCadeaux(cadeaux);
     $('resultat-flamme').innerHTML = RM.htmlFlammeResultat(flamme);
     RM.afficherEcran('resultats');
+    jouerSonsDeFin({ etoiles, deblocage: Boolean(RM.nouvelleEtape), flamme, cadeaux });
     if (etoiles === 5) lancerConfettis();
   };
+
+  // Les sons de l'écran de fin : une note par étoile, puis la fanfare, la magie, la flamme, le cadeau
+  function jouerSonsDeFin({ etoiles, deblocage, flamme, cadeaux, parfait = etoiles === 5 }) {
+    const plus = RM.sons.plusTard;
+    let t = 250;
+    for (let i = 1; i <= etoiles; i++, t += 220) plus(t, 'etoile', i);
+    if (parfait) { plus(t, 'fanfare'); t += 1100; }
+    if (deblocage) { plus(t, 'magie'); t += 600; }
+    if (flamme?.grandi) { plus(t, 'flamme'); t += 600; }
+    if (cadeaux.length) plus(t, 'cadeau');
+  }
+
+  // ---------- Fin du défi du jour ou d'une révision du carnet ----------
+  function terminerPartieSpeciale(partie) {
+    const profil = P.profilActif();
+    const avant = RM.dressing.gagnes(profil);
+    const { flamme } = P.enregistrerPartieSpeciale(partie);
+    const sorties = partie.special === 'carnet' ? P.reviserCarnet(partie.resultatsEtapes) : [];
+    const cadeaux = RM.dressing.gagnes(profil).filter(id => !avant.includes(id));
+    const parfait = partie.bonnes === partie.nombre;
+    const pluriel = partie.bonnes > 1 ? 's' : '';
+
+    RM.poserRoxy('resultat-roxy', partie.bonnes * 2 >= partie.nombre ? 'ouais' : 'reflechit');
+    $('resultat-etoiles').innerHTML = `<span class="resultat-special">${partie.titre}</span>`;
+    $('resultat-score').innerHTML =
+      `<b>${partie.bonnes}</b> bonne${pluriel} réponse${pluriel} sur ${partie.nombre} · <b>+${partie.points}</b> ✨`;
+    $('resultat-message').innerHTML = RM.defis.messageFin(partie, { sorties }) + RM.dressing.htmlCadeaux(cadeaux);
+    $('resultat-flamme').innerHTML = RM.htmlFlammeResultat(flamme);
+    $('resultat-rejouer').hidden = true;
+    RM.afficherEcran('resultats');
+    jouerSonsDeFin({ etoiles: 0, deblocage: sorties.length > 0, flamme, cadeaux, parfait });
+    if (parfait) lancerConfettis();
+  }
 
   $('resultat-rejouer').addEventListener('click', () => {
     RM.lancerPartie(dernierePartie.etape, dernierePartie.nombre);
@@ -111,7 +155,14 @@
     $('aide-contenu').scrollTop = 0;
   };
 
-  const fermerAide = () => { $('aide').hidden = true; };
+  // 🗣️ Roxy lit la leçon
+  $('aide-ecouter').hidden = !RM.voix.disponible;
+  $('aide-ecouter').addEventListener('click', () => {
+    RM.voix.lire([$('aide-titre').textContent, $('aide-contenu').innerHTML], $('aide-ecouter'));
+  });
+
+  const fermerAide = () => { $('aide').hidden = true; RM.voix.arreter(); };
+  $('quiz-suivant').addEventListener('click', () => RM.voix.arreter());
   $('aide-fermer').addEventListener('click', fermerAide);
   $('aide').addEventListener('click', e => { if (e.target.id === 'aide') fermerAide(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerAide(); });
@@ -131,4 +182,13 @@
       setTimeout(() => confetti.remove(), 4500);
     }
   }
+
+  // ---------- Hors ligne ----------
+  // Le « service worker » garde une copie de l'appli sur l'iPad : elle s'ouvre même sans Internet
+  // (en brousse, sur les îles, à l'école quand le wifi est capricieux).
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* tant pis : l'appli marche en ligne */ }));
+  }
+
+  RM.sons.majBoutons();
 })();

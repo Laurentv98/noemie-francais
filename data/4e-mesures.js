@@ -8,7 +8,7 @@
 
 (function () {
   const {
-    ESPACE, MOINS, entier, parmi, decimal, net, ecrire, mesure, euros, decimalesDe, lireNombre, egaux,
+    ESPACE, MOINS, entier, parmi, decimal, net, ecrire, mesure, francs, decimalesDe, lireNombre, egaux,
     puissance, puissanceTexte, choix, nombre, vraiFaux, ajouterEtape, figures,
   } = RM.maths;
   const F = figures; // les dessins : F.segment, F.polygone, F.angleDroit…
@@ -16,9 +16,10 @@
   // ======================================================================
   // Les petits outils communs à toutes les étapes
   // ======================================================================
-  // Des prénoms, avec le pronom qui va avec (pour écrire « parcourt-elle » ou « parcourt-il »)
-  const PRENOMS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'],
-    ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il'], ['Mamie', 'elle'], ['Papi', 'il']];
+  // Des prénoms, avec le pronom qui va avec (pour écrire « parcourt-elle » ou « parcourt-il ») :
+  // les enfants (de toutes les communautés de Nouvelle-Calédonie, voir le moteur), puis Mamie et Papi
+  const ENFANTS = RM.maths.PRENOMS.map(({ nom, il }) => [nom, il]);
+  const PRENOMS = [...ENFANTS, ['Mamie', 'elle'], ['Papi', 'il']];
   // Vrai une fois sur deux (ou avec la probabilité donnée)
   const auHasard = (probabilite = 0.5) => Math.random() < probabilite;
   // Une majuscule au début d’une phrase
@@ -1070,6 +1071,9 @@
       durees: [30, 45, 60, 90, 120, 150, 180] },
     { sujet: '', verbe: 'parcourt', facon: 'à vélo', roule: 'roule à vélo', enAllant: 'En roulant à vélo', vitesses: [12, 14, 15, 16, 18, 20],
       durees: [30, 45, 60, 75, 90, 105, 120, 150] },
+    // (le va’a, la pirogue à balancier : de 8 à 12 km/h pour un bon rameur, dans le lagon)
+    { sujet: '', verbe: 'parcourt', facon: 'en va’a', roule: 'pagaie en va’a', enAllant: 'En pagayant en va’a', vitesses: [8, 9, 10, 12],
+      durees: [30, 45, 60, 90, 120] },
     { sujet: 'Une voiture', pronom: 'elle', verbe: 'parcourt', facon: '', roule: 'roule', enAllant: 'En roulant',
       vitesses: [50, 60, 70, 80, 90, 100, 110, 120], durees: [30, 45, 60, 90, 105, 120, 135, 150, 180] },
     { sujet: 'Un TGV', pronom: 'il', verbe: 'parcourt', facon: '', roule: 'roule', enAllant: 'En roulant', vitesses: [200, 220, 240, 260, 280],
@@ -1256,7 +1260,7 @@
       }
       if (sorte === 'comparer') {
         for (;;) {
-          const enfants = RM.melanger(PRENOMS.slice(0, 8)).slice(0, 3).map(([nom]) => nom);
+          const enfants = RM.melanger(ENFANTS).slice(0, 3).map(([nom]) => nom);
           const vitesses = RM.melanger([10, 12, 14, 15, 16, 18, 20]).slice(0, 3);
           // (des durées avec lesquelles on divise de tête : ÷ 0,5 ; ÷ 1 ; ÷ 1,5 ; ÷ 2)
           const durees = vitesses.map(() => parmi([30, 60, 90, 120]));
@@ -1394,13 +1398,13 @@
   // [qui, le verbe, des vitesses réalistes en m/s]
   const MOBILES = [
     ['Un joggeur', 'court', [2, 2.5, 3, 3.5, 4]], ['Une cycliste', 'roule', [4, 5, 6, 7, 7.5, 8, 10]], ['Roxy', 'court', [10, 12]],
-    ['Un cheval', 'galope', [12, 15]], ['Une voiture', 'roule', [15, 20, 22.5, 25, 30, 32.5, 35]], ['Un TGV', 'roule', [60, 70, 75, 80]],
+    ['Un cheval', 'galope', [12, 15]], ['Une pirogue (va’a)', 'file', [2.5, 3, 3.5]], ['Une voiture', 'roule', [15, 20, 22.5, 25, 30, 32.5, 35]], ['Un TGV', 'roule', [60, 70, 75, 80]],
     ['Un guépard', 'court', [25, 30]],
   ];
   // Pour comparer : [le nom, des vitesses réalistes en m/s]
   // (des vitesses qui se chevauchent : chacun peut être le plus rapide)
   const COUREURS = [['le guépard', [20, 25, 30]], ['le lièvre', [12, 15, 18, 20]], ['le cheval', [10, 12, 15, 18]],
-    ['Roxy', [8, 10, 12]], ['le cycliste', [5, 6, 8, 10]], ['la voiture', [10, 15, 20, 25]], ['le coureur', [4, 5, 6, 8]]];
+    ['Roxy', [8, 10, 12]], ['le cycliste', [5, 6, 8, 10]], ['la voiture', [10, 15, 20, 25]], ['le coureur', [4, 5, 6, 8]], ['le va’a', [2.5, 3, 3.5]]];
   // Pour passer d’une unité à l’autre : [de, vers, l’opération, pourquoi]
   const OPERATIONS = [
     ['km/h', 'm/s', '÷ 3,6', `1${ESPACE}km/h, c’est 1${ESPACE}000${ESPACE}m en 3${ESPACE}600${ESPACE}s : on <b>divise par 3,6</b> (36${ESPACE}km/h = 10${ESPACE}m/s).`],
@@ -1513,7 +1517,7 @@
           const naif = ecrits.indexOf(plusVite ? Math.max(...ecrits) : Math.min(...ecrits));
           if (naif === i && auHasard(0.8)) continue;
           const texte = c => (c.enKmh ? mesure(net(3.6 * c.ms), 'km/h') : mesure(c.ms, 'm/s'));
-          const enKmh = trois.map(c => (c.enKmh ? `${c.nom} : ${texte(c)}` : `${c.nom} : ${c.ms} × 3,6 = ${mesure(net(3.6 * c.ms), 'km/h')}`));
+          const enKmh = trois.map(c => (c.enKmh ? `${c.nom} : ${texte(c)}` : `${c.nom} : ${ecrire(c.ms)} × 3,6 = ${mesure(net(3.6 * c.ms), 'km/h')}`));
           return choix({
             consigne: 'Compare les vitesses',
             enonce: `${majuscule(trois[0].nom)} : ${texte(trois[0])} ; ${trois[1].nom} : ${texte(trois[1])} ; ${trois[2].nom} : ${texte(trois[2])}. `
@@ -1584,35 +1588,36 @@
   // ======================================================================
   // 5. Débits et prix : les grandeurs quotients
   // ======================================================================
-  // Des aliments et des prix au kilo réalistes (€/kg), avec les masses qu’on achète (g)
+  // Des aliments et des prix au kilo réalistes en francs Pacifique (F/kg), avec les masses qu’on achète (g).
+  // (des prix arrondis, pas des prix officiels ; pas de centimes : le prix payé est un nombre entier de francs)
   const ALIMENTS = [
-    ['le comté', [14, 16, 18, 20, 24], [150, 200, 250, 300, 400, 500]],
-    ['le jambon', [16, 20, 24, 30], [100, 150, 200, 250, 300]],
-    ['les cerises', [6, 8, 10, 12], [250, 500, 750, 1500]],
-    ['les noix', [10, 12, 14, 16], [200, 250, 400, 500]],
-    ['le café', [12, 16, 20], [250, 500]],
-    ['les champignons', [8, 10, 12], [250, 300, 400, 500, 750]],
-    ['les bonbons', [10, 12, 15], [100, 200, 250, 400]],
+    ['les crevettes', [1600, 2000, 2400, 2800, 3200], [250, 500, 750, 1500]],
+    ['le thon frais', [1600, 2000, 2400], [250, 500, 750, 1500]],
+    ['les letchis', [600, 800, 1000], [500, 750, 1500, 2000]],
+    ['les mangues', [400, 500, 600, 800], [500, 1500, 2000, 2500]],
+    ['les tomates', [400, 600, 800], [500, 750, 1500]],
+    ['le fromage', [3600, 4000, 4800], [150, 200, 250, 300, 400, 500]],
+    ['le jambon', [2400, 3000, 3600], [100, 150, 200, 250, 300]],
   ];
-  // Pour comparer deux paquets : [le produit, des prix au kilo réalistes (€/kg), les masses des paquets (g)]
+  // Pour comparer deux paquets : [le produit, des prix au kilo réalistes (F/kg), les masses des paquets (g)]
   const PAQUETS = [
-    ['de riz', [2, 2.4, 2.8, 3, 3.2, 3.6, 4], [500, 1000, 2000]],
-    ['de pâtes', [1.6, 2, 2.4, 2.8, 3], [500, 1000, 1500]],
-    ['de café', [12, 14, 16, 18, 20], [250, 500, 1000]],
-    ['de chocolat', [8, 10, 12, 14], [100, 200, 250, 400]],
-    ['de farine', [1.2, 1.4, 1.6, 2], [500, 1000, 1500, 2000]],
+    ['de riz', [200, 240, 280, 300, 320, 360, 400], [500, 1000, 2000]],
+    ['de pâtes', [300, 400, 500, 600], [500, 1000, 1500]],
+    ['de café', [2400, 3000, 3600, 4000], [250, 500, 1000]],
+    ['de chocolat', [1600, 2000, 2400, 3000], [100, 200, 250, 400]],
+    ['de farine', [200, 240, 300, 360], [500, 1000, 1500, 2000]],
   ];
-  // Un aliment, son prix au kilo et une masse (g), avec un prix qui tombe juste (en centimes). garder : les masses possibles
+  // Un prix « rond » en francs : un nombre entier de dizaines de francs
+  const prixRond = x => Number.isInteger(net(x)) && x > 0 && net(x) % 10 === 0;
+  // Un aliment, son prix au kilo et une masse (g), avec un prix qui tombe juste (en dizaines de francs). garder : les masses possibles
   function tirerAliment(garder) {
     for (;;) {
       const [aliment, prixKilo, masses] = parmi(ALIMENTS);
       const u = parmi(prixKilo);
       const g = parmi(masses.filter(garder));
-      if (g && propre(u * g / 1000, 2)) return { aliment, u, g };
+      if (g && prixRond(u * g / 1000)) return { aliment, u, g };
     }
   }
-  // Un prix sans le signe € (pour les calculs) : 2,40
-  const sansEuro = x => euros(x).replace(ESPACE + '€', '');
   // Une masse en g ou en kg : 500 g, 1 kg, 1,5 kg
   const masse = g => (g >= 1000 ? mesure(net(g / 1000), 'kg') : mesure(g, 'g'));
 
@@ -1622,15 +1627,15 @@
     ['Sur le robinet de la baignoire, on lit', mesure(12, 'L/min'), 'un débit'],
     ['Sur la pompe de la piscine, on lit', mesure(5, 'm³/h'), 'un débit'],
     ['Au parc, la fontaine donne', mesure(3, 'L/min'), 'un débit'],
-    ['Sur l’étiquette du fromage, on lit', mesure(18, '€/kg'), 'un prix au kilo'],
-    ['Sur l’étiquette des pommes, on lit', `2,50${ESPACE}€/kg`, 'un prix au kilo'],
-    ['Sur l’étiquette des tomates, on lit', `3,20${ESPACE}€/kg`, 'un prix au kilo'],
+    ['Sur l’étiquette du fromage, on lit', mesure(4000, 'F/kg'), 'un prix au kilo'],
+    ['Au marché, sur la pancarte des letchis, on lit', mesure(800, 'F/kg'), 'un prix au kilo'],
+    ['Au marché, sur la pancarte des crevettes, on lit', mesure(2400, 'F/kg'), 'un prix au kilo'],
     ['Au bord de la route, un panneau indique', mesure(80, 'km/h'), 'une vitesse'],
     ['La météo annonce un vent de', mesure(10, 'm/s'), 'une vitesse'],
     ['Sur le compteur du scooter, on lit', mesure(45, 'km/h'), 'une vitesse'],
     ['Pour la voiture de Papi, on lit', `6${ESPACE}L/100${ESPACE}km`, 'une consommation'],
     ['Pour la voiture de Mamie, on lit', `5${ESPACE}L/100${ESPACE}km`, 'une consommation'],
-    ['Pour le camping-car de la famille de Léa, on lit', `7,5${ESPACE}L/100${ESPACE}km`, 'une consommation'],
+    ['Pour le pick-up de la famille de Wanir, on lit', `9,5${ESPACE}L/100${ESPACE}km`, 'une consommation'],
     ['Pour la région de Roxy, on lit', mesure(120, 'hab/km²'), 'une densité de population'],
     ['Pour la ville de Tom, on lit', mesure(4000, 'hab/km²'), 'une densité de population'],
     ['Pour la montagne où Papi fait du ski, on lit', mesure(30, 'hab/km²'), 'une densité de population'],
@@ -1638,13 +1643,13 @@
   const SENS_QUOTIENTS = {
     'une vitesse': 'une distance divisée par une durée (km/h, m/s)',
     'un débit': 'un volume divisé par une durée (L/min, m³/h)',
-    'un prix au kilo': 'un prix divisé par une masse (€/kg)',
+    'un prix au kilo': 'un prix divisé par une masse (F/kg)',
     'une consommation': `le nombre de litres de carburant utilisés pour 100${ESPACE}km (L/100${ESPACE}km)`,
     'une densité de population': 'un nombre d’habitants divisé par une aire (hab/km²)',
   };
   // Les unités qu’on peut utiliser pour chaque grandeur
   const UNITES_QUOTIENTS = {
-    'une vitesse': ['km/h', 'm/s'], 'un débit': ['L/min', 'm³/h', 'L/h'], 'un prix au kilo': ['€/kg'],
+    'une vitesse': ['km/h', 'm/s'], 'un débit': ['L/min', 'm³/h', 'L/h'], 'un prix au kilo': ['F/kg'],
     'une consommation': [`L/100${ESPACE}km`], 'une densité de population': ['hab/km²'],
   };
 
@@ -1749,16 +1754,18 @@
           const kg = net(g / 1000);
           const [nom, pronom] = parmi(PRENOMS);
           // L’erreur classique : la masse mal convertie (250 g → 2,5 kg, soit × 10) ; et aussi 25 kg (× 100), 0,025 kg (÷ 10),
-          // 0,0025 kg (÷ 100), et diviser au lieu de multiplier (prix au kilo ÷ masse, en kg ou en g)
-          const enEuros = x => (propre(x, 2) && x >= 0.01 && x < 1000 ? euros(x) : null);
+          // 0,0025 kg (÷ 100), et diviser au lieu de multiplier (prix au kilo ÷ masse, en kg ou en g).
+          // (en francs, pas de centimes : on ne garde que les pièges entiers)
+          const enFrancs = x => (Number.isInteger(net(x)) && x >= 10 && x < 1e6 ? francs(x) : null);
           return choixAvecErreur({
             consigne: 'Calcule le prix',
-            enonce: `Au marché, ${aliment} ${aliment.startsWith('les') ? 'coûtent' : 'coûte'} ${mesure(u, '€/kg')}. `
+            enonce: `Au marché${auHasard() ? ` de ${parmi(['Nouméa', 'Koné', 'Bourail', 'La Foa', 'Koumac'])}` : ''}, `
+              + `${aliment} ${aliment.startsWith('les') ? 'coûtent' : 'coûte'} ${mesure(u, 'F/kg')}. `
               + `${nom} en achète ${masse(g)}. ${majuscule(pronom)} paie ___.`,
-            reponse: euros(prix),
+            reponse: francs(prix),
             explication: (g < 1000 ? `On écrit la masse en kg : ${masse(g)} = ${mesure(kg, 'kg')} (et pas ${mesure(net(kg * 10), 'kg')}).<br>`
-              : 'Prix = prix au kilo × masse (en kg) :<br>') + `${ecrire(u)} × ${ecrire(kg)} = <b>${euros(prix)}</b>.`,
-          }, euros(net(prix * 10)), [prix / 10, prix / 100, prix * 100, u / kg, u / g].map(enEuros).filter(Boolean));
+              : 'Prix = prix au kilo × masse (en kg) :<br>') + `${ecrire(u)} × ${ecrire(kg)} = <b>${francs(prix)}</b>.`,
+          }, francs(net(prix * 10)), [prix / 10, prix / 100, prix * 100, u / kg, u / g].map(enFrancs).filter(Boolean));
         }
         // Le prix au kilo, à partir du prix d’un sachet
         // (une masse qui partage le kilo : 250 g, 500 g… ou plus d’un kilo)
@@ -1766,16 +1773,16 @@
         const prix = net(u * g / 1000);
         const q = nombre({
           consigne: 'Calcule le prix au kilo',
-          enonce: `Au marché, ${parmi(PRENOMS)[0]} paie ${euros(prix)} pour ${masse(g)} de ${aliment.replace(/^(le|les) /, '')}. `
+          enonce: `Au marché, ${parmi(PRENOMS)[0]} paie ${francs(prix)} pour ${masse(g)} de ${aliment.replace(/^(le|les) /, '')}. `
             + 'Quel est le prix au kilo ?',
           reponse: u,
-          prix: true,
+          enFrancs: true,
           explication: g < 1000
-            ? `1${ESPACE}kg = 1${ESPACE}000${ESPACE}g, c’est ${1000 / g} fois ${masse(g)} :<br>${sansEuro(prix)} × ${1000 / g} = <b>${euros(u)} le kilo</b>.`
-            : `Prix au kilo = prix ÷ masse (en kg) = ${sansEuro(prix)} ÷ ${ecrire(g / 1000)} = <b>${euros(u)} le kilo</b>.`,
-          solution: `<b>${euros(u)}/kg</b>`,
+            ? `1${ESPACE}kg = 1${ESPACE}000${ESPACE}g, c’est ${1000 / g} fois ${masse(g)} :<br>${ecrire(prix)} × ${1000 / g} = <b>${francs(u)} le kilo</b>.`
+            : `Prix au kilo = prix ÷ masse (en kg) = ${ecrire(prix)} ÷ ${ecrire(g / 1000)} = <b>${francs(u)} le kilo</b>.`,
+          solution: `<b>${mesure(u, 'F/kg')}</b>`,
         });
-        q.unite = '€/kg';
+        q.unite = 'F/kg';
         return q;
       }
       if (sorte === 'meilleurPrix') {
@@ -1787,15 +1794,15 @@
           const uA = parmi(prix);
           const uB = pareil ? uA : parmi(prix.filter(p => p !== uA));
           const [pA, pB] = [net(uA * gA / 1000), net(uB * gB / 1000)];
-          if (!propre(pA, 2) || !propre(pB, 2)) continue;
+          if (!prixRond(pA) || !prixRond(pB)) continue;
           // Le piège, le plus souvent : le paquet qui coûte le moins cher n’est pas le moins cher au kilo
           if (!pareil && (pA < pB) === (uA < uB) && auHasard(0.7)) continue;
           const reponse = pareil ? 'c’est pareil' : (uA < uB ? 'le paquet A' : 'le paquet B');
-          const auKilo = (p, g, u) => (g === 1000 ? `${euros(p)} pour 1${ESPACE}kg`
-            : `${sansEuro(p)} ÷ ${ecrire(g / 1000)} = ${euros(u)}/kg`);
+          const auKilo = (p, g, u) => (g === 1000 ? `${francs(p)} pour 1${ESPACE}kg`
+            : `${ecrire(p)} ÷ ${ecrire(g / 1000)} = ${mesure(u, 'F/kg')}`);
           return choix({
             consigne: 'Compare les prix au kilo',
-            enonce: `Paquet A : ${masse(gA)} ${produit} pour ${euros(pA)}. Paquet B : ${masse(gB)} pour ${euros(pB)}. `
+            enonce: `Paquet A : ${masse(gA)} ${produit} pour ${francs(pA)}. Paquet B : ${masse(gB)} pour ${francs(pB)}. `
               + 'Lequel est le moins cher au kilo ?',
             reponse,
             choix: ['le paquet A', 'le paquet B', 'c’est pareil'],
@@ -1806,17 +1813,25 @@
       }
       if (sorte === 'consommation') {
         const c = parmi([4, 5, 6, 7, 8]);
-        const d = parmi([150, 200, 250, 300, 350, 400, 450, 500, 600, 800]);
-        const L = net(c * d / 100);
+        let d = parmi([150, 200, 250, 300, 350, 400, 450, 500, 600, 800]);
         if (auHasard()) {
+          // Un vrai trajet de la Grande Terre, avec une distance arrondie (à peu près juste) : ou juste une distance
+          // (des espaces insécables autour du tiret : « Nouméa – » ne reste pas seul en fin de ligne)
+          const entre = lieu => `Nouméa${ESPACE}–${ESPACE}${lieu.replace(' ', ESPACE)}`;
+          const trajet = auHasard() ? parmi([[`l’aller-retour ${entre('La Foa')}`, 220], [`l’aller-retour ${entre('Bourail')}`, 330],
+            [`le trajet ${entre('Koné')}`, 270], [`le trajet ${entre('Koumac')}`, 370]]) : null;
+          if (trajet) d = trajet[1];
+          const L = net(c * d / 100);
           return nombre({
             consigne: 'Calcule le carburant',
-            enonce: `La voiture de Papi consomme ${c}${ESPACE}L aux 100${ESPACE}km. Combien de litres d’essence faut-il pour ${mesure(d, 'km')} ?`,
+            enonce: `La voiture de Papi consomme ${c}${ESPACE}L aux 100${ESPACE}km. Combien de litres d’essence faut-il pour `
+              + `${trajet ? `${trajet[0]} (${mesure(d, 'km')} environ)` : mesure(d, 'km')} ?`,
             reponse: L,
             unite: 'L',
             explication: `${mesure(d, 'km')}, c’est ${ecrire(d / 100)} fois 100${ESPACE}km :<br>${c} × ${ecrire(d / 100)} = <b>${mesure(L, 'L')}</b>.`,
           });
         }
+        const L = net(c * d / 100);
         return nombre({
           consigne: 'Calcule la consommation',
           enonce: `Pour un trajet de ${mesure(d, 'km')}, la voiture de Mamie a utilisé ${mesure(L, 'L')} d’essence. Quelle est sa consommation, en L/100${ESPACE}km ?`,
@@ -1898,15 +1913,16 @@
         });
       }
       if (famille === 'prix') {
-        const u = parmi([12, 16, 18, 20, 24]);
+        // (des prix au kilo en francs, multiples de 400 : tous les prix tombent juste)
+        const [aliment, u] = parmi([['de fromage', parmi([3200, 3600, 4000, 4800])], ['de crevettes', parmi([2000, 2400, 2800])]]);
         const g = parmi([250, 500]);
         const prix = u * g / 1000;
         // ÷ au lieu de ×, 250 g lu 2,5 kg, 250 g lu 0,025 kg
         const faux = parmi([u * 1000 / g, net(u * g / 100), net(u * g / 10000)]);
         return vraiFaux({
-          enonce: `À ${mesure(u, '€/kg')}, ${mesure(g, 'g')} de fromage coûtent ${euros(vrai ? prix : faux)}.`,
+          enonce: `À ${mesure(u, 'F/kg')}, ${mesure(g, 'g')} ${aliment} coûtent ${francs(vrai ? prix : faux)}.`,
           vrai,
-          explication: `${mesure(g, 'g')} = ${mesure(g / 1000, 'kg')}, donc ${u} × ${ecrire(g / 1000)} = <b>${euros(prix)}</b>.`,
+          explication: `${mesure(g, 'g')} = ${mesure(g / 1000, 'kg')}, donc ${ecrire(u)} × ${ecrire(g / 1000)} = <b>${francs(prix)}</b>.`,
         });
       }
       const c = parmi([4, 5, 6, 8]);
@@ -1921,24 +1937,24 @@
     titreLecon: 'Débits et prix',
     lecon: `
       <p>Une <b>grandeur quotient</b> est le quotient de deux grandeurs. Son unité le dit : « L/min » se lit
-        « litres par minute » ; « €/kg », « euros par kilo ».</p>
+        « litres par minute » ; « F/kg », « francs par kilo ».</p>
       <table>
         <tr><th>Vitesse</th><td>distance ÷ durée</td><td>km/h, m/s</td></tr>
         <tr><th>Débit</th><td>volume ÷ durée</td><td>L/min, m³/h</td></tr>
-        <tr><th>Prix au kilo</th><td>prix ÷ masse (en kg)</td><td>€/kg</td></tr>
+        <tr><th>Prix au kilo</th><td>prix ÷ masse (en kg)</td><td>F/kg</td></tr>
         <tr><th>Consommation</th><td>litres de carburant pour 100&nbsp;km</td><td>L/100&nbsp;km</td></tr>
         <tr><th>Densité de population</th><td>nombre d’habitants ÷ aire</td><td>hab/km²</td></tr>
       </table>
       <p>👉 <i>60&nbsp;L en 5&nbsp;min : 60 ÷ 5 = 12&nbsp;L/min</i> · <i>12&nbsp;L/min pendant 3&nbsp;min : 12 × 3 = 36&nbsp;L</i> ·
         <i>150&nbsp;L à 10&nbsp;L/min : 150 ÷ 10 = 15&nbsp;min</i></p>
-      <p>👉 <i>Le comté à 18&nbsp;€/kg : 250&nbsp;g = 0,25&nbsp;kg coûtent 18 × 0,25 = 4,50&nbsp;€</i> ·
+      <p>👉 <i>Les crevettes à 2&nbsp;400&nbsp;F/kg : 250&nbsp;g = 0,25&nbsp;kg coûtent 2&nbsp;400 × 0,25 = 600&nbsp;F</i> ·
         <i>6&nbsp;L/100&nbsp;km, pour 300&nbsp;km : 6 × 3 = 18&nbsp;L</i> · <i>21&nbsp;L pour 350&nbsp;km, c’est 21 ÷ 3,5 = 6&nbsp;L pour 100&nbsp;km</i> ·
         <i>1&nbsp;200 habitants sur 15&nbsp;km² : 1&nbsp;200 ÷ 15 = 80&nbsp;hab/km²</i></p>
       <p><b>Convertir :</b> 12&nbsp;L/min = 12 × 60 = 720&nbsp;L/h (1&nbsp;h = 60&nbsp;min) · 1&nbsp;L/s = 60&nbsp;L/min ·
         1&nbsp;m³ = 1&nbsp;000&nbsp;L, donc 3&nbsp;m³/h = 3&nbsp;000&nbsp;L/h.</p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> pour comparer deux paquets, calcule le prix d’un kilo de chacun.
         Le paquet le moins cher n’est pas toujours le moins cher au kilo !</div>
-      <p>⚠️ Écris la masse en kg avant de multiplier par un prix en €/kg : 250&nbsp;g = 0,25&nbsp;kg (et pas 2,5&nbsp;kg).</p>
+      <p>⚠️ Écris la masse en kg avant de multiplier par un prix en F/kg : 250&nbsp;g = 0,25&nbsp;kg (et pas 2,5&nbsp;kg).</p>
     `,
   });
 

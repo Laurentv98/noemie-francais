@@ -5,18 +5,19 @@
 
 (function () {
   const {
-    entier, parmi, entierSauf, net, ecrire, mesure, euros, frac, fracTexte, simplifier, pgcd, tableau,
+    entier, parmi, entierSauf, net, ecrire, mesure, francs, frac, fracTexte, simplifier, pgcd, tableau,
     choix, nombre, fraction, vraiFaux, ajouterEtape, figures, MOINS, ESPACE,
   } = RM.maths;
 
   // ======================================================================
   // Des petites aides, pour toutes les étapes
   // ======================================================================
-  // Les enfants des problèmes (« il » ou « elle », pour les accords)
+  // Les enfants des problèmes (« il » ou « elle », pour les accords) : des prénoms de toutes les communautés du pays
   const ENFANTS = [
-    { nom: 'Léa', il: 'elle' }, { nom: 'Tom', il: 'il' }, { nom: 'Zoé', il: 'elle' }, { nom: 'Hugo', il: 'il' },
-    { nom: 'Inès', il: 'elle' }, { nom: 'Sami', il: 'il' }, { nom: 'Lina', il: 'elle' }, { nom: 'Noé', il: 'il' },
-    { nom: 'Jade', il: 'elle' }, { nom: 'Malo', il: 'il' },
+    { nom: 'Kalia', il: 'elle' }, { nom: 'Teva', il: 'il' }, { nom: 'Maëva', il: 'elle' }, { nom: 'Sione', il: 'il' },
+    { nom: 'Wakana', il: 'elle' }, { nom: 'Minh', il: 'il' }, { nom: 'Hinano', il: 'elle' }, { nom: 'Wanir', il: 'il' },
+    { nom: 'Mei', il: 'elle' }, { nom: 'Kylian', il: 'il' }, { nom: 'Léa', il: 'elle' }, { nom: 'Tom', il: 'il' },
+    { nom: 'Inès', il: 'elle' }, { nom: 'Noa', il: 'il' },
   ];
   // n enfants différents
   const enfants = n => RM.melanger(ENFANTS).slice(0, n).map(e => ({ ...e }));
@@ -37,9 +38,8 @@
   const listeEt = valeurs => (valeurs.length === 2 ? `${ecrire(valeurs[0])} et ${ecrire(valeurs[1])}` : liste(valeurs));
   // Les pièges : des nombres positifs, sans les erreurs de calcul de l'ordinateur
   const positifs = valeurs => valeurs.map(net).filter(v => v > 0);
-  const enEuros = valeurs => positifs(valeurs).map(euros);
-  // Un prix sans le signe €, pour les cases d'un tableau « Prix (€) » : 22,50 (et pas 22,5)
-  const ecrirePrix = v => euros(v).replace(`${ESPACE}€`, '');
+  // Des prix en francs (XPF) : des nombres entiers, sans centimes
+  const enFrancs = valeurs => positifs(valeurs).filter(Number.isInteger).map(francs);
   // Au plus 2 (ou 3) chiffres après la virgule : pas de 3,333… sur un bouton
   const auCentieme = v => Number.isInteger(net(v * 100));
   const auMillieme = v => Number.isInteger(net(v * 1000));
@@ -72,17 +72,19 @@
   // 1. La proportionnalité
   // ======================================================================
   // Les tableaux : les titres des deux lignes, les nombres du haut possibles et les coefficients possibles
-  // (en 5e, le coefficient peut être un nombre décimal : 1,5 ; 2,4 ; 0,8…)
+  // (en 5e, le coefficient peut être un nombre décimal : 1,5 ; 0,75 ; 2,5… Les prix en francs sont entiers :
+  // les décimaux sont dans les masses, les bouteilles et les paquets)
   const GRANDEURS = [
-    { x: 'Masse (kg)', y: 'Prix (€)', xs: [1, 2, 3, 4, 5, 6, 8, 10], coefs: [1.5, 2.5, 3.5, 1.2, 2.4, 0.8, 4, 6] },
-    { x: 'Masse (kg)', y: 'Prix (€)', xs: [0.5, 1.5, 2, 2.5, 3, 4, 5], coefs: [2, 3, 4, 6, 8] },
-    { x: 'Nombre de cahiers', y: 'Prix (€)', xs: [2, 3, 4, 5, 6, 8, 10], coefs: [1.5, 2.5, 1.2, 0.8, 1.8] },
+    { x: 'Letchis (kg)', y: 'Prix (F)', xs: [1, 2, 3, 4, 5, 6, 8, 10], coefs: [400, 500, 600, 800, 1000] },
+    { x: 'Crevettes (kg)', y: 'Prix (F)', xs: [0.5, 1.5, 2, 2.5, 3, 4, 5], coefs: [1600, 2000, 2400, 3000] },
+    { x: 'Nombre de bouteilles', y: 'Volume (L)', xs: [2, 3, 4, 5, 6, 8, 10], coefs: [1.5, 0.5, 0.75, 1.25] },
+    { x: 'Nombre de paquets', y: 'Masse (kg)', xs: [2, 3, 4, 5, 6, 8, 10], coefs: [0.25, 0.5, 1.5, 2.5, 1.2] },
     { x: 'Durée (h)', y: 'Distance (km)', xs: [1, 2, 3, 4, 5, 6], coefs: [4, 5, 12, 15, 18, 60, 80, 90] },
     { x: 'Nombre de personnes', y: 'Farine (g)', xs: [2, 3, 4, 5, 6, 8, 10], coefs: [40, 50, 60, 75, 80] },
     { x: 'Nombre de tours', y: 'Distance (m)', xs: [2, 3, 4, 5, 6, 8, 10], coefs: [200, 250, 400] },
   ];
-  // Les nombres du bas s'écrivent comme des prix dans une ligne « Prix (€) » (22,50)
-  const ecritureDe = G => (G.y === 'Prix (€)' ? ecrirePrix : ecrire);
+  // Les nombres du tableau (les prix en francs sont des entiers : ils s'écrivent comme les autres nombres)
+  const ecritureDe = () => ecrire;
   const tableauDe = (G, xs, ys) => tableau([[G.x, ...xs], [G.y, ...ys.map(y => (typeof y === 'number' ? ecritureDe(G)(y) : y))]]);
   // Les quotients « bas ÷ haut » : « 5 ÷ 2 = 2,5 ; 7,50 ÷ 3 = 2,5 »
   const quotients = (xs, ys, e) => xs.map((x, i) => `${e(ys[i])} ÷ ${ecrire(x)} = ${ecrire(net(ys[i] / x))}`).join(' ; ');
@@ -97,6 +99,7 @@
   function presqueJuste(y, interdits) {
     let pas;
     if (!Number.isInteger(y)) pas = Number.isInteger(y * 2) ? 0.5 : 0.2;
+    else if (y >= 1000 && y % 100 === 0) pas = 100;
     else if (y % 10 === 0) pas = y >= 200 ? 20 : (y >= 100 ? 10 : 5);
     else pas = y >= 50 ? 2 : 1;
     const libres = ecarts => ecarts.map(d => net(y + d)).filter(v => v > 0 && !interdits.includes(v));
@@ -121,9 +124,11 @@
         // y = a × x + c : c est choisi pour que la 1re colonne marche avec « × k », mais pas les autres
         // (« ajout » : on ajoute toujours c ; « depart » : un prix de départ, par exemple)
         k = parmi(G.coefs.filter(c => c > 1));
-        // (hors des prix, a reste entier : pas de « 187,5 g » de farine)
+        // (avec un coefficient entier, a reste entier : pas de « 187,5 g » de farine)
         let moitie = net(k / 2);
-        if (G.y !== 'Prix (€)' && !Number.isInteger(moitie)) moitie = k >= 20 ? 5 * Math.floor(k / 10) : Math.floor(k / 2);
+        if (Number.isInteger(k) && !Number.isInteger(moitie)) moitie = k >= 20 ? 5 * Math.floor(k / 10) : Math.floor(k / 2);
+        // (et au plus 2 chiffres après la virgule : pour 1,25, on prend 0,6 et pas 0,625)
+        if (!auCentieme(moitie)) moitie = net(Math.floor(moitie * 10) / 10);
         const a = sorte === 'ajout' && k <= 6 ? 1 : moitie;
         const c = net((k - a) * xs[0]);
         ys = xs.map(x => net(a * x + c));
@@ -267,7 +272,7 @@
     const consigne = 'Complète le tableau de proportionnalité';
     if (!avecBoutons) {
       return nombre({
-        consigne, enonce: T.html, reponse: T.reponse, prix: !enHaut && T.e === ecrirePrix, solution: T.solution, explication: T.explication,
+        consigne, enonce: T.html, reponse: T.reponse, enFrancs: !enHaut && T.G.y === 'Prix (F)', solution: T.solution, explication: T.explication,
       });
     }
     const x = T.xs[T.j];
@@ -280,7 +285,9 @@
     const valable = v => v > 0 && v !== bon && !visibles.includes(v) && auCentieme(v);
     // une demi-colonne ou un quart de colonne de trop ou de moins, et (avec un petit coefficient) l'erreur de l'addition :
     // ajouter en bas ce qu'on ajoute en haut
-    const proches = [T.k * (x + 0.5), T.k * (x - 0.5), bon + T.k / 4, bon - T.k / 4];
+    // (dans une ligne de prix en francs, des prix ronds : ± 100 F, ± 200 F, et pas ± un quart du prix au kilo)
+    const ecarts = T.G.y === 'Prix (F)' ? [100, -100, 200, -200] : [T.k / 4, -T.k / 4];
+    const proches = [T.k * (x + 0.5), T.k * (x - 0.5), ...ecarts.map(d => bon + d)];
     if (T.k < 10) proches.push(...T.xs.map((xi, i) => T.ys[i] + x - xi).filter((v, i) => i !== T.j), x + T.k);
     const dedans = [...new Set(proches.map(net))].filter(v => valable(v) && v > bas && v < haut);
     // (s'il n'y en a pas 3 de chaque côté de la réponse, on complète avec des colonnes de trop ou de moins :
@@ -300,12 +307,15 @@
   }
 
   // Les problèmes : des objets à la pièce, des recettes, des trajets à vitesse constante, un robinet
+  // (des prix en francs, entiers et arrondis)
   const PIECES = [
-    { un: 'croissant', des: 'croissants', prix: [0.9, 1.1, 1.2, 1.3] },
-    { un: 'cahier', des: 'cahiers', prix: [1.5, 2.5, 1.8, 2.4] },
-    { un: 'yaourt', des: 'yaourts', prix: [0.4, 0.5, 0.6, 0.8] },
-    { un: 'ticket de bus', des: 'tickets de bus', prix: [1.5, 1.6, 1.8] },
-    { un: 'pot de miel', des: 'pots de miel', prix: [4.5, 5.5, 6.5] },
+    { un: 'croissant', des: 'croissants', prix: [120, 150, 180] },
+    { un: 'cahier', des: 'cahiers', prix: [180, 250, 350] },
+    { un: 'yaourt', des: 'yaourts', prix: [90, 110, 120] },
+    { un: 'ticket de bus', des: 'tickets de bus', prix: [150, 200, 250] },
+    { un: 'pot de miel', des: 'pots de miel', prix: [1200, 1500, 1800] },
+    { un: 'ananas', des: 'ananas', prix: [300, 350, 400] },
+    { un: 'régime de bananes', des: 'régimes de bananes', prix: [600, 800, 900] },
   ];
   const INGREDIENTS = [
     { nom: 'farine', unite: 'g', parPersonne: [25, 40, 50, 60, 75] },
@@ -318,7 +328,8 @@
   const TRAJETS = [
     { phrase: p => `${p.nom} roule à vélo à vitesse constante : ${p.il} parcourt`, il: p => p.il, pas: 10, distances: [2, 2.5, 3, 4] },
     { phrase: () => 'Mamie marche à vitesse constante : elle parcourt', il: () => 'elle', pas: 30, distances: [2, 2.5] },
-    { phrase: () => 'Un train roule à vitesse constante : il parcourt', il: () => 'il', pas: 10, distances: [15, 20, 25] },
+    { phrase: () => 'Un car roule à vitesse constante : il parcourt', il: () => 'il', pas: 10, distances: [10, 12, 15] },
+    { phrase: p => `${p.nom} pagaie en va’a à vitesse constante : ${p.il} parcourt`, il: p => p.il, pas: 15, distances: [1.5, 2] },
   ];
 
   // Un problème de proportionnalité : l'énoncé, la réponse (u l'écrit avec son unité), l'explication, les pièges
@@ -333,17 +344,17 @@
       do { a = entier(3, 9); c = entier(2, 12); } while (a === c);
       const [ya, yc] = [net(u * a), net(u * c)];
       let explication;
-      if (c % a === 0) explication = `${ecrire(c)} ${P.des}, c’est ${ecrire(c / a)} fois plus que ${ecrire(a)} : ${euros(ya)} × ${ecrire(c / a)} = <b>${euros(yc)}</b>.`;
-      else if (a % c === 0) explication = `${ecrire(c)} ${P.des}, c’est ${ecrire(a / c)} fois moins que ${ecrire(a)} : ${euros(ya)} ÷ ${ecrire(a / c)} = <b>${euros(yc)}</b>.`;
+      if (c % a === 0) explication = `${ecrire(c)} ${P.des}, c’est ${ecrire(c / a)} fois plus que ${ecrire(a)} : ${francs(ya)} × ${ecrire(c / a)} = <b>${francs(yc)}</b>.`;
+      else if (a % c === 0) explication = `${ecrire(c)} ${P.des}, c’est ${ecrire(a / c)} fois moins que ${ecrire(a)} : ${francs(ya)} ÷ ${ecrire(a / c)} = <b>${francs(yc)}</b>.`;
       else {
-        explication = `On passe par l’unité : un ${P.un} coûte ${euros(ya)} ÷ ${ecrire(a)} = ${euros(u)}.<br>`
-          + `${majuscule(combien(c, P.un, P.des))} : ${ecrire(c)} × ${euros(u)} = <b>${euros(yc)}</b>.`;
+        explication = `On passe par l’unité : un ${P.un} coûte ${francs(ya)} ÷ ${ecrire(a)} = ${francs(u)}.<br>`
+          + `${majuscule(combien(c, P.un, P.des))} : ${ecrire(c)} × ${francs(u)} = <b>${francs(yc)}</b>.`;
       }
       return {
-        enonce: `${ecrire(a)} ${P.des} coûtent ${euros(ya)}. Combien coûtent ${ecrire(c)} ${P.des} ?`,
-        reponse: yc, u: euros, prix: true, explication,
-        // l'erreur de l'addition (1 objet de plus → 1 € de plus), un objet de trop ou de moins, le prix d'un seul
-        pieges: [ya + c - a, u * (c + 1), u * (c - 1), u, ya],
+        enonce: `${ecrire(a)} ${P.des} coûtent ${francs(ya)}. Combien coûtent ${ecrire(c)} ${P.des} ?`,
+        reponse: yc, u: francs, enFrancs: true, explication,
+        // un ou deux objets de trop ou de moins, le prix d'un seul, le prix donné dans l'énoncé
+        pieges: [u * (c + 1), u * (c - 1), u * (c + 2), u * (c - 2), u, ya],
       };
     }
     if (sorte === 'recette') {
@@ -397,7 +408,7 @@
     const P = problemeProportion();
     if (!avecBoutons) {
       return nombre({
-        consigne: 'Résous le problème', enonce: P.enonce, reponse: P.reponse, unite: P.unite, prix: P.prix, explication: P.explication,
+        consigne: 'Résous le problème', enonce: P.enonce, reponse: P.reponse, unite: P.unite, enFrancs: P.enFrancs, explication: P.explication,
       });
     }
     return choix({
@@ -413,53 +424,50 @@
     const vrai = Math.random() < 0.5;
     const forme = parmi(['calcul', 'calcul', 'regle', 'situation']);
     if (forme === 'calcul') {
-      // La linéarité (et l'erreur : 2 objets de plus → 2 € de plus)
+      // La linéarité
       const P = parmi(PIECES);
       const u = parmi(P.prix);
       let a;
       let c;
-      do { a = entier(2, 6); c = entier(3, 10); } while (a === c || net(u * a + c - a) <= 0);
-      const [ya, yc] = [net(u * a), net(u * c)];
-      // les erreurs : 1 objet de plus → 1 € de plus, un objet de trop ou de moins, un prix à l'unité faux de 10 centimes
-      const additif = net(ya + c - a);
-      const faux = parmi([additif, net(u * (c + 1)), net(u * (c - 1)), net((u + 0.1) * c), net((u - 0.1) * c)].filter(v => v > 0 && v !== yc));
-      const ecart = Math.abs(c - a);
+      do { a = entier(2, 6); c = entier(3, 10); } while (a === c);
+      const [ya, yc] = [u * a, u * c];
+      // les erreurs : un objet de trop ou de moins, un prix à l'unité faux de 10 F (jamais le prix donné : trop facile)
+      const faux = parmi([u * (c + 1), u * (c - 1), (u + 10) * c, (u - 10) * c].filter(v => v > 0 && v !== yc && v !== ya));
       return vraiFaux({
-        enonce: `Si ${ecrire(a)} ${P.des} coûtent ${euros(ya)}, alors ${ecrire(c)} ${P.des} coûtent ${euros(vrai ? yc : faux)}.`,
+        enonce: `Si ${ecrire(a)} ${P.des} coûtent ${francs(ya)}, alors ${ecrire(c)} ${P.des} coûtent ${francs(vrai ? yc : faux)}.`,
         vrai,
-        explication: `Un ${P.un} coûte ${euros(ya)} ÷ ${ecrire(a)} = ${euros(u)}, donc ${ecrire(c)} ${P.des} coûtent ${ecrire(c)} × ${euros(u)} = <b>${euros(yc)}</b>.`
-          + (vrai || faux !== additif ? '' : `<br>⚠️ ${combien(ecart, P.un, P.des)} de ${c > a ? 'plus' : 'moins'}, ce n’est pas ${euros(ecart)} de ${c > a ? 'plus' : 'moins'} !`),
+        explication: `Un ${P.un} coûte ${francs(ya)} ÷ ${ecrire(a)} = ${francs(u)}, donc ${ecrire(c)} ${P.des} coûtent ${ecrire(c)} × ${francs(u)} = <b>${francs(yc)}</b>.`,
       });
     }
     if (forme === 'regle') {
       const m = entier(2, 5);
       const REGLES = [
         [true, 'Dans un tableau de proportionnalité, on peut additionner deux colonnes pour obtenir une autre colonne.',
-          'Par exemple, si 2 kg coûtent 5 € et 3 kg coûtent 7,50 €, alors 5 kg (2 + 3) coûtent 5 + 7,50 = 12,50 €.'],
+          `Par exemple, si 2 kg de letchis coûtent ${francs(1200)} et 3 kg coûtent ${francs(1800)}, alors 5 kg (2 + 3) coûtent ${ecrire(1200)} + ${ecrire(1800)} = ${francs(3000)}.`],
         [false, 'Dans un tableau de proportionnalité, on peut ajouter le même nombre en haut et en bas pour obtenir une autre colonne.',
-          'Par exemple, si 2 kg coûtent 5 €, alors 3 kg (2 + 1) ne coûtent pas 5 + 1 = 6 €, mais 7,50 €.'],
+          'Par exemple, si 2 bouteilles contiennent 3 L, alors 3 bouteilles (2 + 1) ne contiennent pas 3 + 1 = 4 L, mais 4,5 L.'],
         [true, `Dans un tableau de proportionnalité, si un nombre du haut est multiplié par ${ecrire(m)}, le nombre du bas est aussi multiplié par ${ecrire(m)}.`,
-          `Par exemple, si 1 kg coûte 3 €, alors ${ecrire(m)} kg coûtent ${ecrire(m)} × 3 = ${ecrire(3 * m)} €.`],
+          `Par exemple, si 1 kg de letchis coûte ${francs(500)}, alors ${ecrire(m)} kg coûtent ${ecrire(m)} × 500 = ${francs(500 * m)}.`],
         [false, `Dans un tableau de proportionnalité, si on ajoute ${ecrire(m)} à un nombre du haut, on ajoute aussi ${ecrire(m)} au nombre du bas.`,
-          `Par exemple, si 1 kg coûte 3 €, alors ${ecrire(1 + m)} kg coûtent ${ecrire(1 + m)} × 3 = ${ecrire(3 * (1 + m))} €, et pas 3 + ${ecrire(m)} = ${ecrire(3 + m)} €.`],
+          `Par exemple, si 1 paquet pèse 3 kg, alors ${ecrire(1 + m)} paquets pèsent ${ecrire(1 + m)} × 3 = ${ecrire(3 * (1 + m))} kg, et pas 3 + ${ecrire(m)} = ${ecrire(3 + m)} kg.`],
       ];
       const [, enonce, exemple] = parmi(REGLES.filter(([v]) => v === vrai));
       return vraiFaux({
         enonce,
         vrai,
         explication: `<b>${vrai ? 'Vrai' : 'Faux'}</b> : on peut multiplier une colonne, ou additionner deux colonnes, mais pas ajouter le même nombre en haut et en bas.<br>`
-          + exemple.replace(/ (kg|€)/g, `${ESPACE}$1`),
+          + exemple.replace(/ (kg|L)\b/g, `${ESPACE}$1`),
       });
     }
-    const k = entier(4, 9);
-    const c = entier(2, 4);
+    const k = 100 * entier(4, 9);
+    const c = 100 * entier(3, 5);
     const SITUATIONS = [
-      [true, `Les cerises coûtent ${euros(k)} le kilo. Le prix payé est proportionnel à la masse de cerises.`,
-        `${mesure(1, 'kg')} coûte ${euros(k)}, ${mesure(2, 'kg')} coûtent ${euros(2 * k)} : on multiplie toujours par ${ecrire(k)}.`],
-      [true, `Un train roule à vitesse constante. La distance parcourue est proportionnelle à la durée du trajet.`,
+      [true, `Au marché, les mangues coûtent ${francs(k)} le kilo. Le prix payé est proportionnel à la masse de mangues.`,
+        `${mesure(1, 'kg')} coûte ${francs(k)}, ${mesure(2, 'kg')} coûtent ${francs(2 * k)} : on multiplie toujours par ${ecrire(k)}.`],
+      [true, `Un car roule à vitesse constante. La distance parcourue est proportionnelle à la durée du trajet.`,
         'À vitesse constante, en 2 fois plus de temps, on parcourt 2 fois plus de distance.'],
-      [false, `Un taxi coûte ${euros(c)} au départ, puis ${euros(2)} par kilomètre. Le prix payé est proportionnel à la distance.`,
-        `${mesure(1, 'km')} coûte ${euros(c + 2)}, mais ${mesure(2, 'km')} coûtent ${euros(c + 4)}, et pas le double (${euros(2 * (c + 2))}), à cause des ${euros(c)} du départ.`],
+      [false, `Un taxi coûte ${francs(c)} au départ, puis ${francs(200)} par kilomètre. Le prix payé est proportionnel à la distance.`,
+        `${mesure(1, 'km')} coûte ${francs(c + 200)}, mais ${mesure(2, 'km')} coûtent ${francs(c + 400)}, et pas le double (${francs(2 * (c + 200))}), à cause des ${francs(c)} du départ.`],
       [false, 'La taille d’un enfant est proportionnelle à son âge.',
         'À 5 ans, on mesure environ 1,10&nbsp;m. À 10 ans, on ne mesure pas le double (2,20&nbsp;m) !'],
     ];
@@ -490,20 +498,22 @@
       <h4>Le coefficient de proportionnalité</h4>
       <p>Deux grandeurs sont <b>proportionnelles</b> quand on passe de l’une à l’autre en <b>multipliant toujours par le même nombre</b> :
         le <b>coefficient de proportionnalité</b>. Il peut être décimal.</p>
-      ${tableau([['Masse (kg)', 2, 3, 5, 8], ['Prix (€)', 5, '7,50', '12,50', 20]])}
-      <p>👉 Les quotients « bas ÷ haut » sont tous égaux : <i>5 ÷ 2 = 2,5 ; 7,50 ÷ 3 = 2,5 ; 12,50 ÷ 5 = 2,5 ; 20 ÷ 8 = 2,5</i>.
-        C’est un tableau de proportionnalité, de coefficient <b>2,5</b>. Si un seul quotient est différent, ce n’en est pas un.</p>
+      ${tableau([['Nombre de bouteilles', 2, 3, 5, 8], ['Volume (L)', 3, '4,5', '7,5', 12]])}
+      <p>👉 Les quotients « bas ÷ haut » sont tous égaux : <i>3 ÷ 2 = 1,5 ; 4,5 ÷ 3 = 1,5 ; 7,5 ÷ 5 = 1,5 ; 12 ÷ 8 = 1,5</i>.
+        C’est un tableau de proportionnalité, de coefficient <b>1,5</b> (des bouteilles de 1,5&nbsp;L). Si un seul quotient est différent, ce n’en est pas un.</p>
       <h4>Compléter un tableau</h4>
-      <p>• <b>Avec le coefficient</b> : 7&nbsp;kg coûtent 7 × 2,5 = 17,50&nbsp;€.<br>
-        • <b>En multipliant (ou en divisant) une colonne</b> : 6&nbsp;kg, c’est 2 fois 3&nbsp;kg, donc 2 × 7,50 = 15&nbsp;€.<br>
-        • <b>En additionnant deux colonnes</b> : 5&nbsp;kg = 2&nbsp;kg + 3&nbsp;kg, donc 5 + 7,50 = 12,50&nbsp;€.<br>
-        • <b>En passant par l’unité</b> : 1&nbsp;kg coûte 5 ÷ 2 = 2,50&nbsp;€.</p>
+      <p>• <b>Avec le coefficient</b> : 7 bouteilles contiennent 7 × 1,5 = 10,5&nbsp;L.<br>
+        • <b>En multipliant (ou en divisant) une colonne</b> : 6 bouteilles, c’est 2 fois 3 bouteilles, donc 2 × 4,5 = 9&nbsp;L.<br>
+        • <b>En additionnant deux colonnes</b> : 5 bouteilles = 2 bouteilles + 3 bouteilles, donc 3 + 4,5 = 7,5&nbsp;L.<br>
+        • <b>En passant par l’unité</b> : 1 bouteille contient 3 ÷ 2 = 1,5&nbsp;L.</p>
+      <p>Au marché, le prix est proportionnel à la masse : si 1&nbsp;kg de letchis coûte 600&nbsp;F, 3&nbsp;kg coûtent 3 × 600 = 1&nbsp;800&nbsp;F.
+        Les prix en francs et en euros sont proportionnels aussi : 1&nbsp;000&nbsp;F ≈ 8,38&nbsp;€, donc 3&nbsp;000&nbsp;F ≈ 3 × 8,38 = 25,14&nbsp;€.</p>
       <h4>La vitesse constante</h4>
       <p>À vitesse constante, la distance est proportionnelle à la durée :
         <i>6&nbsp;km en 20&nbsp;min, c’est 3&nbsp;km en 10&nbsp;min, donc 5 × 3 = 15&nbsp;km en 50&nbsp;min.</i></p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> regarde d’abord les nombres du haut. L’un est le double d’un autre ?
         La somme de deux autres ? Sinon, passe par le coefficient ou par l’unité !</div>
-      <p>⚠️ Ajouter le <b>même nombre</b> en haut et en bas, c’est faux : si 2&nbsp;kg coûtent 5&nbsp;€, 3&nbsp;kg ne coûtent pas 6&nbsp;€.
+      <p>⚠️ Ajouter le <b>même nombre</b> en haut et en bas, c’est faux : si 2 bouteilles contiennent 3&nbsp;L, 3 bouteilles ne contiennent pas 4&nbsp;L.
         Un taxi qui coûte déjà quelque chose au départ n’est pas proportionnel à la distance.</p>
     `,
   });
@@ -511,7 +521,7 @@
   // ======================================================================
   // 2. Les pourcentages
   // ======================================================================
-  // Le calcul de t % de n, expliqué pas à pas (e : ecrire pour un nombre, euros pour un prix)
+  // Le calcul de t % de n, expliqué pas à pas (e : ecrire pour un nombre, francs pour un prix)
   function calculPourcent(t, n, e = ecrire) {
     const r = net(t * n / 100);
     const dix = net(n / 10);
@@ -548,9 +558,10 @@
 
   // Appliquer un pourcentage, dans une situation (le résultat est entier : ce sont des élèves, des pages…)
   const QUANTITES = [
-    { min: 300, max: 800, pas: 10, texte: (t, n) => `Dans un collège de ${ecrire(n)} élèves, ${mesure(t, '%')} viennent en bus. Combien d’élèves viennent en bus ?`, unite: 'élèves' },
+    { min: 200, max: 400, pas: 10, texte: (t, n) => `Dans un collège de brousse de ${ecrire(n)} élèves, ${mesure(t, '%')} viennent en car. Combien d’élèves viennent en car ?`, unite: 'élèves' },
     { min: 80, max: 400, pas: 10, texte: (t, n, p) => `Un livre a ${ecrire(n)} pages. ${p.nom} en a lu ${mesure(t, '%')}. Combien de pages a-t-${p.il} lues ?`, unite: 'pages' },
     { min: 20, max: 120, pas: 5, texte: (t, n) => `Un sac contient ${ecrire(n)} billes, dont ${mesure(t, '%')} sont rouges. Combien y a-t-il de billes rouges ?`, unite: 'billes' },
+    { min: 20, max: 120, pas: 5, texte: (t, n, p) => `Dans le jardin de Papi, ${p.nom} cueille ${ecrire(n)} letchis, dont ${mesure(t, '%')} sont encore un peu verts. Combien de letchis sont verts ?`, unite: 'letchis' },
     { min: 200, max: 800, pas: 50, taux: [5, 12, 15, 20, 30, 35, 40], texte: (t, n) => `Un gâteau de ${mesure(n, 'g')} contient ${mesure(t, '%')} de beurre. Quelle masse de beurre contient-il ?`, unite: 'g' },
   ];
   const TAUX = [5, 15, 20, 30, 35, 40, 60, 70, 75, 80, 12];
@@ -594,10 +605,10 @@
 
   // Calculer un pourcentage : une part d'un total
   const PROPORTIONS = [
-    { totaux: [20, 25, 40, 50, 60], texte: (a, b) => `Sur les ${ecrire(b)} élèves du club de sport, ${ecrire(a)} font du judo. Quel pourcentage des élèves du club font du judo ?` },
+    { totaux: [20, 25, 40, 50, 60], texte: (a, b) => `Sur les ${ecrire(b)} élèves du club de sport, ${ecrire(a)} font du va’a. Quel pourcentage des élèves du club font du va’a ?` },
     { totaux: [20, 25, 40, 50, 200], texte: (a, b) => `Roxy a semé ${ecrire(b)} graines, et ${ecrire(a)} ont germé. Quel pourcentage des graines a germé ?` },
     { totaux: [10, 20, 25, 40, 50], texte: (a, b, p) => `${p.nom} a réussi ${ecrire(a)} tirs au but sur ${ecrire(b)}. Quel est son pourcentage de réussite ?` },
-    { totaux: [20, 25, 40, 50, 80], texte: (a, b) => `Mamie a fait ${ecrire(b)} pots de confiture, dont ${ecrire(a)} à la fraise. Quel pourcentage des pots sont à la fraise ?` },
+    { totaux: [20, 25, 40, 50, 80], texte: (a, b) => `Mamie a fait ${ecrire(b)} pots de confiture, dont ${ecrire(a)} à la mangue. Quel pourcentage des pots sont à la mangue ?` },
     { totaux: [20, 25], texte: (a, b) => `Dans une classe de ${ecrire(b)} élèves, ${ecrire(a)} portent des lunettes. Quelle est la fréquence des élèves à lunettes, en pourcentage ?` },
   ];
 
@@ -635,67 +646,74 @@
     });
   }
 
-  // Les soldes et les augmentations
+  // Les soldes et les augmentations : des prix en francs, ronds (pas : l'écart entre deux prix possibles)
   const ARTICLES = [
-    { nom: 'un pull', min: 20, max: 60 }, { nom: 'un jeu de société', min: 16, max: 48 },
-    { nom: 'des baskets', min: 40, max: 90, pluriel: true }, { nom: 'un sac à dos', min: 20, max: 50 },
-    { nom: 'une trousse', min: 8, max: 20, f: true }, { nom: 'un livre', min: 10, max: 24 },
-    { nom: 'un vélo', min: 120, max: 300 }, { nom: 'une lampe', min: 12, max: 40, f: true },
+    { nom: 'un t-shirt', min: 1500, max: 3500, pas: 100 }, { nom: 'un jeu de société', min: 2000, max: 6000, pas: 500 },
+    { nom: 'des chaussures de sport', min: 5000, max: 12000, pas: 500, pluriel: true }, { nom: 'un sac à dos', min: 2000, max: 6000, pas: 500 },
+    { nom: 'une trousse', min: 800, max: 2000, pas: 100, f: true }, { nom: 'un livre', min: 1500, max: 3000, pas: 100 },
+    { nom: 'un vélo', min: 20000, max: 60000, pas: 5000 }, { nom: 'un masque de plongée', min: 2000, max: 5000, pas: 500 },
+    { nom: 'une planche de bodyboard', min: 6000, max: 15000, pas: 1000, f: true },
   ];
   const HAUSSES = [
-    { nom: 'L’abonnement au club de foot', min: 60, max: 150 },
-    { nom: 'Le prix de la place de cinéma', min: 6, max: 10 },
-    { nom: 'Le prix du kilo de cerises', min: 5, max: 9 },
+    { nom: 'L’abonnement au club de va’a', min: 10000, max: 20000, pas: 1000 },
+    { nom: 'Le prix de la place de cinéma', min: 1000, max: 1500, pas: 100 },
+    { nom: 'Le prix du kilo de crevettes', min: 1500, max: 4000, pas: 100 },
+    { nom: 'Le prix du ticket de bus', min: 150, max: 300, pas: 50 },
   ];
 
   function soldes() {
+    // (t % d'un prix en centaines de francs : le résultat est toujours un nombre entier de francs)
+    const cinqDeMoins = (t, P) => (t > 5 ? [net((t - 5) * P / 100)] : []);
+    const cinqDePlus = (t, P) => net((t + 5) * P / 100);
     if (Math.random() < 0.25) {
       const H = parmi(HAUSSES);
-      const t = parmi(H.max <= 10 ? [10, 20, 5] : [5, 10, 15, 20]);
-      const P = nombrePour(t, H.min, H.max, true);
+      const t = parmi([5, 10, 15, 20]);
+      const P = nombrePour(t, H.min, H.max, false, H.pas);
       const r = net(t * P / 100);
       return {
-        enonce: `${H.nom}, ${euros(P)}, augmente de ${mesure(t, '%')}. Quel est le nouveau prix ?`,
+        enonce: `${H.nom}, ${francs(P)}, augmente de ${mesure(t, '%')}. Quel est le nouveau prix ?`,
         reponse: net(P + r),
-        explication: `L’augmentation : ${mesure(t, '%')} de ${euros(P)}. ${calculPourcent(t, P, euros).replace(/<\/?b>/g, '')}<br>`
-          + `Le nouveau prix : ${euros(P)} + ${euros(r)} = <b>${euros(net(P + r))}</b>.`,
-        // ajouter t euros, donner l'augmentation, enlever au lieu d'ajouter, deux fois l'augmentation, la moitié
-        pieges: [P + t, r, P - r, P + 2 * r, P + r + 1, P + r - 1, P + r / 2],
+        explication: `L’augmentation : ${mesure(t, '%')} de ${francs(P)}. ${calculPourcent(t, P, francs).replace(/<\/?b>/g, '')}<br>`
+          + `Le nouveau prix : ${francs(P)} + ${francs(r)} = <b>${francs(net(P + r))}</b>.`,
+        // ajouter t francs, donner l'augmentation, enlever au lieu d'ajouter, deux fois l'augmentation, la moitié, 5 % de trop ou de moins
+        pieges: [P + t, r, P - r, P + 2 * r, P + r / 2, P + cinqDePlus(t, P), ...cinqDeMoins(t, P).map(v => P + v)],
       };
     }
     const A = parmi(ARTICLES);
     const t = parmi([10, 20, 30, 40, 15, 25, 50]);
-    const P = nombrePour(t, A.min, A.max, true);
+    const P = nombrePour(t, A.min, A.max, false, A.pas);
     const r = net(t * P / 100);
-    const debut = `Pendant les soldes, ${A.nom} à ${euros(P)} ${A.pluriel ? 'sont' : 'est'} à ${MOINS}${mesure(t, '%')}.`;
+    const debut = `Pendant les soldes, ${A.nom} à ${francs(P)} ${A.pluriel ? 'sont' : 'est'} à ${MOINS}${mesure(t, '%')}.`;
     if (Math.random() < 0.35) {
       return {
         enonce: `${debut} Quel est le montant de la réduction ?`,
         reponse: r,
-        explication: `La réduction, c’est ${mesure(t, '%')} du prix.<br>${calculPourcent(t, P, euros)}`,
-        // enlever t euros, donner le nouveau prix, le double, la moitié, 10 % au lieu de t % (jamais plus que le prix)
-        pieges: [...(t < P ? [t] : []), P - r, r * 2, r / 2, ...(t !== 10 ? [P / 10] : []), r - 1, r + 1].filter(v => v < P),
+        explication: `La réduction, c’est ${mesure(t, '%')} du prix.<br>${calculPourcent(t, P, francs)}`,
+        // enlever t francs, donner le nouveau prix, le double, la moitié, 10 % au lieu de t %, 5 % de trop ou de moins
+        // (le piège « t F » seulement s'il a l'ordre de grandeur de la réduction : « 25 F » pour un vélo ne tromperait personne)
+        pieges: [...(t * 10 >= r ? [t] : []), P - r, r * 2, r / 2, ...(t !== 10 ? [P / 10] : []), cinqDePlus(t, P), ...cinqDeMoins(t, P)].filter(v => v < P),
       };
     }
     return {
       enonce: `${debut} Quel est ${A.pluriel ? 'leur' : 'son'} nouveau prix ?`,
       reponse: net(P - r),
-      explication: `La réduction : ${mesure(t, '%')} de ${euros(P)}. ${calculPourcent(t, P, euros).replace(/<\/?b>/g, '')}<br>`
-        + `Le nouveau prix : ${euros(P)} − ${euros(r)} = <b>${euros(net(P - r))}</b>.`
-        + (t !== r && t < P ? `<br>⚠️ On n’enlève pas ${euros(t)}, mais ${mesure(t, '%')} du prix !` : ''),
-      // enlever t euros, donner la réduction, ajouter au lieu d'enlever, enlever deux fois ou à moitié, enlever 10 % au lieu de t %
-      pieges: [...(t < P ? [P - t] : []), r, P + r, P - 2 * r, P - r + 1, P - r - 1, P - r / 2, ...(t > 10 ? [P - P / 10] : [])],
+      explication: `La réduction : ${mesure(t, '%')} de ${francs(P)}. ${calculPourcent(t, P, francs).replace(/<\/?b>/g, '')}<br>`
+        + `Le nouveau prix : ${francs(P)} − ${francs(r)} = <b>${francs(net(P - r))}</b>.`
+        + `<br>⚠️ On n’enlève pas ${francs(t)}, mais ${mesure(t, '%')} du prix !`,
+      // enlever t francs, donner la réduction, ajouter au lieu d'enlever, enlever deux fois ou à moitié, enlever 10 % au lieu de t %,
+      // enlever 5 % de trop ou de moins
+      pieges: [P - t, r, P + r, P - 2 * r, P - r / 2, ...(t > 10 ? [P - P / 10] : []), P - cinqDePlus(t, P), ...cinqDeMoins(t, P).map(v => P - v)],
     };
   }
 
   function questionSoldes(avecBoutons) {
     const S = soldes();
-    if (!avecBoutons) return nombre({ consigne: 'Résous le problème', enonce: S.enonce, reponse: S.reponse, prix: true, explication: S.explication });
+    if (!avecBoutons) return nombre({ consigne: 'Résous le problème', enonce: S.enonce, reponse: S.reponse, enFrancs: true, explication: S.explication });
     return choix({
       consigne: 'Résous le problème',
       enonce: S.enonce,
-      reponse: euros(S.reponse),
-      pieges: enEuros(S.pieges).filter(v => v !== euros(S.reponse)),
+      reponse: francs(S.reponse),
+      pieges: enFrancs(S.pieges).filter(v => v !== francs(S.reponse)),
       explication: S.explication,
     });
   }
@@ -725,16 +743,17 @@
     }
     const A = parmi(ARTICLES.filter(x => !x.pluriel));
     const t = parmi([10, 20, 25, 50]);
-    const P = nombrePour(t, A.min, A.max, false);
+    const P = nombrePour(t, A.min, A.max, false, A.pas);
     const r = net(t * P / 100);
     const bon = net(P - r);
-    // les erreurs : enlever t euros, donner la réduction, enlever deux fois la réduction, enlever 10 % au lieu de t %,
-    // une erreur d'un euro (jamais un prix soldé plus cher qu'avant : ce serait trop facile)
-    const faux = parmi(positifs([P - t, r, P - 2 * r, ...(t !== 10 ? [P - P / 10] : []), bon + 1, bon - 1]).filter(v => v !== bon && v < P));
+    // les erreurs : enlever t francs, donner la réduction, enlever deux fois la réduction, enlever 10 % au lieu de t %,
+    // enlever 5 % de trop ou de moins (jamais un prix soldé plus cher qu'avant : ce serait trop facile)
+    const faux = parmi(positifs([P - t, r, P - 2 * r, ...(t !== 10 ? [P - P / 10] : []), bon + P / 20, bon - P / 20])
+      .filter(v => Number.isInteger(v) && v !== bon && v < P));
     return vraiFaux({
-      enonce: `${majuscule(A.nom)} à ${euros(P)}, soldé${A.f ? 'e' : ''} à ${MOINS}${mesure(t, '%')}, coûte ${euros(vrai ? bon : faux)}.`,
+      enonce: `${majuscule(A.nom)} à ${francs(P)}, soldé${A.f ? 'e' : ''} à ${MOINS}${mesure(t, '%')}, coûte ${francs(vrai ? bon : faux)}.`,
       vrai,
-      explication: `La réduction : ${mesure(t, '%')} de ${euros(P)} = ${euros(r)}.<br>Le nouveau prix : ${euros(P)} − ${euros(r)} = <b>${euros(bon)}</b>.`,
+      explication: `La réduction : ${mesure(t, '%')} de ${francs(P)} = ${francs(r)}.<br>Le nouveau prix : ${francs(P)} − ${francs(r)} = <b>${francs(bon)}</b>.`,
     });
   }
 
@@ -762,10 +781,10 @@
       <p>On écrit la proportion, puis on la transforme en fraction sur 100 :
         <i>14 élèves sur 40 : ${frac(14, 40)} = ${frac(7, 20)} = ${frac(35, 100)} = 35&nbsp;%.</i> C’est aussi une <b>fréquence</b>, écrite en pourcentage.</p>
       <h4>Soldes et augmentations</h4>
-      <p><i>Un pull à 45&nbsp;€ est à −20&nbsp;%. La réduction : 20&nbsp;% de 45&nbsp;€ = 9&nbsp;€. Le nouveau prix : 45 − 9 = 36&nbsp;€.</i><br>
-        Pour une augmentation, on <b>ajoute</b> : <i>un prix de 40&nbsp;€ augmente de 10&nbsp;% ; 10&nbsp;% de 40&nbsp;€ = 4&nbsp;€, donc le nouveau prix est 40 + 4 = 44&nbsp;€.</i></p>
+      <p><i>Un t-shirt à 2&nbsp;500&nbsp;F est à −20&nbsp;%. La réduction : 20&nbsp;% de 2&nbsp;500&nbsp;F = 500&nbsp;F. Le nouveau prix : 2&nbsp;500 − 500 = 2&nbsp;000&nbsp;F.</i><br>
+        Pour une augmentation, on <b>ajoute</b> : <i>une place de cinéma à 1&nbsp;200&nbsp;F augmente de 10&nbsp;% ; 10&nbsp;% de 1&nbsp;200&nbsp;F = 120&nbsp;F, donc le nouveau prix est 1&nbsp;200 + 120 = 1&nbsp;320&nbsp;F.</i></p>
       <div class="astuce">💡 <b>L’astuce de Roxy :</b> prendre t&nbsp;%, c’est diviser par 100 ÷ t : 20&nbsp;% → ÷ 5 ; 5&nbsp;% → ÷ 20.</div>
-      <p>⚠️ 20&nbsp;% de 45, ce n’est pas 45 − 20 ! Et 5&nbsp;%, ce n’est pas ÷ 5.</p>
+      <p>⚠️ 20&nbsp;% de 2&nbsp;500&nbsp;F, ce n’est pas 2&nbsp;500 − 20 ! Et 5&nbsp;%, ce n’est pas ÷ 5.</p>
     `,
   });
 
@@ -779,14 +798,16 @@
     return Math.random() < 0.5 ? [a, b] : [b, a];
   }
   const TRIPLES = [[1, 2, 3], [1, 1, 2], [2, 3, 5], [1, 2, 2], [1, 3, 4], [2, 2, 1], [3, 2, 1]];
-  // Ce qu'on partage (euros : de l'argent)
+  // Ce qu'on partage (francs : de l'argent, en centaines de francs : une part vaut « max » centaines au plus)
   const A_PARTAGER = [
     { un: 'bonbon', des: 'bonbons', max: 60 }, { un: 'bille', des: 'billes', max: 80 },
-    { un: 'noisette', des: 'noisettes', max: 60 }, { un: 'carte', des: 'cartes', max: 60 },
-    { euros: true, max: 100 }, { euros: true, max: 100 },
+    { un: 'letchi', des: 'letchis', max: 60 }, { un: 'coquillage', des: 'coquillages', max: 60 },
+    { francs: true, max: 100 }, { francs: true, max: 100 },
   ];
-  // Écrire une quantité partagée : « 21 bonbons » ou « 21 € »
-  const quantite = (O, v) => (O.euros ? euros(v) : combien(v, O.un, O.des));
+  // Écrire une quantité partagée : « 21 bonbons » ou « 2 100 F »
+  const quantite = (O, v) => (O.francs ? francs(v) : combien(v, O.un, O.des));
+  // En francs, on partage des centaines de francs
+  const centaines = O => (O.francs ? 100 : 1);
 
   function questionPartager() {
     const O = parmi(A_PARTAGER);
@@ -794,23 +815,23 @@
     const gens = enfants(3);
     const parts = trois ? RM.melanger(TRIPLES)[0] : paire();
     const n = additionner(parts);
-    const k = entier(2, Math.floor(O.max / n));
+    const k = centaines(O) * entier(2, Math.floor(O.max / n));
     const T = n * k;
     const i = entier(0, parts.length - 1);
     const qui = gens[i];
     const noms = gens.slice(0, parts.length).map(g => g.nom);
     const pourQui = parts.map((p, j) => `${combien(p, 'part')} pour ${noms[j]}`).join(', ');
     const donneur = parmi(['Mamie', 'Papi']);
-    const debut = O.euros
-      ? `${donneur} partage ${euros(T)} entre ${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`
+    const debut = O.francs
+      ? `${donneur} partage ${francs(T)} entre ${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`
       : `${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]} se partagent ${quantite(O, T)}`;
-    const question = O.euros ? `Combien ${qui.nom} reçoit-${qui.il} ?` : `Combien ${de(O.des)} ${qui.nom} reçoit-${qui.il} ?`;
+    const question = O.francs ? `Combien ${qui.nom} reçoit-${qui.il} ?` : `Combien ${de(O.des)} ${qui.nom} reçoit-${qui.il} ?`;
     return nombre({
       consigne: 'Partage dans le ratio',
       enonce: `${debut} dans le ratio ${ratio(...parts)} (${pourQui}). ${question}`,
       reponse: parts[i] * k,
-      unite: O.euros ? '' : O.des,
-      prix: Boolean(O.euros),
+      unite: O.francs ? '' : O.des,
+      enFrancs: Boolean(O.francs),
       explication: `On compte les parts : ${somme(parts)} = ${combien(n, 'part')}.<br>Une part : ${ecrire(T)} ÷ ${ecrire(n)} = ${quantite(O, k)}.<br>`
         + `${qui.nom} a ${combien(parts[i], 'part')} : ${ecrire(parts[i])} × ${ecrire(k)} = <b>${quantite(O, parts[i] * k)}</b>.`,
     });
@@ -820,15 +841,15 @@
     const O = parmi(A_PARTAGER);
     const [a, b] = paire();
     const n = a + b;
-    const k = entier(Math.max(2, Math.ceil(12 / n)), Math.floor(O.max / n));
+    const k = centaines(O) * entier(Math.max(2, Math.ceil(12 / n)), Math.floor(O.max / n));
     const T = n * k;
     const grande = Math.random() < 0.5;
     const m = grande ? Math.max(a, b) : Math.min(a, b);
     const autre = n - m;
-    const e = O.euros ? euros : ecrire;
+    const e = O.francs ? francs : ecrire;
     // Les erreurs : l'autre part, une seule part, partager en deux moitiés, une part de trop ou de moins,
-    // prendre les m/autre du total (au lieu des m/n)
-    const candidats = [autre * k, k, T / 2, (m + 1) * k, (m - 1) * k, T - k, T * m / autre, m * k + 1, m * k - 1];
+    // prendre les m/autre du total (au lieu des m/n), et (hors des francs) une erreur de comptage
+    const candidats = [autre * k, k, T / 2, (m + 1) * k, (m - 1) * k, T - k, T * m / autre, ...(O.francs ? [] : [m * k + 1, m * k - 1])];
     return choix({
       consigne: 'Partage dans le ratio',
       enonce: `On partage ${quantite(O, T)} dans le ratio ${ratio(a, b)}. Quelle est la plus ${grande ? 'grande' : 'petite'} part ?`,
@@ -842,8 +863,9 @@
   // Trouver le ratio de deux quantités : [la phrase, le nom des deux quantités, un multiplicateur « rond »]
   const GROUPES = [
     { texte: (x, y) => `Au club de théâtre, il y a ${ecrire(x)} filles et ${ecrire(y)} garçons.`, noms: ['filles', 'garçons'], les: ['les filles', 'les garçons'], fois: [2, 3, 4, 5, 6] },
-    { texte: (x, y) => `Dans le panier, il y a ${ecrire(x)} pommes et ${ecrire(y)} poires.`, noms: ['pommes', 'poires'], les: ['les pommes', 'les poires'], fois: [2, 3, 4, 6] },
-    { texte: (x, y) => `Dans la volière, il y a ${ecrire(x)} perruches et ${ecrire(y)} canaris.`, noms: ['perruches', 'canaris'], les: ['les perruches', 'les canaris'], fois: [2, 3, 4, 5] },
+    { texte: (x, y) => `Dans le panier, il y a ${ecrire(x)} mangues et ${ecrire(y)} papayes.`, noms: ['mangues', 'papayes'], les: ['les mangues', 'les papayes'], fois: [2, 3, 4, 6] },
+    { texte: (x, y) => `En snorkeling dans le lagon, Roxy a vu ${ecrire(x)} poissons-clowns et ${ecrire(y)} poissons-perroquets.`,
+      noms: ['poissons-clowns', 'poissons-perroquets'], les: ['les poissons-clowns', 'les poissons-perroquets'], fois: [2, 3, 4, 5] },
     { texte: (x, y) => `Dans la trousse de Roxy, il y a ${ecrire(x)} crayons et ${ecrire(y)} feutres.`, noms: ['crayons', 'feutres'], les: ['les crayons', 'les feutres'], fois: [2, 3, 4] },
     { texte: (x, y) => `Mamie vend ${ecrire(x)} pots de miel et ${ecrire(y)} pots de confiture.`, noms: ['miel', 'confiture'], les: ['le miel', 'la confiture'], fois: [2, 3, 4, 5, 6] },
   ];
@@ -931,8 +953,8 @@
   const MELANGES = [
     { a: 'sirop', b: 'eau', duA: 'du sirop', duB: 'de l’eau', court: ['Sirop', 'eau'], unite: 'cL', ratios: [[1, 4], [1, 5], [1, 6], [1, 7]],
       parts: [2, 3, 4, 5, 10, 15, 20], intro: 'Pour préparer une boisson, on mélange du sirop et de l’eau', produit: 'de boisson' },
-    { a: 'jus d’orange', b: 'limonade', duA: 'du jus d’orange', duB: 'de la limonade', court: ['Jus d’orange', 'limonade'], unite: 'cL',
-      ratios: [[2, 3], [3, 2], [1, 2], [3, 1]], parts: [5, 10, 15, 20], intro: 'Pour un cocktail, on mélange du jus d’orange et de la limonade', produit: 'de cocktail' },
+    { a: 'jus d’ananas', b: 'jus de mangue', duA: 'du jus d’ananas', duB: 'du jus de mangue', court: ['Jus d’ananas', 'jus de mangue'], unite: 'cL',
+      ratios: [[2, 3], [3, 2], [1, 2], [3, 1]], parts: [5, 10, 15, 20], intro: 'Pour un jus de fruits, on mélange du jus d’ananas et du jus de mangue', produit: 'de jus de fruits' },
     { a: 'peinture bleue', b: 'peinture jaune', duA: 'du bleu', duB: 'du jaune', court: ['Bleu', 'jaune'], unite: 'L',
       ratios: [[2, 3], [3, 2], [1, 3], [3, 4]], parts: [1, 2, 3], intro: 'Pour obtenir du vert, on mélange de la peinture bleue et de la peinture jaune', produit: 'de peinture verte' },
     { a: 'farine', b: 'sucre', duA: 'de la farine', duB: 'du sucre', court: ['Farine', 'sucre'], unite: 'g',
@@ -1046,15 +1068,15 @@
       });
     }
     const [a, b] = croissant(paire());
-    const k = entier(2, Math.floor(60 / (a + b)));
+    const k = 100 * entier(2, Math.floor(60 / (a + b)));
     const T = (a + b) * k;
     const bon = a * k;
     const faux = parmi([b * k, T * a / b, T / 2].filter(v => Number.isInteger(v) && v !== bon));
     return vraiFaux({
-      enonce: `Si on partage ${euros(T)} dans le ratio ${ratio(a, b)}, la plus petite part est ${euros(vrai ? bon : faux)}.`,
+      enonce: `Si on partage ${francs(T)} dans le ratio ${ratio(a, b)}, la plus petite part est ${francs(vrai ? bon : faux)}.`,
       vrai,
-      explication: `${ecrire(a)} + ${ecrire(b)} = ${combien(a + b, 'part')}. Une part : ${ecrire(T)} ÷ ${ecrire(a + b)} = ${euros(k)}.<br>`
-        + `La plus petite part : ${ecrire(a)} × ${ecrire(k)} = <b>${euros(bon)}</b>.`,
+      explication: `${ecrire(a)} + ${ecrire(b)} = ${combien(a + b, 'part')}. Une part : ${ecrire(T)} ÷ ${ecrire(a + b)} = ${francs(k)}.<br>`
+        + `La plus petite part : ${ecrire(a)} × ${ecrire(k)} = <b>${francs(bon)}</b>.`,
     });
   }
 
@@ -1078,10 +1100,10 @@
       <p>Deux quantités sont dans le <b>ratio 2&nbsp;:&nbsp;3</b> quand, pour <b>2 parts</b> de la première, il y a <b>3 parts</b> de la seconde
         (toutes les parts sont égales). L’ordre compte : si le ratio filles&nbsp;:&nbsp;garçons est 2&nbsp;:&nbsp;3, le ratio garçons&nbsp;:&nbsp;filles est 3&nbsp;:&nbsp;2.</p>
       <h4>Partager dans un ratio</h4>
-      <p>👉 <i>Léa et Tom se partagent 35 bonbons dans le ratio 2&nbsp;:&nbsp;3.</i><br>
-        On compte les parts : 2 + 3 = 5 parts. Une part : 35 ÷ 5 = 7 bonbons.<br>
-        Léa : 2 × 7 = <b>14</b> bonbons ; Tom : 3 × 7 = <b>21</b> bonbons. On vérifie : 14 + 21 = 35 ✔<br>
-        Léa a donc ${frac(2, 5)} des bonbons (2 parts sur 5), et pas ${frac(2, 3)} ! Avec trois nombres (1&nbsp;:&nbsp;2&nbsp;:&nbsp;3), on compte 1 + 2 + 3 = 6 parts.</p>
+      <p>👉 <i>Kalia et Teva se partagent 35 letchis dans le ratio 2&nbsp;:&nbsp;3.</i><br>
+        On compte les parts : 2 + 3 = 5 parts. Une part : 35 ÷ 5 = 7 letchis.<br>
+        Kalia : 2 × 7 = <b>14</b> letchis ; Teva : 3 × 7 = <b>21</b> letchis. On vérifie : 14 + 21 = 35 ✔<br>
+        Kalia a donc ${frac(2, 5)} des letchis (2 parts sur 5), et pas ${frac(2, 3)} ! Avec trois nombres (1&nbsp;:&nbsp;2&nbsp;:&nbsp;3), on compte 1 + 2 + 3 = 6 parts.</p>
       <h4>Des ratios égaux</h4>
       <p>Comme pour les fractions, on multiplie ou on divise les deux nombres par le <b>même nombre</b> :
         <i>12&nbsp;:&nbsp;18 = 2&nbsp;:&nbsp;3 (÷ 6) ; 2&nbsp;:&nbsp;3 = 10&nbsp;:&nbsp;15 (× 5).</i>
@@ -1100,7 +1122,7 @@
   const ENQUETES = [
     { intro: 'On a demandé aux élèves d’une classe combien ils ont de frères et sœurs.', titre: 'Frères et sœurs', valeurs: [0, 1, 2, 3, 4],
       voici: 'Voici leurs réponses', qui: ['élève', 'élèves'], auMoins: v => `Combien d’élèves ont au moins ${v >= 2 ? `${ecrire(v)} frères et sœurs` : '1 frère ou sœur'} ?` },
-    { intro: 'Hugo a noté le nombre de buts marqués par son équipe à chaque match.', titre: 'Buts marqués', valeurs: [0, 1, 2, 3, 4, 5],
+    { intro: 'Sione a noté le nombre de buts marqués par son équipe à chaque match.', titre: 'Buts marqués', valeurs: [0, 1, 2, 3, 4, 5],
       voici: 'Voici ce qu’il a noté', qui: ['match', 'matchs'], auMoins: v => `Lors de combien de matchs l’équipe a-t-elle marqué au moins ${combien(v, 'but')} ?` },
     { intro: 'On a demandé à des élèves combien de livres ils ont lus pendant les vacances.', titre: 'Livres lus', valeurs: [0, 1, 2, 3, 4, 5],
       voici: 'Voici leurs réponses', qui: ['élève', 'élèves'], auMoins: v => `Combien d’élèves ont lu au moins ${combien(v, 'livre')} ?` },
@@ -1294,7 +1316,7 @@
     });
   }
 
-  const ACTIVITES = ['ont un chat', 'ont un chien', 'font du judo', 'font du foot', 'ont un vélo', 'aiment le ski'];
+  const ACTIVITES = ['ont un chat', 'ont un chien', 'font du judo', 'font du foot', 'ont un vélo', 'font du va’a', 'savent nager le crawl'];
 
   function questionFrequenceChoix() {
     const N = parmi([10, 20, 25, 50]);
@@ -1330,11 +1352,11 @@
     { intro: 'Les élèves de 5e B ont dit comment ils viennent au collège.', unite: 'élèves',
       reponses: [['bus', 'en bus'], ['vélo', 'à vélo'], ['à pied', 'à pied'], ['voiture', 'en voiture']],
       question: c => `Quel pourcentage des élèves viennent ${c} ?`, fraction: c => `Quelle fraction des élèves viennent ${c} ?` },
-    { intro: 'Les élèves du club ont choisi leur saison préférée.', unite: 'élèves',
-      reponses: [['hiver', 'l’hiver'], ['printemps', 'le printemps'], ['été', 'l’été'], ['automne', 'l’automne']],
+    { intro: 'Les élèves du club ont choisi leur fruit préféré.', unite: 'élèves',
+      reponses: [['mangue', 'la mangue'], ['letchi', 'le letchi'], ['papaye', 'la papaye'], ['ananas', 'l’ananas']],
       question: c => `Quel pourcentage des élèves préfèrent ${c} ?`, fraction: c => `Quelle fraction des élèves préfèrent ${c} ?` },
     { intro: 'Les membres du club de sport ont choisi une activité.', unite: 'membres',
-      reponses: [['foot', 'le foot'], ['judo', 'le judo'], ['danse', 'la danse'], ['tennis', 'le tennis'], ['natation', 'la natation']],
+      reponses: [['foot', 'le foot'], ['judo', 'le judo'], ['danse', 'la danse'], ['va’a', 'le va’a'], ['natation', 'la natation']],
       question: c => `Quel pourcentage des membres ont choisi ${c} ?`, fraction: c => `Quelle fraction des membres ont choisi ${c} ?` },
   ];
 
@@ -1462,7 +1484,10 @@
       question: p => `Quelle est la moyenne ${de(p.nom)} ?` },
     { texte: p => `${p.nom} a noté le nombre de pages lues chaque jour :`, min: 8, max: 40, n: [4, 5, 6], unite: 'pages', sommeCredible: true,
       question: p => `Combien de pages ${p.nom} a-t-${p.il} lues en moyenne par jour ?` },
-    { texte: () => 'Voici les températures relevées à midi pendant plusieurs jours, en °C :', min: 12, max: 28, n: [4, 5, 6], unite: '°C',
+    // (une seule saison par série : l'été, en février, ou l'hiver, en juillet)
+    { texte: () => 'Voici les températures relevées à midi à Nouméa pendant plusieurs jours de février, en °C :', min: 27, max: 31, n: [4, 5, 6], unite: '°C',
+      question: () => 'Quelle est la température moyenne ?' },
+    { texte: () => 'Voici les températures relevées à midi à Nouméa pendant plusieurs jours de juillet, en °C :', min: 20, max: 24, n: [4, 5, 6], unite: '°C',
       question: () => 'Quelle est la température moyenne ?' },
     { texte: p => `${p.nom} a compté ses points à chaque partie de fléchettes :`, min: 10, max: 60, n: [3, 4, 5], unite: 'points', sommeCredible: true,
       question: p => `Combien de points ${p.nom} a-t-${p.il} marqués en moyenne par partie ?` },
@@ -1516,11 +1541,11 @@
 
   // La moyenne avec des effectifs
   const PONDEREES = [
-    { intro: 'Hugo a noté le nombre de buts marqués par son équipe.', titre: 'Buts marqués', effectif: 'Nombre de matchs',
+    { intro: 'Sione a noté le nombre de buts marqués par son équipe.', titre: 'Buts marqués', effectif: 'Nombre de matchs',
       valeurs: [0, 1, 2, 3, 4], question: 'Combien de buts l’équipe a-t-elle marqués en moyenne par match ?', unite: '' },
     { intro: 'Voici les notes d’un groupe d’élèves au contrôle.', titre: 'Note', effectif: 'Nombre d’élèves',
       valeurs: [8, 10, 12, 14, 16, 18], question: 'Quelle est la note moyenne du groupe ?', unite: '' },
-    { intro: 'À l’entrée du parc, on a compté les personnes dans chaque voiture.', titre: 'Personnes', effectif: 'Nombre de voitures',
+    { intro: 'Sur le parking de la plage, on a compté les personnes dans chaque voiture.', titre: 'Personnes', effectif: 'Nombre de voitures',
       valeurs: [1, 2, 3, 4, 5], question: 'Combien y a-t-il de personnes en moyenne par voiture ?', unite: '' },
     { intro: 'Mamie a compté les œufs pondus chaque jour par ses poules.', titre: 'Œufs pondus', effectif: 'Nombre de jours',
       valeurs: [3, 4, 5, 6, 7], question: 'Combien d’œufs les poules ont-elles pondus en moyenne par jour ?', unite: 'œufs' },
@@ -2006,7 +2031,7 @@
     const pr = net(entier(1, pluie ? 19 : 8) * 0.05);
     const [debut, question] = pluie
       ? [`La météo annonce que la probabilité qu’il pleuve demain est ${ecrire(pr)}.`, 'Quelle est la probabilité qu’il ne pleuve pas ?']
-      : [`La probabilité que le bus ${de(p.nom)} soit en retard est ${ecrire(pr)}.`, 'Quelle est la probabilité qu’il ne soit pas en retard ?'];
+      : [`La probabilité que le car ${de(p.nom)} soit en retard est ${ecrire(pr)}.`, 'Quelle est la probabilité qu’il ne soit pas en retard ?'];
     return nombre({
       consigne: 'Calcule la probabilité',
       enonce: `${debut} ${question}`,

@@ -1637,6 +1637,256 @@ body.en-course { overflow: hidden; }
 .diplome-record { color: var(--brun-doux); font-weight: 700; }
 .diplome .boutons-resultat { margin-top: 12px; }
 
+/* ======================================================================
+   Roxy et ses accessoires (le dressing)
+   ====================================================================== */
+/* Chaque Roxy est un cadre avec son image : les accessoires se posent dessus, en % de sa largeur */
+.roxy { position: relative; container-type: inline-size; }
+.roxy-image { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.accessoire {
+  position: absolute;
+  z-index: 1;
+  font-size: calc(var(--taille) * 1cqw);
+  line-height: 1;
+  transform: translate(-50%, -50%) rotate(var(--rotation, 0deg));
+  pointer-events: none;
+  filter: drop-shadow(0 2px 1px rgba(90, 53, 33, .25));
+  animation: accessoire-pop .45s cubic-bezier(.3, 1.6, .5, 1);
+}
+.accessoire img { display: block; width: calc(var(--taille) * 1cqw); height: auto; }
+@keyframes accessoire-pop {
+  from { transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) scale(.2); opacity: 0; }
+}
+
+/* ---------- L'accueil qui parle ---------- */
+#ecran-accueil { position: relative; }
+.accueil-son { position: absolute; top: 0; right: 0; }
+.bulle-accueil {
+  position: relative;
+  margin: 0 0 -6px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #fff;
+  font-family: var(--police-titre);
+  font-size: 1.3rem;
+  font-weight: 600;
+  box-shadow: 0 4px 0 var(--creme-fonce);
+  animation: etoile-pop .6s cubic-bezier(.3, 1.6, .5, 1) .3s both;
+}
+.bulle-accueil::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  border: 10px solid transparent;
+  border-top-color: #fff;
+  border-bottom: 0;
+  transform: translateX(-50%);
+}
+.bulle-accueil:empty { visibility: hidden; }
+
+/* ---------- La présentation de Roxy (première visite) ---------- */
+#ecran-bienvenue.actif { min-height: calc(100dvh - 60px); justify-content: center; }
+.bienvenue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+}
+.roxy-bienvenue { width: min(300px, 64vw); }
+.roxy-bienvenue.entree { animation: roxy-entree .6s cubic-bezier(.3, 1.5, .5, 1); }
+@keyframes roxy-entree {
+  from { transform: scale(.6) rotate(-8deg); opacity: 0; }
+}
+.bulle-bienvenue {
+  flex: none;
+  width: 100%;
+  min-height: 110px;
+  border-color: var(--orange-clair);
+  font-family: var(--police-titre);
+  font-size: 1.45rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.bulle-bienvenue::before, .bulle-bienvenue::after { display: none; }
+/* Lu par VoiceOver, mais invisible à l'écran */
+.lu-seulement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.bienvenue-points { display: flex; gap: 8px; }
+.bienvenue-points span { width: 10px; height: 10px; border-radius: 50%; background: var(--orange-clair); transition: all .3s; }
+.bienvenue-points span.actif { width: 26px; border-radius: 999px; background: var(--orange); }
+.bienvenue-boutons { display: flex; gap: 12px; }
+
+/* ---------- Le coin de Roxy, en haut de la carte ---------- */
+.coin-roxy {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.tuile-coin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 8px 12px;
+  border: 3px solid transparent;
+  border-radius: 22px;
+  background: #fff;
+  color: var(--brun);
+  font-size: 1rem;
+  box-shadow: 0 5px 0 var(--creme-fonce);
+  transition: transform .08s;
+}
+.tuile-coin:active { transform: translateY(3px); }
+.tuile-coin b { font-family: var(--police-titre); font-size: 1.15rem; font-weight: 600; }
+.tuile-coin small { color: var(--brun-doux); font-size: .85rem; font-weight: 700; }
+.tuile-icone { font-size: 2rem; line-height: 1.1; }
+.tuile-defi { border-color: var(--or); background: linear-gradient(180deg, #FFF8DF, #fff 70%); }
+.tuile-defi:not(.fait) .tuile-icone { animation: sautiller 1.6s ease-in-out infinite; }
+.tuile-defi.fait { border-color: var(--vert-clair); background: #fff; }
+.tuile-carnet { border-color: #CFE3F6; }
+.tuile-carnet.vide { opacity: .8; }
+.tuile-dressing { border-color: #F6D3E2; }
+.pastille {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  min-width: 28px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--corail);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 800;
+  box-shadow: 0 2px 0 #B8483A;
+  animation: etoile-pop .5s cubic-bezier(.3, 1.6, .5, 1) .4s both;
+}
+
+/* ---------- Les questions : d'où vient la question, et Roxy qui lit ---------- */
+.carte-question { position: relative; }
+.bouton-ecouter {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: var(--creme);
+  font-size: 1.4rem;
+  box-shadow: 0 3px 0 var(--creme-fonce);
+}
+.bouton-ecouter.en-lecture { background: var(--orange-clair); animation: lecture 1s ease-in-out infinite; }
+@keyframes lecture {
+  50% { transform: scale(1.12); }
+}
+.fenetre-entete .bouton-ecouter { position: static; margin-left: auto; flex-shrink: 0; }
+.puce-origine {
+  width: fit-content;
+  margin: 0 auto 10px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--creme);
+  color: var(--brun-doux);
+  font-size: .9rem;
+  font-weight: 800;
+}
+.carte-question .consigne { padding: 0 44px; }
+
+/* ---------- La fin d'une partie spéciale ---------- */
+.resultat-special {
+  display: inline-block;
+  font-family: var(--police-titre);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--orange);
+  text-shadow: 0 4px 0 var(--orange-clair);
+  animation: etoile-pop .6s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+.deblocage.cadeau { background: #FCE3EE; color: #9C2F63; }
+.diplome-cadeau { width: 1.6em; height: 1.6em; vertical-align: middle; }
+.deblocage.cadeau .bouton-lien { display: block; margin: 4px auto 0; color: #9C2F63; font-family: var(--police-texte); }
+
+/* ---------- L'écran du dressing ---------- */
+.dressing {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 1.4fr;
+  gap: 20px;
+  align-items: start;
+}
+.dressing-apercu {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 60%, #FFF1DC, #fff 70%);
+}
+.roxy-dressing { width: min(320px, 100%); }
+.roxy-dressing.essayage { animation: sautiller .5s ease-in-out 2; }
+.dressing-onglets { display: flex; gap: 8px; margin-bottom: 14px; }
+.onglet-dressing {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brun);
+  font-size: 1rem;
+  font-weight: 800;
+  box-shadow: 0 4px 0 var(--creme-fonce);
+}
+.onglet-dressing small { color: var(--brun-doux); }
+.onglet-dressing.actif { background: var(--orange); color: #fff; box-shadow: 0 4px 0 var(--orange-fonce); }
+.onglet-dressing.actif small { color: #FFE9D2; }
+.grille-accessoires {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+.accessoire-choix {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 3px solid transparent;
+  border-radius: 20px;
+  background: #fff;
+  color: var(--brun);
+  font-size: .95rem;
+  box-shadow: 0 4px 0 var(--creme-fonce);
+}
+.accessoire-choix.porte { border-color: var(--vert); background: var(--vert-clair); }
+.accessoire-dessin { position: relative; font-size: 2.8rem; line-height: 1.1; }
+.accessoire-dessin img { display: block; width: 3.2rem; height: 3.2rem; }
+.accessoire-nom { font-weight: 800; line-height: 1.2; text-align: center; }
+.accessoire-porte { color: #1F6B42; font-size: .85rem; font-weight: 800; }
+.accessoire-choix.verrouille .accessoire-dessin { filter: grayscale(1) opacity(.45); }
+.cadenas { position: absolute; right: -10px; bottom: -4px; font-size: 1.3rem; }
+.accessoire-condition { color: var(--brun-doux); font-size: .8rem; font-weight: 700; line-height: 1.2; text-align: center; }
+.accessoire-barre { width: 80%; height: 6px; border-radius: 999px; background: var(--creme-fonce); overflow: hidden; }
+.accessoire-barre span { display: block; height: 100%; background: var(--or); }
+.dressing-aide { color: var(--brun-doux); font-size: .95rem; text-align: center; }
+
+@media (max-width: 700px) {
+  .dressing { grid-template-columns: 1fr; }
+  .dressing-apercu { position: static; padding: 12px; }
+  .roxy-dressing { width: min(200px, 60vw); }
+}
+@media (max-width: 600px) {
+  .coin-roxy { gap: 8px; }
+  .tuile-coin { padding: 10px 4px; }
+  .tuile-coin b { font-size: .95rem; }
+  .tuile-coin small { font-size: .75rem; }
+  .onglet-dressing { font-size: .85rem; }
+  .bulle-bienvenue { font-size: 1.2rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .confetti { display: none; }

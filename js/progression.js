@@ -50,6 +50,10 @@
       etapes: {},        // pour chaque étape : meilleures étoiles, parties, bonnes réponses, questions
       courses: {},       // pour chaque forêt (« 6e », « 6e-maths »…) : le record de la course de Roxy
       tempsDeJeu: 0,     // en secondes, pour l'espace parent
+      tenue: {},         // les accessoires que porte Roxy : { tete, yeux, ami }
+      defis: [],         // les jours où le défi du jour a été fait
+      vus: [],           // les accessoires déjà annoncés
+      carnet: {},        // le carnet de Roxy : les étapes où l'on s'est trompé, à revoir
       creeLe: new Date().toISOString(),
     };
     if (heritage) {
@@ -133,6 +137,8 @@
     profil.tempsDeJeu += Math.round((Date.now() - partie.debut) / 1000);
     profil.dernierePartie = new Date().toISOString();
     profil.derniereEtape = partie.etape.id; // pour savoir sur quel chemin placer Roxy
+    // Zéro faute : l'étape n'a plus rien à faire dans le carnet de Roxy
+    if (etoiles === 5 && profil.carnet?.[partie.etape.id]) delete profil.carnet[partie.etape.id];
     const resultatFlamme = nourrirFlamme(profil);
     enregistrer();
     return { etoiles, record, ancienMeilleur, flamme: resultatFlamme };
@@ -155,6 +161,95 @@
     return { record, meilleur: infos.meilleur, premiere: infos.parties === 1 };
   }
 
+  // ---------- Le carnet de Roxy : les étapes à revoir ----------
+  // Une erreur range l'étape dans le carnet (boîte 0 : à revoir tout de suite).
+  // Une révision réussie la fait monter d'une boîte : on la revoit 1, puis 3, puis 7 jours plus tard,
+  // et après la dernière, elle sort du carnet (« je la connais ! »). Une révision ratée la renvoie à demain.
+  const ATTENTES = [1, 3, 7];
+  const dansNJours = n => {
+    const m = RM.progression.maintenant();
+    return jourDe(new Date(m.getFullYear(), m.getMonth(), m.getDate() + n));
+  };
+
+  function noterErreur(idEtape) {
+    const profil = trouver(donnees.profilActif);
+    if (!profil) return;
+    profil.carnet = profil.carnet || {};
+    const fiche = profil.carnet[idEtape] || { boite: 0, erreurs: 0 };
+    fiche.erreurs++;
+    // Une étape déjà en révision garde sa date (pas de révision sans fin le même jour)
+    if (!fiche.prochain || fiche.boite > 0) fiche.prochain = aujourdhuiEtHier().aujourdhui;
+    fiche.boite = 0;
+    profil.carnet[idEtape] = fiche;
+    enregistrer();
+  }
+
+  // À la fin d'une révision du carnet : pour chaque étape revue, réussie ou pas
+  function reviserCarnet(resultats) {
+    const profil = trouver(donnees.profilActif);
+    profil.carnet = profil.carnet || {};
+    const sorties = [];
+    Object.entries(resultats).forEach(([id, reussie]) => {
+      const fiche = profil.carnet[id];
+      if (!fiche) return;
+      if (!reussie) {
+        fiche.boite = 0;
+        fiche.prochain = dansNJours(1);
+      } else if (fiche.boite >= ATTENTES.length) {
+        delete profil.carnet[id];
+        sorties.push(id);
+      } else {
+        fiche.prochain = dansNJours(ATTENTES[fiche.boite]);
+        fiche.boite++;
+      }
+    });
+    enregistrer();
+    return sorties;
+  }
+
+  // Les étapes du carnet à revoir aujourd'hui (les plus en retard d'abord)
+  function aRevoir(profil) {
+    const { aujourdhui } = aujourdhuiEtHier();
+    return Object.entries(profil.carnet || {})
+      .filter(([id, fiche]) => fiche.prochain <= aujourdhui && typeof RM.trouverEtape?.(id)?.creerQuestions === 'function')
+      .sort((a, b) => a[1].prochain.localeCompare(b[1].prochain))
+      .map(([id]) => id);
+  }
+
+  // ---------- Le défi du jour (une fois par jour) et les parties spéciales ----------
+  const defiFait = profil => (profil.defis || []).includes(aujourdhuiEtHier().aujourdhui);
+
+  // Une partie spéciale (défi du jour, carnet) : pas d'étoiles d'étape, mais des points,
+  // le temps de jeu et la flamme, comme une vraie partie
+  function enregistrerPartieSpeciale(partie) {
+    const profil = trouver(donnees.profilActif);
+    profil.points += partie.points;
+    profil.tempsDeJeu += Math.round((Date.now() - partie.debut) / 1000);
+    profil.dernierePartie = new Date().toISOString();
+    if (partie.special === 'defi') {
+      profil.defis = profil.defis || [];
+      const jour = aujourdhuiEtHier().aujourdhui;
+      if (!profil.defis.includes(jour)) profil.defis.push(jour);
+    }
+    const resultatFlamme = nourrirFlamme(profil);
+    enregistrer();
+    return { flamme: resultatFlamme };
+  }
+
+  // ---------- Le dressing de Roxy ----------
+  function habillerRoxy(profil, place, idAccessoire) {
+    profil.tenue = profil.tenue || {};
+    if (idAccessoire) profil.tenue[place] = idAccessoire;
+    else delete profil.tenue[place];
+    enregistrer();
+  }
+
+  // Les accessoires déjà montrés au joueur (pour annoncer seulement les nouveaux)
+  function marquerVus(profil, ids) {
+    profil.vus = [...new Set([...(profil.vus || []), ...ids])];
+    enregistrer();
+  }
+
   // ---------- Pour l'espace parent : le code, l'export et l'import ----------
   const reglages = () => (donnees.parent = donnees.parent || { code: null, derniereExport: null });
 
@@ -172,6 +267,7 @@
 
   // Un fichier importé peut venir de n'importe où : on ne garde que ce qu'on connaît, bien rangé
   const JOUR_VALIDE = /^\d{4}-\d{2}-\d{2}$/;
+  const jourValide = jour => typeof jour === 'string' && JOUR_VALIDE.test(jour);
   const nombre = valeur => (Number.isFinite(valeur) && valeur >= 0 ? valeur : 0);
 
   function nettoyerProfil(p, idsDejaVus) {
@@ -191,8 +287,8 @@
         actuelle: nombre(p.serie.actuelle),
         record: nombre(p.serie.record),
         recordABattre: nombre(p.serie.recordABattre),
-        dernierJour: JOUR_VALIDE.test(p.serie.dernierJour) ? p.serie.dernierJour : null,
-        jours: p.serie.jours.filter(jour => JOUR_VALIDE.test(jour)),
+        dernierJour: jourValide(p.serie.dernierJour) ? p.serie.dernierJour : null,
+        jours: p.serie.jours.filter(jour => jourValide(jour)),
       };
     }
     const courses = {};
@@ -204,6 +300,21 @@
           meilleuresPortes: nombre(c.meilleuresPortes),
           parties: nombre(c.parties),
         };
+      });
+    }
+    // Le dressing, les défis et le carnet (les identifiants sont vérifiés à l'affichage)
+    const texteCourt = v => (typeof v === 'string' && v.length <= 40 ? v : undefined);
+    const tenue = {};
+    if (p.tenue && typeof p.tenue === 'object') {
+      ['tete', 'yeux', 'ami'].forEach(place => { if (texteCourt(p.tenue[place])) tenue[place] = p.tenue[place]; });
+    }
+    const defis = Array.isArray(p.defis) ? p.defis.filter(jour => jourValide(jour)) : [];
+    const vus = Array.isArray(p.vus) ? p.vus.filter(texteCourt) : [];
+    const carnet = {};
+    if (p.carnet && typeof p.carnet === 'object') {
+      Object.entries(p.carnet).forEach(([idEtape, f]) => {
+        if (!f || typeof f !== 'object' || !jourValide(f.prochain) || !texteCourt(idEtape)) return;
+        carnet[idEtape] = { boite: Math.min(3, nombre(f.boite)), erreurs: nombre(f.erreurs), prochain: f.prochain };
       });
     }
     const id = typeof p.id === 'string' && !idsDejaVus.has(p.id) ? p.id : nouvelId();
@@ -220,6 +331,10 @@
       etapes,
       courses,
       tempsDeJeu: nombre(p.tempsDeJeu),
+      tenue,
+      defis,
+      vus,
+      carnet,
       creeLe: dateValide(p.creeLe),
       dernierePartie: dateValide(p.dernierePartie),
       derniereEtape: typeof p.derniereEtape === 'string' ? p.derniereEtape : undefined,
@@ -273,6 +388,13 @@
     creerProfil,
     enregistrerPartie,
     enregistrerCourse,
+    enregistrerPartieSpeciale,
+    noterErreur,
+    reviserCarnet,
+    aRevoir,
+    defiFait,
+    habillerRoxy,
+    marquerVus,
     courseDe: (profil, foret) => profil.courses?.[foret] || null,
 
     profils: () => donnees.profils,

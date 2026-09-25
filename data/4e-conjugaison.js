@@ -62,7 +62,7 @@
     ['Si elle ___ mieux, elle gagnerait la partie.', 'jouer', 2, 'imparfait'],
     ['Si nous ___ à Paris, nous visiterions la tour Eiffel.', 'aller', 3, 'imparfait'],
     ['Si je ___ voler, je visiterais le monde entier.', 'pouvoir', 0, 'imparfait'],
-    ['Si j’avais faim, je ___ une pomme.', 'manger', 0, 'conditionnel'],
+    ['Si j’avais faim, je ___ une mangue.', 'manger', 0, 'conditionnel'],
     ['Si tu venais, nous ___ ensemble.', 'jouer', 3, 'conditionnel'],
     ['S’il pleuvait, nous ___ à la maison.', 'rester', 3, 'conditionnel'],
     ['Si j’étais une renarde, j’___ dans la forêt.', 'habiter', 0, 'conditionnel'],
@@ -242,11 +242,11 @@
   // [phrase, verbe, sujet, genre et nombre du sujet, temps]
   const VOIX_PASSIVE = [
     ['Le gâteau ___ par Roxy.', 'manger', 'le gâteau', 'ms', 'present'],
-    ['Les lettres ___ par Léa.', 'écrire', 'les lettres', 'fp', 'present'],
+    ['Les lettres ___ par Maëva.', 'écrire', 'les lettres', 'fp', 'present'],
     ['La souris ___ par le chat.', 'voir', 'la souris', 'fs', 'passeCompose'],
     ['Les chatons ___ par les enfants.', 'regarder', 'les chatons', 'mp', 'present'],
     ['La porte ___ par le vent.', 'ouvrir', 'la porte', 'fs', 'passeCompose'],
-    ['Les pommes ___ par les enfants.', 'manger', 'les pommes', 'fp', 'passeCompose'],
+    ['Les mangues ___ par les enfants.', 'manger', 'les mangues', 'fp', 'passeCompose'],
     ['Le trésor ___ par un pirate.', 'trouver', 'le trésor', 'ms', 'passeCompose'],
     ['Les chansons ___ par la chorale.', 'chanter', 'les chansons', 'fp', 'futur'],
     ['La chambre ___ par Tom.', 'ranger', 'la chambre', 'fs', 'futur'],
@@ -264,7 +264,7 @@
     ['Les règles ___ par tous les élèves.', 'apprendre', 'les règles', 'fp', 'present'],
     ['La chanson ___ par toute la classe.', 'chanter', 'la chanson', 'fs', 'futur'],
     ['Les biscuits ___ par Roxy.', 'prendre', 'les biscuits', 'mp', 'passeCompose'],
-    ['La réponse ___ par Zoé.', 'trouver', 'la réponse', 'fs', 'passeCompose'],
+    ['La réponse ___ par Hinano.', 'trouver', 'la réponse', 'fs', 'passeCompose'],
   ];
 
   P.ajouterEtape({

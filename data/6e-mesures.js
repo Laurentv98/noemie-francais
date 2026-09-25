@@ -12,9 +12,9 @@
   // ======================================================================
   // Les petits outils communs à toutes les étapes
   // ======================================================================
-  // Des prénoms, avec le pronom qui va avec (pour écrire « a-t-elle » ou « a-t-il »)
-  const PRENOMS = [['Léa', 'elle'], ['Tom', 'il'], ['Zoé', 'elle'], ['Hugo', 'il'], ['Inès', 'elle'],
-    ['Sami', 'il'], ['Lina', 'elle'], ['Noé', 'il'], ['Mamie', 'elle'], ['Papi', 'il']];
+  // Des prénoms de toutes les communautés de Nouvelle-Calédonie, avec le pronom qui va avec
+  // (pour écrire « a-t-elle » ou « a-t-il »), et Mamie et Papi
+  const PRENOMS = [...RM.maths.PRENOMS.map(({ nom, il }) => [nom, il]), ['Mamie', 'elle'], ['Papi', 'il']];
   // Vrai une fois sur deux (ou avec la probabilité donnée)
   const auHasard = (probabilite = 0.5) => Math.random() < probabilite;
   // Des guillemets français, avec des espaces qui ne se coupent pas
@@ -230,10 +230,11 @@
   const TAILLES = [
     ['Une fourmi mesure environ', 5, 'mm', ''],
     ['Une coccinelle mesure environ', 7, 'mm', ''],
-    [`Une pièce de 1${ESPACE}€ a une épaisseur d’environ`, 2, 'mm', ''],
+    ['Une pièce de monnaie a une épaisseur d’environ', 2, 'mm', ''],
     ['Une gomme mesure environ', 4, 'cm', 'de long'],
     ['Un crayon neuf mesure environ', 18, 'cm', ''],
     ['Un escargot mesure environ', 3, 'cm', ''],
+    ['Un cagou mesure environ', 55, 'cm', 'de long'],
     ['Un ongle mesure environ', 1, 'cm', 'de large'],
     [`À 10${ESPACE}ans, on mesure environ`, 140, 'cm', ''],
     ['Une porte mesure environ', 2, 'm', 'de haut'],
@@ -244,6 +245,7 @@
     ['Un terrain de football mesure environ', 100, 'm', 'de long'],
     ['La tour Eiffel mesure environ', 300, 'm', 'de haut'],
     ['Une randonnée d’une journée fait environ', 15, 'km', ''],
+    ['De Nouméa à Bourail, il y a environ', 165, 'km', 'par la route'],
     ['Un marathon mesure environ', 42, 'km', ''],
     ['Le tour de la Terre mesure environ', 40000, 'km', ''],
   ];
@@ -293,7 +295,7 @@
       const enM = net(km * 1000);
       return nombre({
         consigne: 'Résous le problème',
-        enonce: `${prenom} court ${mesure(km, 'km')}, puis encore ${mesure(m, 'm')}. `
+        enonce: `${prenom} fait du va’a sur le lagon : ${pronom} pagaie ${mesure(km, 'km')}, puis encore ${mesure(m, 'm')}. `
           + `Quelle distance a-t-${pronom} parcourue en tout, en mètres ?`,
         reponse: enM + m,
         unite: 'm',
@@ -388,7 +390,7 @@
     ['Un œuf pèse environ', 60, 'g', ''],
     ['Une tablette de chocolat pèse environ', 100, 'g', ''],
     ['Un morceau de sucre pèse environ', 5, 'g', ''],
-    [`Une pièce de 1${ESPACE}€ pèse environ`, 7, 'g', ''],
+    ['Une mangue pèse environ', 300, 'g', ''],
     ['Un chat pèse environ', 4, 'kg', ''],
     ['À la naissance, un bébé pèse environ', 3, 'kg', ''],
     ['Un sac de pommes de terre pèse environ', 5, 'kg', ''],
@@ -467,7 +469,7 @@
       const g = parmi([125, 250, 300, 400, 450, 500, 750]);
       return nombre({
         consigne: 'Résous le problème',
-        enonce: `${prenom} achète ${n} pots de confiture de ${mesure(g, 'g')}. Quelle est la masse des ${n} pots, en kilogrammes ?`,
+        enonce: `${prenom} achète ${n} pots de confiture de goyave de ${mesure(g, 'g')}. Quelle est la masse des ${n} pots, en kilogrammes ?`,
         reponse: net(n * g / 1000),
         unite: 'kg',
         explication: `${n} × ${ecrire(g)} = ${mesure(n * g, 'g')}.<br>`
@@ -511,7 +513,7 @@
     const g = 50 * entier(3, 19);
     return nombre({
       consigne: 'Résous le problème',
-      enonce: `${prenom} porte un sac de ${mesure(kg, 'kg')} de pommes et un sac de ${mesure(g, 'g')} de noix. `
+      enonce: `Au marché, ${prenom} porte un sac de ${mesure(kg, 'kg')} de mangues et un sac de ${mesure(g, 'g')} de letchis. `
         + `Quelle masse porte-t-${pronom} en tout, en grammes ?`,
       reponse: kg * 1000 + g,
       unite: 'g',
@@ -666,7 +668,7 @@
   // [la phrase, la durée la plus courte qui convient]
   const DUREES_ENTRE = [
     [(t1, t2) => `Le film commence à ${horaire(t1)} et finit à ${horaire(t2)}. Il dure ___.`, 75],
-    [(t1, t2) => `Le train part à ${horaire(t1)} et arrive à ${horaire(t2)}. Le trajet dure ___.`, 25],
+    [(t1, t2) => `Le car part de Nouméa à ${horaire(t1)} et arrive au village à ${horaire(t2)}. Le trajet dure ___.`, 25],
     [(t1, t2) => `La balade de Roxy commence à ${horaire(t1)} et finit à ${horaire(t2)}. Elle dure ___.`, 25],
     [(t1, t2) => `Le match commence à ${horaire(t1)} et se termine à ${horaire(t2)}. Il dure ___.`, 60],
   ];
@@ -678,7 +680,8 @@
       20, 55, [14, 17]],
     [(t1, t2, prenom) => `${prenom} part de la maison à ${horaire(t1)} et arrive à l’école à ${horaire(t2)}. `
       + 'Combien de minutes dure le trajet ?', 10, 40, [7, 8]],
-    [(t1, t2) => `La séance de piscine commence à ${horaire(t1)} et finit à ${horaire(t2)}. Combien de minutes dure-t-elle ?`,
+    [(t1, t2) => `La sortie snorkeling à la Baie des Citrons commence à ${horaire(t1)} et finit à ${horaire(t2)}. `
+      + 'Combien de minutes dure-t-elle ?',
       40, 95, [9, 16]],
   ];
   const ARRIVEES = [
@@ -688,7 +691,7 @@
     [(t, d) => `Le gâteau entre dans le four à ${horaire(t)}. Il cuit ${duree(d)}. Il sort à ___.`, 25, 70],
   ];
   const DEPARTS = [
-    [(t, d) => `Le train arrive à ${horaire(t)}, après ${duree(d)} de trajet. Il est parti à ___.`, 25, 170],
+    [(t, d) => `Le bateau arrive au quai à ${horaire(t)}, après ${duree(d)} de trajet. Il est parti à ___.`, 25, 170],
     [(t, d) => `Le spectacle finit à ${horaire(t)}. Il a duré ${duree(d)}. Il a commencé à ___.`, 45, 150],
   ];
 
@@ -988,7 +991,7 @@
       + `Il lui faut ___${ESPACE}m de grillage.`, 'm', 4, 20, 1],
     [(L, l) => `Roxy fait le tour d’un champ de ${mesure(L, 'm')} sur ${mesure(l, 'm')}. Elle parcourt ___${ESPACE}m.`,
       'm', 20, 90, 5],
-    [(L, l) => `Léa colle un ruban autour d’une photo de ${mesure(L, 'cm')} sur ${mesure(l, 'cm')}. Il faut ___${ESPACE}cm de ruban.`,
+    [(L, l) => `Maëva colle un ruban autour d’une photo de ${mesure(L, 'cm')} sur ${mesure(l, 'cm')}, prise au lagon. Il faut ___${ESPACE}cm de ruban.`,
       'cm', 8, 20, 1],
   ];
 
@@ -1354,12 +1357,12 @@
       'm', 3, 6, 1],
     [(L, l) => `Le potager de Papi est un rectangle de ${mesure(L, 'm')} sur ${mesure(l, 'm')}. Son aire est ___${ESPACE}m².`, 'm', 4, 12, 1],
   ];
-  // Des prénoms qui commencent par une consonne (pour écrire « de Léa », sans élision)
-  const PRENOMS_CONSONNE = ['Léa', 'Tom', 'Zoé', 'Sami', 'Lina', 'Noé'];
+  // Des prénoms qui commencent par une consonne (pour écrire « de Léa », « de Hinano », sans élision ; pas Hugo : « d’Hugo »)
+  const PRENOMS_CONSONNE = RM.maths.PRENOMS.map(p => p.nom).filter(nom => !/^([AEIOUÉÈ]|Hu)/.test(nom));
   const SURFACES = [
     ['l’aire d’un timbre', 'cm²'], ['l’aire d’une page de cahier', 'cm²'], ['l’aire d’une carte postale', 'cm²'],
     ['l’aire de l’écran d’une tablette', 'cm²'], ['l’aire d’une chambre', 'm²'], ['l’aire de la cour de récréation', 'm²'],
-    ['l’aire d’un terrain de football', 'm²'], ['l’aire d’un appartement', 'm²'], ['l’aire de la France', 'km²'],
+    ['l’aire d’un terrain de football', 'm²'], ['l’aire d’un appartement', 'm²'], ['l’aire de la Grande Terre', 'km²'],
     ['l’aire d’une grande forêt', 'km²'], ['l’aire d’une ville', 'km²'], ['l’aire d’un grand lac', 'km²'],
   ];
   // Les conversions d’aires : [de, vers, rangs (un m² = 100 dm² : 2 rangs par unité)]
