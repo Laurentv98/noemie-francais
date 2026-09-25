@@ -939,10 +939,10 @@
   function montrerQuestion(porte) {
     porte.questionMontree = true;
     const q = porte.question;
-    $('course-question').innerHTML = `
+    $('course-question').innerHTML = RM.insecables(`
       <p class="course-consigne">${q.consigne}</p>
       <div class="course-enonce">${q.enonce}</div>
-      <p class="course-indice">Passe par la bonne porte&nbsp;: ${q.choix.map(c => `<b>${q.etiquettes?.[c] || c}</b>`).join(' · ')}</p>`;
+      <p class="course-indice">Passe par la bonne porte&nbsp;: ${q.choix.map(c => `<b>${q.etiquettes?.[c] || c}</b>`).join(' · ')}</p>`);
     $('course-question').hidden = false;
   }
 

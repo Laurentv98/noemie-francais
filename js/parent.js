@@ -296,8 +296,8 @@
       <ul class="liste-profils">${listeProfils}</ul>
 
       <h4>Sauvegarde</h4>
-      <p class="bloc-sous-titre">Les progrès sont enregistrés dans le navigateur de cet iPad. Exportez-les de temps en temps :
-        si Safari efface ses données, vous pourrez tout récupérer avec « Importer ».</p>
+      <p class="bloc-sous-titre">Les progrès sont enregistrés dans le navigateur de cet appareil. Exportez-les de temps en temps :
+        si le navigateur efface ses données, vous pourrez tout récupérer avec « Importer ».</p>
       <p class="derniere-sauvegarde${aRappeler ? ' a-faire' : ''}">
         ${aRappeler ? '⚠️ ' : '✅ '}Dernière sauvegarde : ${derniere ? quand(derniere) : 'jamais'}</p>
       <div class="boutons-reglages">
@@ -407,7 +407,7 @@
     if (action === 'exporter') {
       telecharger(P.exporter(), `renard-malin-sauvegarde-${P.jourDe(P.maintenant())}.json`);
       RM.ecrans.parent();
-      RM.bulleInfo('📤 Sauvegarde créée&nbsp;! Sur iPad, elle se range dans l’app Fichiers, dossier « Téléchargements ».');
+      RM.bulleInfo('📤 Sauvegarde créée&nbsp;! Elle se range dans le dossier « Téléchargements » (sur iPad : app Fichiers).');
     }
     if (action === 'importer') $('parent-fichier').click();
     if (action === 'code') {

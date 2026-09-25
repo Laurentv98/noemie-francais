@@ -96,7 +96,21 @@
       grille.appendChild(bouton);
     });
     zone.appendChild(grille);
+    ajusterColonnes();
   }
+
+  // Sur un téléphone, un mot trop long pour tenir dans une des deux colonnes (« interrogative ») :
+  // on passe à une seule colonne plutôt que de couper le mot
+  function ajusterColonnes() {
+    const grille = document.querySelector('#quiz-reponse .grille-choix');
+    if (!grille || grille.classList.contains('choix-longs')) return;
+    const deborde = [...grille.children].some(bouton => bouton.scrollWidth > bouton.clientWidth + 1);
+    if (deborde) grille.classList.add('choix-longs');
+  }
+  // L'appareil tourne (paysage → portrait) : les colonnes rétrécissent.
+  // Et la police arrive parfois après la première question : on remesure.
+  window.addEventListener('resize', ajusterColonnes);
+  document.fonts?.ready.then(ajusterColonnes);
 
   // Une case pour écrire, avec des boutons d'accents (pénibles à taper sur iPad).
   // En maths (q.saisie) : le clavier des chiffres, l'unité à côté de la case, et les touches − , /

@@ -156,7 +156,8 @@ button:disabled { cursor: default; }
   gap: 14px;
 }
 .roxy-accueil {
-  width: min(320px, 70vw);
+  /* Moins grande sur un écran peu haut, pour que tout tienne sans faire défiler */
+  width: min(320px, 70vw, 33dvh);
   animation: sautiller 2.4s ease-in-out infinite;
 }
 @keyframes sautiller {
@@ -598,7 +599,7 @@ button:disabled { cursor: default; }
 /* Les réglages */
 .liste-profils { margin: 0; padding: 0; list-style: none; }
 .liste-profils li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-.reglage-prenom { flex: 1; font-weight: 800; }
+.reglage-prenom { flex: 1; min-width: 0; font-weight: 800; overflow-wrap: anywhere; }
 .boutons-reglages { display: flex; flex-wrap: wrap; gap: 10px; }
 .bouton-reglage {
   min-height: 48px;
@@ -861,6 +862,10 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
   transition: transform .1s;
 }
 .rond-etape:active .rond { transform: translateY(4px); }
+/* Sur une tablette ou un ordinateur, le nom de l'étape a plus de place (moins de lignes) */
+@media (min-width: 700px) {
+  .rond-etape { width: 190px; }
+}
 .ouverte .rond { border-color: var(--zone); background: #fff; color: var(--zone); }
 .reussie .rond { background: var(--zone); color: #fff; }
 .verrouillee .rond { background: #E6DDD3; color: #A89684; font-size: 1.7rem; }
@@ -1098,10 +1103,12 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
 
 .grille-choix {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr) : les deux colonnes restent égales et dans l'écran, même avec un mot très long */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 .bouton-choix {
+  min-width: 0;
   min-height: 76px;
   padding: 10px;
   border: 3px solid var(--creme-fonce);
@@ -1114,9 +1121,8 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
   transition: transform .08s, box-shadow .08s;
 }
 /* Des réponses longues (des définitions) : une seule colonne, un peu plus petit */
-.choix-longs { grid-template-columns: 1fr; }
-.choix-longs .bouton-choix { min-height: 62px; padding: 10px 18px; font-size: 1.25rem; line-height: 1.3; }
-.enonce.enonce-long { font-size: clamp(1.25rem, 3.6vw, 1.65rem); line-height: 1.5; }
+.choix-longs { grid-template-columns: minmax(0, 1fr); }
+.choix-longs .bouton-choix { min-height: 62px; padding: 10px 18px; font-size: 1.25rem; line-height: 1.3; overflow-wrap: break-word; }.enonce.enonce-long { font-size: clamp(1.25rem, 3.6vw, 1.65rem); line-height: 1.5; }
 .bouton-choix:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 var(--creme-fonce); }
 .bouton-choix:disabled:not(.juste):not(.faux) { opacity: .45; }
 .bouton-choix.juste {
@@ -1191,7 +1197,8 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpolyline points='4,18 50,3 96,18' fill='none' stroke='%235A3521' stroke-width='3' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") top center / 76% .34em no-repeat;
 }
 /* Un tableau dans une question (proportionnalité, statistiques…) */
-.tableau-maths { margin: 6px auto 12px; border-collapse: collapse; font-size: .8em; }
+/* Trop large pour un téléphone ? Le tableau défile de côté, sans pousser la page */
+.tableau-maths { display: block; width: fit-content; max-width: 100%; margin: 6px auto 12px; overflow-x: auto; border-collapse: collapse; font-size: .8em; }
 .tableau-maths th, .tableau-maths td { min-width: 2.6em; padding: 6px 10px; border: 2px solid var(--creme-fonce); text-align: center; }
 .tableau-maths th { background: var(--creme); font-family: var(--police-texte); font-size: .8em; font-weight: 800; text-align: left; }
 .tableau-maths td { background: #fff; }
@@ -1235,7 +1242,9 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
 .bulle {
   position: relative;
   flex: 1;
+  min-width: 0;
   padding: 18px 20px;
+  overflow-wrap: break-word;
   border: 3px solid var(--vert);
   border-radius: var(--arrondi);
   background: #fff;
@@ -1272,7 +1281,7 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
   vertical-align: middle;
 }
 .solution { margin: 0 0 10px; font-size: 1.25rem; }
-.explication { font-size: 1.05rem; line-height: 1.55; }
+.explication { font-size: 1.05rem; line-height: 1.55; overflow-x: auto; }
 .mini-tableau { margin-top: 10px; border-collapse: separate; border-spacing: 4px 2px; }
 .mini-tableau td { padding: 3px 10px; border-radius: 8px; }
 .mini-tableau td.cible { background: var(--orange-clair); font-weight: 800; }
@@ -1336,6 +1345,7 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
   flex-direction: column;
   gap: 14px;
   width: 100%;
+  min-width: 0; /* sinon, un grand tableau de la leçon élargit la fenêtre au-delà de l'écran */
   max-width: 640px;
   max-height: calc(100dvh - 32px);
   padding: 20px 24px 24px;
@@ -1425,8 +1435,56 @@ a.bouton-reglage { display: inline-flex; align-items: center; color: var(--brun)
   .ls-reussite { grid-column: 2; grid-row: 1 / span 2; }
   .ligne-stat.entete span:nth-child(2) { display: none; }
   .retour { flex-direction: column; align-items: center; }
-  .roxy-retour { width: 100px; }
+  .retour > .bulle { align-self: stretch; }
+  .roxy-retour { width: 90px; }
   .bulle::before { display: none; }
+  /* La carte : le titre peut passer sur deux lignes, sans pousser les boutons hors de l'écran */
+  .entete-carte { gap: 8px; padding-bottom: 6px; }
+  .entete-carte .barre h2 { min-width: 0; font-size: 1.15rem; line-height: 1.15; overflow-wrap: anywhere; }
+  .zone { scroll-margin-top: 190px; }
+  /* Le nombre de questions */
+  .choix-duree { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bouton-duree { padding: 12px 4px; }
+  .bouton-duree .nombre { font-size: 2.2rem; }
+  /* La fenêtre de la leçon : plus de place pour le texte, et les grands tableaux défilent de côté */
+  .fenetre { padding: 16px 16px 20px; border-radius: 22px; }
+  .fenetre-entete img { width: 56px; }
+  .fenetre-entete h3 { font-size: 1.35rem; }
+  .fenetre-contenu { font-size: 1.05rem; }
+  .lecon table { display: block; overflow-x: auto; font-size: .92rem; }
+  /* Les tableaux des questions de maths : plus serrés, pour que la case « ? » reste dans l'écran */
+  .enonce .tableau-maths { font-size: .6em; }
+  .bulle .tableau-maths, .lecon .tableau-maths { font-size: .9em; }
+  .tableau-maths th, .tableau-maths td { min-width: 2em; padding: 5px 6px; }
+  .lecon th, .lecon td { padding: 5px 8px; }
+}
+
+/* ---------- Très petits téléphones (moins de 420 pixels de large) ---------- */
+@media (max-width: 420px) {
+  .bouton-rond { width: 48px; height: 48px; font-size: 1.25rem; }
+  /* Sur la carte, la pastille du joueur ne montre que son animal */
+  .puce-joueur { padding: 4px; }
+  .joueur-points { display: none; }
+  .puce-flamme { min-height: 48px; }
+  .entete-carte .barre h2 { font-size: 1.05rem; }
+  .bouton-matiere .matiere-icone { display: none; }
+  .bouton-matiere b { white-space: nowrap; }
+  /* Les questions : la barre de progression passe sur sa propre ligne, sous les boutons */
+  #ecran-quiz .barre { flex-wrap: wrap; row-gap: 10px; }
+  #ecran-quiz .progression { order: 1; flex-basis: 100%; }
+  #ecran-quiz .compteur-points { margin-left: auto; }
+  .enonce { margin-bottom: 20px; }
+  .carte-question { padding: 20px 12px; }
+  .enonce .tableau-maths { font-size: .55em; }
+  .bouton-choix { min-height: 68px; font-size: 1.45rem; }
+  .grille-choix { gap: 10px; }
+}
+
+/* ---------- Écrans peu hauts (téléphone couché) ---------- */
+@media (max-height: 560px) {
+  /* Le haut de la carte ne reste plus collé : sinon, il cacherait la moitié de la forêt */
+  .entete-carte { position: static; }
+  .zone { scroll-margin-top: 12px; }
 }
 
 /* Avec une souris (ordinateur), un petit effet au survol */
@@ -1604,6 +1662,22 @@ body.en-course { overflow: hidden; }
 }
 .bouton-commande:active { box-shadow: 0 2px 0 rgba(90, 53, 33, .18); transform: translateY(3px); }
 
+/* Téléphone couché : les flèches vont sur les côtés (⬅️ à gauche, ⬆️ ➡️ à droite), pour ne pas cacher Roxy */
+@media (max-height: 560px) {
+  .course-commandes {
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  }
+  .bouton-commande { width: 66px; height: 66px; font-size: 1.7rem; }
+  .bouton-commande[data-commande="saut"] { margin-left: auto; }
+  /* La question, plus petite : on doit voir arriver les portes */
+  .course-question { top: calc(max(8px, env(safe-area-inset-top)) + 58px); width: min(76vw, 560px); padding: 6px 14px 8px; }
+  .course-enonce { margin: 2px 0; font-size: 1.15rem; line-height: 1.25; }
+  .course-indice { font-size: .85rem; }
+  .course-message { top: 50%; font-size: 1.25rem; }
+}
+
 .course-panneau {
   position: absolute;
   inset: 0;
@@ -1663,9 +1737,12 @@ body.en-course { overflow: hidden; }
 .accueil-son { position: absolute; top: 0; right: 0; }
 .bulle-accueil {
   position: relative;
+  /* De la place de chaque côté pour le bouton 🔊, en haut à droite */
+  max-width: calc(100% - 128px);
   margin: 0 0 -6px;
   padding: 10px 20px;
-  border-radius: 999px;
+  border-radius: 24px;
+  text-wrap: balance;
   background: #fff;
   font-family: var(--police-titre);
   font-size: 1.3rem;
@@ -1796,6 +1873,8 @@ body.en-course { overflow: hidden; }
   font-weight: 800;
 }
 .carte-question .consigne { padding: 0 44px; }
+/* L'étape d'origine ne passe pas sous le bouton 🗣️ (sur un téléphone, elle va sur deux lignes) */
+.carte-question .puce-origine { max-width: calc(100% - 112px); border-radius: 16px; text-align: center; }
 
 /* ---------- La fin d'une partie spéciale ---------- */
 .resultat-special {
@@ -1875,8 +1954,9 @@ body.en-course { overflow: hidden; }
 
 @media (max-width: 700px) {
   .dressing { grid-template-columns: 1fr; }
-  .dressing-apercu { position: static; padding: 12px; }
-  .roxy-dressing { width: min(200px, 60vw); }
+  /* Roxy reste visible en haut pendant qu'on choisit (on voit l'accessoire qu'on essaie) */
+  .dressing-apercu { top: max(6px, env(safe-area-inset-top)); z-index: 3; padding: 8px; }
+  .roxy-dressing { width: min(170px, 44vw, 26dvh); }
 }
 @media (max-width: 600px) {
   .coin-roxy { gap: 8px; }
@@ -1884,6 +1964,12 @@ body.en-course { overflow: hidden; }
   .tuile-coin b { font-size: .95rem; }
   .tuile-coin small { font-size: .75rem; }
   .onglet-dressing { font-size: .85rem; }
+  .onglet-dressing small { display: block; }
+  /* L'accueil : le bouton 🔊 passe au-dessus de la bulle de Roxy (plus de place pour la phrase) */
+  .accueil-son { position: static; align-self: flex-end; margin-bottom: -4px; }
+  .bulle-accueil { max-width: 100%; font-size: 1.15rem; }
+  .roxy-accueil { width: min(260px, 64vw, 30dvh); }
+  .grille-accessoires { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
   .bulle-bienvenue { font-size: 1.2rem; }
 }
 

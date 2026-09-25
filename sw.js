@@ -7,7 +7,7 @@
 // - Three.js (la course) et les polices : gardés la première fois qu'ils sont chargés.
 //
 // ⚠️ À chaque mise à jour : changer VERSION ici aussi (la même que les ?v= de index.html).
-const VERSION = '2026-09-25-f';
+const VERSION = '2026-09-25-g';
 const CACHE = 'renard-malin-' + VERSION;
 const THREE = 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js';
 const IMAGES = ['img/roxy-ouais.png', 'img/roxy-reflechit.png', 'img/favicon.png', 'img/icone-180.png', 'img/icone-192.png'];

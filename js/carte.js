@@ -5,7 +5,8 @@
   const $ = id => document.getElementById(id);
   const P = RM.progression;
 
-  const HAUTEUR_LIGNE = 150; // espace entre deux étapes du chemin, en pixels
+  const HAUTEUR_LIGNE = 150; // espace minimum entre deux étapes du chemin, en pixels
+  const MARGE_ETAPE = 28;    // l'espace libre sous une étape (son nom et ses étoiles) avant la suivante (et sa couronne 👑)
   const TAILLE_ROND = 86;
   const LARGEUR_ROXY = 76;
   // Le chemin serpente : position de chaque étape, en % de la largeur
@@ -79,7 +80,10 @@
     // En haut : le coin de Roxy (défi du jour, carnet, dressing)
     $('carte-aventure').innerHTML = RM.defis.htmlCoin(profil)
       + foret.map(zone => htmlZone(profil, zone)).join('') + RM.course.htmlCarte(profil, P.idForetDe(profil));
-    foret.filter(zone => !zone.bientot).forEach(zone => tracerChemin(profil, zone));
+    foret.filter(zone => !zone.bientot).forEach(zone => {
+      espacerEtapes(zone);
+      tracerChemin(profil, zone);
+    });
     placerRoxy(profil, foret);
     RM.nouvelleEtape = null;
 
@@ -159,11 +163,30 @@
     return `<span class="mini-etoiles">${html}</span>`;
   }
 
+  // La hauteur de chaque étape sur son chemin (en pixels depuis le haut du chemin)
+  const hauteurs = new Map();
+  const hauteurDe = etape => hauteurs.get(etape) ?? etape.index * HAUTEUR_LIGNE;
+
+  // Un nom d'étape sur deux ou trois lignes (sur un téléphone, souvent) : l'étape suivante
+  // descend un peu, pour que le nom et les étoiles ne passent pas sous elle
+  function espacerEtapes(zone) {
+    const chemin = document.querySelector(`#zone-${zone.id} .chemin`);
+    const lignes = chemin.querySelectorAll('.ligne-etape');
+    let haut = 0;
+    zone.etapes.forEach((etape, i) => {
+      hauteurs.set(etape, haut);
+      lignes[i].style.top = haut + 'px';
+      const bouton = lignes[i].querySelector('.rond-etape');
+      if (i < zone.etapes.length - 1) haut += Math.max(HAUTEUR_LIGNE, bouton.offsetHeight + MARGE_ETAPE);
+      else chemin.style.height = haut + Math.max(HAUTEUR_LIGNE, bouton.offsetHeight) + 'px';
+    });
+  }
+
   // Le chemin qui relie les étapes : en pointillés jusqu'à la dernière étape ouverte
   function tracerChemin(profil, zone) {
     const chemin = document.querySelector(`#zone-${zone.id} .chemin`);
     const largeur = chemin.clientWidth;
-    const points = zone.etapes.map(e => [positionX(e) / 100 * largeur, e.index * HAUTEUR_LIGNE + TAILLE_ROND / 2]);
+    const points = zone.etapes.map(e => [positionX(e) / 100 * largeur, hauteurDe(e) + TAILLE_ROND / 2]);
     const trace = nombre => points.slice(0, nombre).map(([x, y], i) => {
       if (i === 0) return `M ${x} ${y}`;
       const [xAvant, yAvant] = points[i - 1];
@@ -197,7 +220,7 @@
       const left = positionX(etape) > 50
         ? x - TAILLE_ROND / 2 - LARGEUR_ROXY - 2
         : x + TAILLE_ROND / 2 + 2;
-      return { left: left + 'px', top: (etape.index * HAUTEUR_LIGNE + 4) + 'px' };
+      return { left: left + 'px', top: (hauteurDe(etape) + 4) + 'px' };
     };
 
     const roxy = document.createElement('div');
@@ -219,7 +242,7 @@
     anciennePlace = { profil: profil.id, zone, index: cible.index };
 
     // On fait défiler la carte pour que Roxy soit bien visible
-    const haut = chemin.getBoundingClientRect().top + window.scrollY + cible.index * HAUTEUR_LIGNE;
+    const haut = chemin.getBoundingClientRect().top + window.scrollY + hauteurDe(cible);
     window.scrollTo({ top: Math.max(0, haut - window.innerHeight / 2 + 60), behavior: doitMarcher ? 'smooth' : 'auto' });
   }
 
